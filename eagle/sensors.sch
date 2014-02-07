@@ -2483,8 +2483,8 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
 <part name="R1" library="SparkFun-Resistors" deviceset="RESISTOR" device="EZ" value="10k"/>
 <part name="R2" library="SparkFun-Resistors" deviceset="RESISTOR" device="EZ" value="10k"/>
-<part name="C1" library="SparkFun-Capacitors" deviceset="CAP" device="PTH" value="100n"/>
-<part name="C2" library="SparkFun-Capacitors" deviceset="CAP" device="PTH" value="100n"/>
+<part name="C1" library="SparkFun-Capacitors" deviceset="CAP" device="PTH1" value="100n"/>
+<part name="C2" library="SparkFun-Capacitors" deviceset="CAP" device="PTH1" value="100n"/>
 <part name="JP1" library="SparkFun-Connectors" deviceset="ARDUINO_SERIAL_PROGRAM" device="PTH" value="FTDI"/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
 <part name="BATT1" library="adafruit" deviceset="AAA" device=""/>
@@ -2502,7 +2502,7 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <part name="GND6" library="supply1" deviceset="GND" device=""/>
 <part name="P+1" library="supply1" deviceset="VCC" device=""/>
 <part name="U1" library="RHT03_DHT-22_AM2302" deviceset="RHT03_DHT-22_AM2302" device="" value="DHT22"/>
-<part name="C3" library="SparkFun-Capacitors" deviceset="CAP" device="PTH" value="100n"/>
+<part name="C3" library="SparkFun-Capacitors" deviceset="CAP" device="PTH1" value="100n"/>
 </parts>
 <sheets>
 <sheet>
