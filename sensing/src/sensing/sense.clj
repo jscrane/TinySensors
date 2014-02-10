@@ -5,13 +5,16 @@
     (seesaw (core :as s))
     (clj-time (core :as t) (local :as local) (coerce :as coerce)))
   (:import
-    (org.jfree.chart ChartPanel)
-    ))
+    (org.jfree.chart ChartPanel)))
 
 (db/defdb sensors (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
 (k/defentity sensordata (k/database sensors))
+(k/defentity nodes (k/database sensors))
 
-(def b (-> (k/select* sensordata) (k/fields :time :battery :light :humidity :temperature) (k/order :time)))
+(def dataq (-> (k/select* sensordata)
+               (k/fields :time :battery :light :humidity :temperature)
+               (k/order :time)))
+(def nodeq (-> (k/select* nodes) (k/fields :id :location)))
 
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
@@ -32,19 +35,56 @@
    )
   )
 
-(defn- avg [n data]
-  (map stats/mean (partition n data)))
+; computes a rolling average of the data filtering data outside range
+(defn- avg
+  ([n data [lo hi]]
+   (let [f (first data)]
+     (first
+       (reduce (fn [[r w s] d]
+                 (let [a (/ s n)
+                       d (if (and (>= d lo) (<= d hi)) d a)]
+                   [(conj r a) (conj (subvec w 1) d) (+ s d (- (w 0)))]))
+               [[] (vec (repeat n f)) (* n f)] (drop n data)))))
+  ([data range]
+   (avg (int (/ (count data) 200)) data range)))
+
+(def plot-area (atom nil))
+(def labels {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
+(def ranges {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]})
 
 (defn make-plot [key data]
-  (ChartPanel. (charts/time-series-plot
-                 (avg 60 (map #(.getTime (:time %)) data))
-                 (avg 60 (map key data))
-                 :x-label "Time" :y-label (str key))))
+  (let [chart (charts/time-series-plot
+                (map #(.getTime (:time %)) data)
+                (avg (map key data) (ranges key))
+                :x-label "Time" :y-label (labels key))]
+    (if @plot-area
+      (do
+        (.setChart @plot-area chart)
+        @plot-area)
+      (reset! plot-area (ChartPanel. chart)))))
+
+(def sensor (atom 2))
+(def parameter (atom :light))
+
+(defn sensor-action [id e]
+  (make-plot @parameter (query-range dataq (reset! sensor id))))
+
+(defn view-action [id e]
+  (make-plot (reset! parameter id) (query-range dataq @sensor)))
 
 (defn -main [& args]
   (s/invoke-later
     (-> (s/frame :title "Sensors",
-               :content (make-plot :light (query-range b 2)),
-               :on-close :exit)
+                 :content (make-plot @parameter (query-range dataq @sensor)),
+                 :on-close :exit
+                 :menubar (s/menubar
+                            :items
+                            [(s/menu :text "File" :items [(s/action :name "Quit" :handler (fn [e] (System/exit 0)))])
+                             (s/menu :text "View" :items (map (fn [[k v]]
+                                                                (s/action :name v :handler (partial view-action k)))
+                                                              labels))
+                             (s/menu :text "Sensor" :items (map (fn [{:keys [id location]}]
+                                                                  (s/action :name location :handler (partial sensor-action id)))
+                                                                (k/select nodeq)))]))
         s/pack!
         s/show!)))
