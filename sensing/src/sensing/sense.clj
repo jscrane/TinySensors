@@ -19,19 +19,15 @@
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
 
-(defn query-window [q id [start end]]
-  (-> q
-      (k/where {:node_id [= id]})
-      (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
-      (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
-      (k/select)))
-
-(defn make-window
-  ([soff eoff]
-   (let [now (local/local-now)]
-     [(t/minus now soff) (t/minus now eoff)]))
-  ([soff]
-   (make-window soff (t/hours 0))))
+(defn query-window [q id [o d]]
+  (let [now (local/local-now)
+        start (t/minus now o)
+        end (t/plus start d)]
+    (-> q
+        (k/where {:node_id [= id]})
+        (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
+        (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
+        (k/select))))
 
 ; computes a rolling average of the data filtering data outside range
 (defn- avg
@@ -49,12 +45,12 @@
 (def plot-area (atom nil))
 (def sensor-names {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
 (def valid {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]})
-(def periods {"6h"  (make-window (t/hours 6)),
-              "12h" (make-window (t/hours 12)),
-              "1d"  (make-window (t/days 1)),
-              "2d"  (make-window (t/days 2)),
-              "1w"  (make-window (t/weeks 1)),
-              "4w"  (make-window (t/weeks 4))})
+(def periods {"6h"  [(t/hours 6) (t/hours 6)],
+              "12h" [(t/hours 12) (t/hours 12)],
+              "1d"  [(t/days 1) (t/days 1)],
+              "2d"  [(t/days 2) (t/days 2)],
+              "1w"  [(t/weeks 1) (t/weeks 1)],
+              "4w"  [(t/weeks 4) (t/weeks 4)]})
 
 (defn make-plot [key data]
   (let [chart (charts/time-series-plot
@@ -71,14 +67,23 @@
 (def curr-sensor (atom :light))
 (def curr-period (atom (periods "12h")))
 
-(defn location-action [id e]
+(defn location-action [id]
   (make-plot @curr-sensor (query-window dataq (reset! curr-location id) @curr-period)))
 
-(defn sensor-action [id e]
+(defn sensor-action [id]
   (make-plot (reset! curr-sensor id) (query-window dataq @curr-location @curr-period)))
 
-(defn period-action [r e]
-  (make-plot @curr-sensor (query-window dataq @curr-location (reset! curr-period r))))
+(defn period-action [p]
+  (make-plot @curr-sensor (query-window dataq @curr-location (reset! curr-period p))))
+
+(defn prev-action []
+  (let [[o d] @curr-period]
+    (period-action [(.plus o d) d])))
+
+(defn next-action []
+  (let [[o d] @curr-period
+        n (.minus o d)]
+    (period-action [(if (pos? n) n o) d])))
 
 (defn -main [& args]
   (s/invoke-later
@@ -87,27 +92,43 @@
                  :on-close :exit
                  :menubar (s/menubar
                             :items
-                            [(s/menu :text "File" :items [(s/action :name "Quit" :handler (fn [e] (System/exit 0)))])
-                             (s/menu :text "Location" :items (let [g (s/button-group)]
-                                                               (map (fn [{:keys [id location]}]
-                                                                      (s/radio-menu-item :text location
-                                                                                         :group g
-                                                                                         :selected? (= id @curr-location)
-                                                                                         :listen [:action (partial location-action id)]))
-                                                                    (k/select nodeq))))
-                             (s/menu :text "Sensor" :items (let [g (s/button-group)]
-                                                             (map (fn [[k v]]
-                                                                    (s/radio-menu-item :text v
-                                                                                       :group g
-                                                                                       :selected? (= k @curr-sensor)
-                                                                                       :listen [:action (partial sensor-action k)]))
-                                                                  sensor-names)))
-                             (s/menu :text "Period" :items (let [g (s/button-group)]
-                                                             (map (fn [[k v]]
-                                                                    (s/radio-menu-item :text k
-                                                                                       :group g
-                                                                                       :selected? (= v @curr-period)
-                                                                                       :listen [:action (partial period-action v)]))
-                                                                  periods)))]))
+                            [(s/menu :text "File"
+                                     :mnemonic \F
+                                     :items [(s/action :name "Quit" :handler (fn [e] (System/exit 0)))])
+                             (s/menu :text "Location"
+                                     :mnemonic \L
+                                     :items (let [g (s/button-group)]
+                                              (map (fn [{:keys [id location]}]
+                                                     (s/radio-menu-item :text location
+                                                                        :group g
+                                                                        :selected? (= id @curr-location)
+                                                                        :listen [:action (fn [e] (location-action id))]))
+                                                   (k/select nodeq))))
+                             (s/menu :text "Sensor"
+                                     :mnemonic \S
+                                     :items (let [g (s/button-group)]
+                                              (map (fn [[k v]]
+                                                     (s/radio-menu-item :text v
+                                                                        :group g
+                                                                        :selected? (= k @curr-sensor)
+                                                                        :listen [:action (fn [e] (sensor-action k))]))
+                                                   sensor-names)))
+                             (s/menu :text "Period"
+                                     :mnemonic \P
+                                     :items (let [g (s/button-group)]
+                                              (concat
+                                                (map (fn [[k v]]
+                                                       (s/radio-menu-item :text k
+                                                                          :group g
+                                                                          :selected? (= v @curr-period)
+                                                                          :listen [:action (fn [e] (period-action v))]))
+                                                     periods)
+                                                [(s/separator)
+                                                 (s/menu-item :text "Prev"
+                                                              :mnemonic \P
+                                                              :listen [:action (fn [e] (prev-action))])
+                                                 (s/menu-item :text "Next"
+                                                              :mnemonic \N
+                                                              :listen [:action (fn [e] (next-action))])])))]))
         s/pack!
         s/show!)))

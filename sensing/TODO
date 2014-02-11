@@ -1,0 +1,10 @@
+UI
+- split out swing ui from model
+- dsl for creating views on model
+- combining sensors and parameters
+- caching db
+
+Hardware
+- design relay (node #1)
+- build node #5
+- provisioning with different duty-cycles for light and dark?
