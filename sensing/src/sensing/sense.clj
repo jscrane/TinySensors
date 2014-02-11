@@ -19,10 +19,10 @@
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
 
-(defn query-window [q id [o d]]
+(defn query-window [q id [off dur]]
   (let [now (local/local-now)
-        start (t/minus now o)
-        end (t/plus start d)]
+        start (t/minus now off)
+        end (t/plus start dur)]
     (-> q
         (k/where {:node_id [= id]})
         (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
@@ -65,7 +65,7 @@
 
 (def curr-location (atom 2))
 (def curr-sensor (atom :light))
-(def curr-period (atom (periods "12h")))
+(def curr-period (atom (periods "6h")))
 
 (defn location-action [id]
   (make-plot @curr-sensor (query-window dataq (reset! curr-location id) @curr-period)))
@@ -94,7 +94,9 @@
                             :items
                             [(s/menu :text "File"
                                      :mnemonic \F
-                                     :items [(s/action :name "Quit" :handler (fn [e] (System/exit 0)))])
+                                     :items [(s/action :name "Quit"
+                                                       :mnemonic \Q
+                                                       :handler (fn [e] (System/exit 0)))])
                              (s/menu :text "Location"
                                      :mnemonic \L
                                      :items (let [g (s/button-group)]
@@ -124,11 +126,14 @@
                                                                           :listen [:action (fn [e] (period-action v))]))
                                                      periods)
                                                 [(s/separator)
-                                                 (s/menu-item :text "Prev"
-                                                              :mnemonic \P
-                                                              :listen [:action (fn [e] (prev-action))])
-                                                 (s/menu-item :text "Next"
-                                                              :mnemonic \N
-                                                              :listen [:action (fn [e] (next-action))])])))]))
+                                                 (s/action :name "Prev"
+                                                           :mnemonic \P
+                                                           :handler (fn [e] (prev-action)))
+                                                 (s/action :name "Next"
+                                                           :mnemonic \N
+                                                           :handler (fn [e] (next-action)))
+                                                 (s/action :name "Now"
+                                                           :mnemonic \W
+                                                           :handler (fn [e] (period-action (periods "6h"))))])))]))
         s/pack!
         s/show!)))
