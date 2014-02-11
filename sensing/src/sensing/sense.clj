@@ -19,21 +19,19 @@
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
 
-(defn query-range
-  ([q id start end]
-   (-> q
-       (k/where {:node_id [= id]})
-       (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
-       (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
-       (k/select)))
-  ([q id start]
-   (query-range q id start (local/local-now)))
-  ([q id]
+(defn query-window [q id [start end]]
+  (-> q
+      (k/where {:node_id [= id]})
+      (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
+      (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
+      (k/select)))
+
+(defn make-window
+  ([soff eoff]
    (let [now (local/local-now)]
-     (query-range q id (t/minus now (t/hours 8)) now))
-   ;(-> q (k/select))
-   )
-  )
+     [(t/minus now soff) (t/minus now eoff)]))
+  ([soff]
+   (make-window soff (t/hours 0))))
 
 ; computes a rolling average of the data filtering data outside range
 (defn- avg
@@ -49,42 +47,67 @@
    (avg (int (/ (count data) 200)) data range)))
 
 (def plot-area (atom nil))
-(def labels {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
-(def ranges {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]})
+(def sensor-names {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
+(def valid {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]})
+(def periods {"6h"  (make-window (t/hours 6)),
+              "12h" (make-window (t/hours 12)),
+              "1d"  (make-window (t/days 1)),
+              "2d"  (make-window (t/days 2)),
+              "1w"  (make-window (t/weeks 1)),
+              "4w"  (make-window (t/weeks 4))})
 
 (defn make-plot [key data]
   (let [chart (charts/time-series-plot
                 (map #(.getTime (:time %)) data)
-                (avg (map key data) (ranges key))
-                :x-label "Time" :y-label (labels key))]
+                (avg (map key data) (valid key))
+                :x-label "Time" :y-label (sensor-names key))]
     (if @plot-area
       (do
         (.setChart @plot-area chart)
         @plot-area)
       (reset! plot-area (ChartPanel. chart)))))
 
-(def sensor (atom 2))
-(def parameter (atom :light))
+(def curr-location (atom 2))
+(def curr-sensor (atom :light))
+(def curr-period (atom (periods "12h")))
+
+(defn location-action [id e]
+  (make-plot @curr-sensor (query-window dataq (reset! curr-location id) @curr-period)))
 
 (defn sensor-action [id e]
-  (make-plot @parameter (query-range dataq (reset! sensor id))))
+  (make-plot (reset! curr-sensor id) (query-window dataq @curr-location @curr-period)))
 
-(defn view-action [id e]
-  (make-plot (reset! parameter id) (query-range dataq @sensor)))
+(defn period-action [r e]
+  (make-plot @curr-sensor (query-window dataq @curr-location (reset! curr-period r))))
 
 (defn -main [& args]
   (s/invoke-later
     (-> (s/frame :title "Sensors",
-                 :content (make-plot @parameter (query-range dataq @sensor)),
+                 :content (make-plot @curr-sensor (query-window dataq @curr-location @curr-period)),
                  :on-close :exit
                  :menubar (s/menubar
                             :items
                             [(s/menu :text "File" :items [(s/action :name "Quit" :handler (fn [e] (System/exit 0)))])
-                             (s/menu :text "View" :items (map (fn [[k v]]
-                                                                (s/action :name v :handler (partial view-action k)))
-                                                              labels))
-                             (s/menu :text "Sensor" :items (map (fn [{:keys [id location]}]
-                                                                  (s/action :name location :handler (partial sensor-action id)))
-                                                                (k/select nodeq)))]))
+                             (s/menu :text "Location" :items (let [g (s/button-group)]
+                                                               (map (fn [{:keys [id location]}]
+                                                                      (s/radio-menu-item :text location
+                                                                                         :group g
+                                                                                         :selected? (= id @curr-location)
+                                                                                         :listen [:action (partial location-action id)]))
+                                                                    (k/select nodeq))))
+                             (s/menu :text "Sensor" :items (let [g (s/button-group)]
+                                                             (map (fn [[k v]]
+                                                                    (s/radio-menu-item :text v
+                                                                                       :group g
+                                                                                       :selected? (= k @curr-sensor)
+                                                                                       :listen [:action (partial sensor-action k)]))
+                                                                  sensor-names)))
+                             (s/menu :text "Period" :items (let [g (s/button-group)]
+                                                             (map (fn [[k v]]
+                                                                    (s/radio-menu-item :text k
+                                                                                       :group g
+                                                                                       :selected? (= v @curr-period)
+                                                                                       :listen [:action (partial period-action v)]))
+                                                                  periods)))]))
         s/pack!
         s/show!)))
