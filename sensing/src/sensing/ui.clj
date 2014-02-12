@@ -1,50 +1,22 @@
-(ns sensing.sense
+(ns sensing.ui
   (:require
-    (korma (db :as db) (core :as k))
-    (incanter (charts :as charts) (stats :as stats))
     (seesaw (core :as s))
-    (clj-time (core :as t) (local :as local) (coerce :as coerce)))
+    (clj-time (core :as t)))
   (:import
-    (org.jfree.chart ChartPanel)))
-
-(db/defdb sensors (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
-(k/defentity sensordata (k/database sensors))
-(k/defentity nodes (k/database sensors))
-
-(def dataq (-> (k/select* sensordata)
-               (k/fields :time :battery :light :humidity :temperature)
-               (k/order :time)))
-(def nodeq (-> (k/select* nodes) (k/fields :id :location)))
-
-(defn- unixtime [d]
-  (long (/ (coerce/to-long d) 1000)))
-
-(defn query-window [q id [off dur]]
-  (let [now (local/local-now)
-        start (t/minus now off)
-        end (t/plus start dur)]
-    (-> q
-        (k/where {:node_id [= id]})
-        (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
-        (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
-        (k/select))))
-
-; computes a rolling average of the data filtering data outside range
-(defn- avg
-  ([n data [lo hi]]
-   (let [f (first data)]
-     (first
-       (reduce (fn [[r w s] d]
-                 (let [a (/ s n)
-                       d (if (and (>= d lo) (<= d hi)) d a)]
-                   [(conj r a) (conj (subvec w 1) d) (+ s d (- (w 0)))]))
-               [[] (vec (repeat n f)) (* n f)] (drop n data)))))
-  ([data range]
-   (avg (int (/ (count data) 200)) data range)))
+    (org.jfree.chart ChartPanel))
+  (:use
+    [sensing.data :only (make-chart query-window sensor-names nodes)]))
 
 (def plot-area (atom nil))
-(def sensor-names {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
-(def valid {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]})
+
+(defn make-plot [key data]
+  (let [chart (make-chart key data)]
+    (if @plot-area
+      (do
+        (.setChart @plot-area chart)
+        @plot-area)
+      (reset! plot-area (ChartPanel. chart)))))
+
 (def periods {"6h"  [(t/hours 6) (t/hours 6)],
               "12h" [(t/hours 12) (t/hours 12)],
               "1d"  [(t/days 1) (t/days 1)],
@@ -52,29 +24,18 @@
               "1w"  [(t/weeks 1) (t/weeks 1)],
               "4w"  [(t/weeks 4) (t/weeks 4)]})
 
-(defn make-plot [key data]
-  (let [chart (charts/time-series-plot
-                (map #(.getTime (:time %)) data)
-                (avg (map key data) (valid key))
-                :x-label "Time" :y-label (sensor-names key))]
-    (if @plot-area
-      (do
-        (.setChart @plot-area chart)
-        @plot-area)
-      (reset! plot-area (ChartPanel. chart)))))
-
 (def curr-location (atom 2))
 (def curr-sensor (atom :light))
 (def curr-period (atom (periods "6h")))
 
 (defn location-action [id]
-  (make-plot @curr-sensor (query-window dataq (reset! curr-location id) @curr-period)))
+  (make-plot @curr-sensor (query-window (reset! curr-location id) @curr-period)))
 
 (defn sensor-action [id]
-  (make-plot (reset! curr-sensor id) (query-window dataq @curr-location @curr-period)))
+  (make-plot (reset! curr-sensor id) (query-window @curr-location @curr-period)))
 
 (defn period-action [p]
-  (make-plot @curr-sensor (query-window dataq @curr-location (reset! curr-period p))))
+  (make-plot @curr-sensor (query-window @curr-location (reset! curr-period p))))
 
 (defn prev-action []
   (let [[o d] @curr-period]
@@ -88,7 +49,7 @@
 (defn -main [& args]
   (s/invoke-later
     (-> (s/frame :title "Sensors",
-                 :content (make-plot @curr-sensor (query-window dataq @curr-location @curr-period)),
+                 :content (make-plot @curr-sensor (query-window @curr-location @curr-period)),
                  :on-close :exit
                  :menubar (s/menubar
                             :items
@@ -105,7 +66,7 @@
                                                                         :group g
                                                                         :selected? (= id @curr-location)
                                                                         :listen [:action (fn [e] (location-action id))]))
-                                                   (k/select nodeq))))
+                                                   nodes)))
                              (s/menu :text "Sensor"
                                      :mnemonic \S
                                      :items (let [g (s/button-group)]
