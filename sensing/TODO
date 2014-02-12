@@ -7,3 +7,6 @@ UI
 Hardware
 - design relay (node #1)
 - provisioning with different duty-cycles for light and dark?
+
+Project
+- git subtree for sketches' gists
