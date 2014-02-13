@@ -3,10 +3,8 @@ UI
 - combining sensors and parameters
 - caching db
 - displaying sensor name on ui
+- displaying weather data
 
 Hardware
 - design relay (node #1)
 - provisioning with different duty-cycles for light and dark?
-
-Project
-- git subtree for sketches' gists
