@@ -12,7 +12,7 @@ DHT dht;
 const uint16_t other_node = 0;
 uint16_t this_node;
 
-const unsigned long interval = 5000; //ms
+const unsigned long interval = 60000; //ms
 
 struct payload_t
 {
@@ -54,5 +54,14 @@ void loop(void)
   bool ok = network.write(header, &payload, sizeof(payload));
 
   radio.powerDown();
-  Sleepy::loseSomeTime(interval);
+
+  int32_t l = light;
+  int32_t s = 1000 * (220 - l);
+  if (s < 10000)
+    s = 10000;
+  do {
+    int32_t i = min(s, interval);  
+    Sleepy::loseSomeTime(i);
+    s -= i;
+  } while (s > 0);
 }
