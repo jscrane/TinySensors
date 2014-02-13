@@ -1,0 +1,10 @@
+UI
+- dsl for creating views on model
+- combining sensors and parameters
+- caching db
+- displaying sensor name on ui
+- displaying weather data
+
+Hardware
+- design relay (node #1)
+- provisioning with different duty-cycles for light and dark?
