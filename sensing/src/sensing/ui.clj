@@ -5,7 +5,7 @@
   (:import
     (org.jfree.chart ChartPanel))
   (:use
-    [sensing.data :only (make-chart query-window sensor-names nodes)]))
+    [sensing.data :only (make-chart query-location sensors locations)]))
 
 (def plot-area (atom nil))
 
@@ -29,13 +29,13 @@
 (def curr-period (atom (periods "6h")))
 
 (defn location-action [id]
-  (make-plot @curr-sensor (query-window (reset! curr-location id) @curr-period)))
+  (make-plot @curr-sensor (query-location (reset! curr-location id) @curr-period)))
 
 (defn sensor-action [id]
-  (make-plot (reset! curr-sensor id) (query-window @curr-location @curr-period)))
+  (make-plot (reset! curr-sensor id) (query-location @curr-location @curr-period)))
 
 (defn period-action [p]
-  (make-plot @curr-sensor (query-window @curr-location (reset! curr-period p))))
+  (make-plot @curr-sensor (query-location @curr-location (reset! curr-period p))))
 
 (defn prev-action []
   (let [[o d] @curr-period]
@@ -49,7 +49,7 @@
 (defn -main [& args]
   (s/invoke-later
     (-> (s/frame :title "Sensors",
-                 :content (make-plot @curr-sensor (query-window @curr-location @curr-period)),
+                 :content (make-plot @curr-sensor (query-location @curr-location @curr-period)),
                  :on-close :exit
                  :menubar (s/menubar
                             :items
@@ -61,12 +61,12 @@
                              (s/menu :text "Location"
                                      :mnemonic \L
                                      :items (let [g (s/button-group)]
-                                              (map (fn [{:keys [id location]}]
-                                                     (s/radio-menu-item :text location
+                                              (map (fn [[k v]]
+                                                     (s/radio-menu-item :text v
                                                                         :group g
-                                                                        :selected? (= id @curr-location)
-                                                                        :listen [:action (fn [e] (location-action id))]))
-                                                   nodes)))
+                                                                        :selected? (= k @curr-location)
+                                                                        :listen [:action (fn [e] (location-action k))]))
+                                                   locations)))
                              (s/menu :text "Sensor"
                                      :mnemonic \S
                                      :items (let [g (s/button-group)]
@@ -75,7 +75,7 @@
                                                                         :group g
                                                                         :selected? (= k @curr-sensor)
                                                                         :listen [:action (fn [e] (sensor-action k))]))
-                                                   sensor-names)))
+                                                   sensors)))
                              (s/menu :text "Period"
                                      :mnemonic \P
                                      :items (let [g (s/button-group)]
