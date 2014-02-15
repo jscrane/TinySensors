@@ -14,7 +14,7 @@
                (k/order :time)))
 (def nodeq (-> (k/select* nodes) (k/fields :id :location)))
 (def weatherq (-> (k/select* weather)
-                  (k/fields :temperature :humidity :visibility :pressure :feels-like :direction :speed :gust :icon :time)
+                  (k/fields :temperature :humidity :visibility :pressure :feels_like :direction :speed :gust :icon :time)
                   (k/order :time)))
 
 (defn- unixtime [d]
@@ -29,18 +29,20 @@
         (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
         (k/select))))
 
-; computes a rolling average of the data filtering data outside range
-(defn- avg
-  ([n data [lo hi]]
-   (let [f (first data)]
-     (first
-       (reduce (fn [[r w s] d]
-                 (let [a (/ s n)
-                       d (if (and (>= d lo) (<= d hi)) d a)]
-                   [(conj r a) (conj (subvec w 1) d) (+ s d (- (w 0)))]))
-               [[] (vec (repeat n f)) (* n f)] (drop n data)))))
-  ([data range]
-   (avg (int (/ (count data) 200)) data range)))
+; computes a rolling average of the data
+(defn- avg [n data]
+  (let [f (take n data)]
+    (first
+      (reduce (fn [[r w s] d]
+                (let [s (+ s d (- (w 0)))]
+                  [(conj r (/ s n)) (conj (subvec w 1) d) s]))
+              [[] (vec f) (apply + f)]
+              (drop n data)))))
+
+(defn- valid [key data]
+  (let [ranges {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]}
+        [lo hi] (ranges key)]
+    (filter (fn [d] (and (>= d lo) (<= d hi))) data)))
 
 (def sensors {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
 
@@ -53,8 +55,10 @@
   (query-window weatherq time-window))
 
 (defn make-chart [key data]
-  (let [valid {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]}]
-    (charts/time-series-plot
-      (map #(.getTime (:time %)) data)
-      (avg (map key data) (valid key))
-      :x-label "Time" :y-label (sensors key))))
+  (charts/time-series-plot
+    (map #(.getTime (:time %)) data)
+    (->> data
+         (map key)
+         (valid key)
+         (avg (inc (int (/ (count data) 250)))))
+    :x-label "Time" :y-label (sensors key)))
