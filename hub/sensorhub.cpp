@@ -75,9 +75,11 @@ int main(int argc, char *argv[])
 			float temperature = ((float)payload.temperature)/10;
 			float battery = ((float)payload.battery) * 3.3 / 1023.0;
 
-			sprintf(buf, "INSERT INTO sensordata VALUES(null,%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,null)", header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
-			if (mysql_query(con, buf))
-				close_exit("insert", con);
+			if (header.from_node > 0) {
+				sprintf(buf, "INSERT INTO sensordata VALUES(null,%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,null)", header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
+				if (mysql_query(con, buf))
+					close_exit("insert", con);
+			}
 
 			if (verbose) {
 				puts(buf);

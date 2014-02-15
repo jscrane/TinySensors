@@ -67,7 +67,7 @@ CREATE TABLE `sensordata` (
   PRIMARY KEY (`id`),
   KEY `node_id` (`node_id`),
   CONSTRAINT `sensordata_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=426178 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=489642 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -89,8 +89,9 @@ CREATE TABLE `weather` (
   `speed` tinyint(3) unsigned NOT NULL,
   `gust` tinyint(3) unsigned NOT NULL,
   `icon` tinyint(3) unsigned NOT NULL,
+  `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1041 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1082 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -102,4 +103,4 @@ CREATE TABLE `weather` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-02-10  9:16:01
+-- Dump completed on 2014-02-13 15:13:54
