@@ -9,7 +9,7 @@ RF24 radio(2, 3);
 RF24Network network(radio);
 DHT dht;
 
-const uint16_t other_node = 0;
+const uint16_t master_node = 0;
 uint16_t this_node;
 
 const unsigned long interval = 60000; //ms
@@ -50,15 +50,15 @@ void loop(void)
   uint16_t battery = analogRead(A0);
 
   payload_t payload = { millis(), light, dht.getStatus(), dht.getHumidity(), dht.getTemperature(), battery };
-  RF24NetworkHeader header(other_node);
+  RF24NetworkHeader header(master_node);
   bool ok = network.write(header, &payload, sizeof(payload));
 
   radio.powerDown();
 
   int32_t l = light;
-  int32_t s = 1000 * (220 - l);
-  if (s < 10000)
-    s = 10000;
+  int32_t s = 1000 * (255 - l) / 3;
+  if (s < 15000)
+    s = 15000;
   do {
     int32_t i = min(s, interval);  
     Sleepy::loseSomeTime(i);
