@@ -12,6 +12,7 @@ void setup(void)
   pinMode(tx, OUTPUT);
   
   serial.begin(9600);
+  serial.println("Sensor Test. Enter node-id and hit return.");
   serial.println("Status\tHumidity\tTemperature\tLight\tBattery\tID");
 
   pinMode(9, INPUT);
