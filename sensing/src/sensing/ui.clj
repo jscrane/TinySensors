@@ -24,7 +24,7 @@
               "1w"  [(t/weeks 1) (t/weeks 1)],
               "4w"  [(t/weeks 4) (t/weeks 4)]})
 
-(def curr-location (atom 2))
+(def curr-location (atom 3))
 (def curr-sensor (atom :light))
 (def curr-period (atom (periods "6h")))
 

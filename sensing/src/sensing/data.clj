@@ -54,11 +54,24 @@
 (defn query-weather [time-window]
   (query-window weatherq time-window))
 
+(defn get-time [data]
+  (map #(.getTime (:time %)) data))
+
+(defn smooth [key data]
+  (->> data
+       (map key)
+       (valid key)
+       (avg (inc (int (/ (count data) 250))))))
+
 (defn make-chart [key data]
   (charts/time-series-plot
-    (map #(.getTime (:time %)) data)
-    (->> data
-         (map key)
-         (valid key)
-         (avg (inc (int (/ (count data) 250)))))
+    (get-time data)
+    (smooth key data)
     :x-label "Time" :y-label (sensors key)))
+
+(defn make-charts [data title]
+  (let [[t d l] (first data)
+        c (charts/time-series-plot t d :x-label "Time" :y-label title :series-label l :legend true :title title)]
+    (doseq [[t d l] (rest data)]
+      (charts/add-lines c t d :x-label "Time" :y-label title :series-label l))
+    c))
