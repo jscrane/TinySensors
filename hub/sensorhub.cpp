@@ -77,16 +77,17 @@ int main(int argc, char *argv[])
 
 			if (header.from_node > 0) {
 				sprintf(buf, "INSERT INTO sensordata VALUES(null,%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,null)", header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
+
+				if (verbose) {
+					puts(buf);
+					printf("#%d from %d at %d: %d %d %3.1f %3.1f %4.2f\n", 
+						header.id, header.from_node, payload.ms, 
+						payload.status, payload.light, 
+						humidity, temperature, battery);
+				}
+
 				if (mysql_query(con, buf))
 					close_exit("insert", con);
-			}
-
-			if (verbose) {
-				puts(buf);
-				printf("#%d from %d at %d: %d %d %3.1f %3.1f %4.2f\n", 
-					header.id, header.from_node, payload.ms, 
-					payload.status, payload.light, 
-					humidity, temperature, battery);
 			}
 		}
 		usleep(100000);
