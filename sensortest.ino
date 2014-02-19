@@ -35,17 +35,15 @@ void loop(void)
   serial.print("\t");
   serial.print(analogRead(A0));
   serial.print("\t");
-  serial.println(EEPROM.read(0), 16);  
+  serial.println(EEPROM.read(0), 8);  
 
   uint8_t id = 0;
   while (serial.available()) {
     int ch = serial.read();
     if (ch == '\n')
       EEPROM.write(0, id);
-    else if (ch >= '0' && ch <= '9')
-      id = (id << 4) | (ch - '0');
-    else if (ch >= 'a' && ch <= 'f')
-      id = (id << 4) | (ch - 'a' + 10);
+    else if (ch >= '0' && ch < '8')
+      id = (id << 3) | (ch - '0');
   }
   delay(dht.getMinimumSamplingPeriod());
 }
