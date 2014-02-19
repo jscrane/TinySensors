@@ -4,6 +4,9 @@
 #include <mysql.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/select.h>
 
 struct payload_t
 {
@@ -13,34 +16,42 @@ struct payload_t
 	uint16_t battery;
 };
 
-static MYSQL *con;
+static MYSQL *db_conn;
+static int ss, cs;
 
 void signal_handler(int signo)
 {
 	fprintf(stderr, "Caught %d\n", signo);
-	if (con)
-		mysql_close(con);
+	if (db_conn)
+		mysql_close(db_conn);
+	if (cs > 0)
+		close(cs);
+	if (ss > 0)
+		close(ss);
 	exit(1);
 }
 
-void close_exit(const char *msg, MYSQL *con)
+void close_exit(const char *msg, MYSQL *db_conn)
 {
-	fprintf(stderr, "%s: %s\n", msg, mysql_error(con));
-	mysql_close(con);
+	fprintf(stderr, "%s: %s\n", msg, mysql_error(db_conn));
+	mysql_close(db_conn);
 	exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-	bool verbose = false;
+	bool verbose = false, sock = true;
 	int opt;
-	while ((opt = getopt(argc, argv, "v")) != -1)
+	while ((opt = getopt(argc, argv, "vs")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
 			break;
+		case 's':
+			sock = false;
+			break;
 		default:
-			fprintf(stderr, "Usage: %s [-v]\n", argv[0]);
+			fprintf(stderr, "Usage: %s [-v] [-s]\n", argv[0]);
 			exit(1);
 		}
 
@@ -48,10 +59,30 @@ int main(int argc, char *argv[])
 
 	if (verbose) 
 		printf("MySQL client version: %s\n", mysql_get_client_info());
-	MYSQL *con = mysql_init(0);
 
-	if (mysql_real_connect(con, "localhost", "sensors", "s3ns0rs", "sensors", 0, NULL, 0) == NULL)
-		close_exit("connect", con);
+	MYSQL *db_conn = mysql_init(0);
+
+	if (mysql_real_connect(db_conn, "localhost", "sensors", "s3ns0rs", "sensors", 0, NULL, 0) == NULL)
+		close_exit("mysql_real_connect", db_conn);
+
+	if (sock) {
+		ss = socket(AF_INET, SOCK_STREAM, 0);
+		if (ss < 0) {
+			perror("socket");
+			sock = false;
+		} else {
+			struct sockaddr_in serv;
+			memset(&serv, 0, sizeof(serv));
+			serv.sin_family = AF_INET;
+			serv.sin_addr.s_addr = htonl(INADDR_ANY);
+			serv.sin_port = htons(5555);
+			if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr))) {
+				perror("bind");
+			} else if (0 > listen(ss, 1)) {
+				perror("listen");
+			}
+		}
+	}
 
 	RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_26, BCM2835_SPI_SPEED_8MHZ);	
 	radio.begin();
@@ -70,12 +101,25 @@ int main(int argc, char *argv[])
 			payload_t payload;
 			network.read(header, &payload, sizeof(payload));
 
-			char buf[1024];
 			float humidity = ((float)payload.humidity)/10;
 			float temperature = ((float)payload.temperature)/10;
 			float battery = ((float)payload.battery) * 3.3 / 1023.0;
 
+			if (cs > 0) {
+				char buf[1024];
+				int n = sprintf(buf, "#%d from %d at %d: %d %d %3.1f %3.1f %4.2f\n", 
+						header.id, header.from_node, payload.ms, 
+						payload.status, payload.light, 
+						humidity, temperature, battery);
+				if (0 > write(cs, buf, n)) {
+					perror("write");
+					close(cs);
+					cs = 0;
+				}
+			}
+
 			if (header.from_node > 0) {
+				char buf[1024];
 				sprintf(buf, "INSERT INTO sensordata VALUES(null,%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,null)", header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
 
 				if (verbose) {
@@ -86,11 +130,29 @@ int main(int argc, char *argv[])
 						humidity, temperature, battery);
 				}
 
-				if (mysql_query(con, buf))
-					close_exit("insert", con);
+				if (mysql_query(db_conn, buf))
+					close_exit("insert", db_conn);
 			}
 		}
-		usleep(100000);
+
+		struct timeval timeout;
+		timeout.tv_usec = 100000;
+		timeout.tv_sec = 0;
+		fd_set rd;
+		FD_ZERO(&rd);
+		if (ss > 0)
+			FD_SET(ss, &rd);
+/* not yet
+		if (cs > 0)
+			FD_SET(cs, &rd);
+*/
+		if (select(ss + 1, &rd, 0, 0, &timeout) > 0) {
+			struct sockaddr_in client;
+			socklen_t addrlen = sizeof(struct sockaddr_in);
+			cs = accept(ss, (struct sockaddr *)&client, &addrlen);
+			if (cs < 0)
+				perror("accept");
+		}
 	}
 	return 0;
 }
