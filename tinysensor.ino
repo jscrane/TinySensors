@@ -5,6 +5,8 @@
 #include <EEPROM.h>
 #include <DHT.h>
 
+#include "tinysensor.h"
+
 RF24 radio(2, 3);
 RF24Network network(radio);
 DHT dht;
@@ -13,15 +15,6 @@ const uint16_t master_node = 0;
 uint16_t this_node;
 
 const unsigned long interval = 60000; //ms
-const unsigned char node_type = 0;
-
-struct payload_t
-{
-  uint32_t ms;
-  uint8_t light, status;
-  int16_t humidity, temperature;
-  uint16_t battery;
-};
 
 void setup(void)
 {
@@ -50,8 +43,8 @@ void loop(void)
   uint8_t light = 255 - analogRead(A1) / 4;
   uint16_t battery = analogRead(A0);
 
-  payload_t payload = { millis(), light, dht.getStatus(), dht.getHumidity(), dht.getTemperature(), battery };
-  RF24NetworkHeader header(master_node, node_type);
+  sensor_payload_t payload = { millis(), light, dht.getStatus(), dht.getHumidity(), dht.getTemperature(), battery };
+  RF24NetworkHeader header(master_node, sensor_type_id);
   bool ok = network.write(header, &payload, sizeof(payload));
 
   radio.powerDown();
