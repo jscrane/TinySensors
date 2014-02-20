@@ -10,7 +10,7 @@
 (k/defentity weather (k/database sensordb))
 
 (def dataq (-> (k/select* sensordata)
-               (k/fields :time :battery :light :humidity :temperature)
+               (k/fields :time :battery :light :humidity :temperature :th_status)
                (k/order :time)))
 (def nodeq (-> (k/select* nodes) (k/fields :id :location)))
 (def weatherq (-> (k/select* weather)
@@ -27,6 +27,7 @@
     (-> q
         (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
         (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
+        (k/where {:th_status 0})
         (k/select))))
 
 ; computes a rolling average of the data
