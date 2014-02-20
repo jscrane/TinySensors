@@ -1,3 +1,6 @@
 [submodule "tinysensor"]
 	path = tinysensor
 	url = https://gist.github.com/8434851.git
+[submodule "sensortest"]
+	path = sensortest
+	url = https://gist.github.com/8434935.git
