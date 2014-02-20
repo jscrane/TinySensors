@@ -7,5 +7,4 @@ UI
 - sample average-size should depend on sample-rate
 
 Hardware
-- design relay (node #1)
-- provisioning with different duty-cycles for light and dark?
+- design relay (node #1): light, motion, accept commands (prototype with pro mini)
