@@ -10,13 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-struct sensor_payload_t
-{
-	uint32_t ms;
-	uint8_t light, status;
-	int16_t humidity, temperature;
-	uint16_t battery;
-};
+#include <tinysensor.h>
 
 static MYSQL *db_conn;
 static int ss, cs;
