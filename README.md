@@ -11,8 +11,10 @@ sketch to test and provision (i.e., set node-id) a TinySensor
 wireless sensor sketch
 
 After cloning this repo, pull the sketches into the correct place with:
-	% git submodule init
-	% git submodule update
+````	
+% git submodule init
+% git submodule update
+````
 
 Software
 ========
