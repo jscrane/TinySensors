@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 struct sensor_payload_t
 {
@@ -41,12 +43,13 @@ void close_exit(const char *msg, MYSQL *db_conn)
 int main(int argc, char *argv[])
 {
 	const char *header = "id\ttime\tnode\ttype\tlight\ttemp-C\thum-%\tbatt-V\tstat\n";
-	bool verbose = false, sock = true;
+	bool verbose = false, sock = true, daemon = true;
 	int opt;
 	while ((opt = getopt(argc, argv, "vs")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
+			daemon = false;
 			break;
 		case 's':
 			sock = false;
@@ -55,6 +58,29 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "Usage: %s [-v] [-s]\n", argv[0]);
 			exit(1);
 		}
+
+	if (daemon) {
+		pid_t pid = fork();
+
+		if (pid < 0)
+			exit(-1);
+		if (pid > 0)
+			exit(0);
+		if (setsid() < 0)
+			exit(-1);
+
+		pid = fork();
+		if (pid < 0)
+			exit(-1);
+		if (pid > 0)
+			exit(0);
+
+		umask(0);
+		chdir("/tmp");
+		close(0);
+		close(1);
+		close(2);
+	}
 
 	signal(SIGINT, signal_handler);
 
@@ -138,10 +164,6 @@ int main(int argc, char *argv[])
 		FD_ZERO(&rd);
 		if (ss > 0)
 			FD_SET(ss, &rd);
-/* not yet
-		if (cs > 0)
-			FD_SET(cs, &rd);
-*/
 		if (select(ss + 1, &rd, 0, 0, &timeout) > 0) {
 			struct sockaddr_in client;
 			socklen_t addrlen = sizeof(struct sockaddr_in);
