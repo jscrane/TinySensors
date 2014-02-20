@@ -9,6 +9,7 @@ See [blog articles](http://programmablehardware.blogspot.ie/search/label/tinysen
 sketch to test and provision (i.e., set node-id) a TinySensor
 * [tinysensor](https://gist.github.com/jscrane/8434851): 
 wireless sensor sketch
+* [tinyrelay](https://gist.github.com/jscrane/9113801): wireless relay sketch
 
 After cloning this repo, pull the sketches into the correct place with:
 ````	
