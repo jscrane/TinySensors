@@ -107,9 +107,9 @@ int main(int argc, char *argv[])
 
 			if (cs > 0) {
 				char buf[1024];
-				int n = sprintf(buf, "#%d from %d at %d: %d %d %3.1f %3.1f %4.2f\n", 
-						header.id, header.from_node, payload.ms, 
-						payload.status, payload.light, 
+				int n = sprintf(buf, "#%d from %d %u at %d: %d %d %3.1f %3.1f %4.2f\n", 
+						header.id, header.from_node, header.type,
+						payload.ms, payload.status, payload.light, 
 						humidity, temperature, battery);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
@@ -120,13 +120,14 @@ int main(int argc, char *argv[])
 
 			if (header.from_node > 0) {
 				char buf[1024];
-				sprintf(buf, "INSERT INTO sensordata VALUES(null,%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,null)", header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
+				sprintf(buf, "INSERT INTO sensordata (node_id,node_ms,light,humidity,temperature,battery,th_status,msg_id,device_type_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,%u)", 
+						header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id, header.type);
 
 				if (verbose) {
 					puts(buf);
-					printf("#%d from %d at %d: %d %d %3.1f %3.1f %4.2f\n", 
-						header.id, header.from_node, payload.ms, 
-						payload.status, payload.light, 
+					printf("#%d from %d %u at %d: %d %d %3.1f %3.1f %4.2f\n", 
+						header.id, header.from_node, header.type, 
+						payload.ms, payload.status, payload.light, 
 						humidity, temperature, battery);
 				}
 
