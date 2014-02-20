@@ -4,7 +4,6 @@ UI
 - caching db
 - displaying sensor name on ui
 - displaying weather data
-- sample average-size should depend on sample-rate
 
 Hardware
 - design relay (node #1): light, motion, accept commands (prototype with pro mini)

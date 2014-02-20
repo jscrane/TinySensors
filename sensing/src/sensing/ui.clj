@@ -1,9 +1,10 @@
 (ns sensing.ui
   (:require
-    (seesaw (core :as s))
+    (seesaw (core :as s) (keystroke :as k))
     (clj-time (core :as t)))
   (:import
-    (org.jfree.chart ChartPanel))
+    (org.jfree.chart ChartPanel)
+    (org.joda.time Hours))
   (:use
     [sensing.data :only (make-chart query-location sensors locations)]))
 
@@ -17,12 +18,17 @@
         @plot-area)
       (reset! plot-area (ChartPanel. chart)))))
 
-(def periods {"6h"  [(t/hours 6) (t/hours 6)],
-              "12h" [(t/hours 12) (t/hours 12)],
-              "1d"  [(t/days 1) (t/days 1)],
-              "2d"  [(t/days 2) (t/days 2)],
-              "1w"  [(t/weeks 1) (t/weeks 1)],
-              "4w"  [(t/weeks 4) (t/weeks 4)]})
+(defn- period [units length]
+  (let [off (.toStandardSeconds (units length))]
+    [off off]))
+
+; val is [offset duration]
+(def periods {"6h"  (period t/hours 6),
+              "12h" (period t/hours 12),
+              "1d"  (period t/days 1),
+              "2d"  (period t/days 2),
+              "1w"  (period t/weeks 1),
+              "4w"  (period t/weeks 4)})
 
 (def curr-location (atom 3))
 (def curr-sensor (atom :light))
@@ -44,7 +50,11 @@
 (defn next-action []
   (let [[o d] @curr-period
         n (.minus o d)]
-    (period-action [(if (pos? n) n o) d])))
+    (period-action [(if (.isGreaterThan n Hours/ZERO) n o) d])))
+
+(defn zoom-out-action []
+  (let [[o d] @curr-period]
+    (period-action [o (.plus d d)])))
 
 (defn -main [& args]
   (s/invoke-later
@@ -57,6 +67,7 @@
                                      :mnemonic \F
                                      :items [(s/action :name "Quit"
                                                        :mnemonic \Q
+                                                       :key (k/keystroke "ctrl Q")
                                                        :handler (fn [e] (System/exit 0)))])
                              (s/menu :text "Location"
                                      :mnemonic \L
@@ -89,12 +100,18 @@
                                                 [(s/separator)
                                                  (s/action :name "Prev"
                                                            :mnemonic \P
+                                                           :key (k/keystroke "LEFT")
                                                            :handler (fn [e] (prev-action)))
                                                  (s/action :name "Next"
                                                            :mnemonic \N
+                                                           :key (k/keystroke "RIGHT")
                                                            :handler (fn [e] (next-action)))
+                                                 (s/action :name "Out"
+                                                           :key (k/keystroke "DOWN")
+                                                           :handler (fn [e] (zoom-out-action)))
                                                  (s/action :name "Now"
                                                            :mnemonic \W
+                                                           :key (k/keystroke "END")
                                                            :handler (fn [e] (period-action (periods "6h"))))])))]))
         s/pack!
         s/show!)))
