@@ -5,8 +5,10 @@ See [blog articles](http://programmablehardware.blogspot.ie/search/label/tinysen
 * hub: lightweight Raspberry Pi server-side for TinySensor
 * sensing: Database viewer
 * eagle: TinySensor Eagle project
-* sensortest: sketch to test and provision (i.e., set node-id) a TinySensor
-* tinysensor: wireless sensor sketch
+* [https://gist.github.com/jscrane/8434935](sensortest): 
+sketch to test and provision (i.e., set node-id) a TinySensor
+* [https://gist.github.com/jscrane/8434851](tinysensor): 
+wireless sensor sketch
 
 Software
 ========
