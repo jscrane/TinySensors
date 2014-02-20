@@ -6,17 +6,9 @@
     (org.jfree.chart ChartPanel)
     (org.joda.time Hours))
   (:use
-    [sensing.data :only (make-chart query-location sensors locations)]))
+    [sensing.data :only (make-charts combine-sensor-data query-locations sensors locations)]))
 
 (def plot-area (atom nil))
-
-(defn make-plot [key data]
-  (let [chart (make-chart key data)]
-    (if @plot-area
-      (do
-        (.setChart @plot-area chart)
-        @plot-area)
-      (reset! plot-area (ChartPanel. chart)))))
 
 (defn- period [units length]
   (let [off (.toStandardSeconds (units length))]
@@ -30,18 +22,28 @@
               "1w"  (period t/weeks 1),
               "4w"  (period t/weeks 4)})
 
-(def curr-location (atom 3))
+(def curr-locations (atom #{3}))
 (def curr-sensor (atom :light))
 (def curr-period (atom (periods "6h")))
 
+(defn make-plot [sensor locations period]
+  (let [chart (make-charts (sensors sensor) (combine-sensor-data sensor period locations))]
+    (if @plot-area
+      (do
+        (.setChart @plot-area chart)
+        @plot-area)
+      (reset! plot-area (ChartPanel. chart)))))
+
 (defn location-action [id]
-  (make-plot @curr-sensor (query-location (reset! curr-location id) @curr-period)))
+  (let [l @curr-locations
+        locs (if (contains? l id) (disj l id) (conj l id))]
+    (make-plot @curr-sensor (reset! curr-locations locs) @curr-period)))
 
 (defn sensor-action [id]
-  (make-plot (reset! curr-sensor id) (query-location @curr-location @curr-period)))
+  (make-plot (reset! curr-sensor id) @curr-locations @curr-period))
 
 (defn period-action [p]
-  (make-plot @curr-sensor (query-location @curr-location (reset! curr-period p))))
+  (make-plot @curr-sensor @curr-locations (reset! curr-period p)))
 
 (defn prev-action []
   (let [[o d] @curr-period]
@@ -59,7 +61,7 @@
 (defn -main [& args]
   (s/invoke-later
     (-> (s/frame :title "Sensors",
-                 :content (make-plot @curr-sensor (query-location @curr-location @curr-period)),
+                 :content (make-plot @curr-sensor @curr-locations @curr-period),
                  :on-close :exit
                  :menubar (s/menubar
                             :items
@@ -71,13 +73,12 @@
                                                        :handler (fn [e] (System/exit 0)))])
                              (s/menu :text "Location"
                                      :mnemonic \L
-                                     :items (let [g (s/button-group)]
-                                              (map (fn [[k v]]
-                                                     (s/radio-menu-item :text v
-                                                                        :group g
-                                                                        :selected? (= k @curr-location)
-                                                                        :listen [:action (fn [e] (location-action k))]))
-                                                   locations)))
+                                     :items (map (fn [[k v]]
+                                                   (s/checkbox-menu-item :text v
+                                                                         ;:group g
+                                                                         :selected? (contains? @curr-locations k)
+                                                                         :listen [:action (fn [e] (location-action k))]))
+                                                 locations))
                              (s/menu :text "Sensor"
                                      :mnemonic \S
                                      :items (let [g (s/button-group)]

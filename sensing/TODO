@@ -1,6 +1,5 @@
 UI
 - dsl for creating views on model
-- combining sensors and parameters
 - caching db
 - displaying sensor name on ui
 - displaying weather data

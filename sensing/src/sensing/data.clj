@@ -52,6 +52,10 @@
 (defn query-location [id time-window]
   (query-window (-> dataq (k/where {:node_id [= id]})) time-window))
 
+; FIXME: put in query
+(defn query-locations [ids time-window]
+  (map (fn [id] (query-location id time-window)) ids))
+
 (defn query-weather [time-window]
   (query-window weatherq time-window))
 
@@ -70,9 +74,16 @@
     (smooth key data)
     :x-label "Time" :y-label (sensors key)))
 
-(defn make-charts [data title]
-  (let [[t d l] (first data)
-        c (charts/time-series-plot t d :x-label "Time" :y-label title :series-label l :legend true :title title)]
-    (doseq [[t d l] (rest data)]
+; combines sensors from multiple locations in a form suitable for make-charts
+(defn combine-sensor-data [sensor time-window ids]
+  (map (fn [data id]
+         [(get-time data) (smooth sensor data) (locations id)])
+       (query-locations ids time-window)
+       ids))
+
+(defn make-charts [title combined]
+  (let [[t d l] (first combined)
+        c (charts/time-series-plot t d :x-label "Time" :y-label title :series-label l :legend true)]
+    (doseq [[t d l] (rest combined)]
       (charts/add-lines c t d :x-label "Time" :y-label title :series-label l))
     c))
