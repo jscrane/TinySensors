@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 
-struct payload_t
+struct sensor_payload_t
 {
 	uint32_t ms;
 	uint8_t light, status;
@@ -40,6 +40,7 @@ void close_exit(const char *msg, MYSQL *db_conn)
 
 int main(int argc, char *argv[])
 {
+	const char *header = "id\ttime\tnode\ttype\tlight\ttemp-C\thum-%\tbatt-V\tstat\n";
 	bool verbose = false, sock = true;
 	int opt;
 	while ((opt = getopt(argc, argv, "vs")) != -1)
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
 		network.update();
 		while (network.available()) {
 			RF24NetworkHeader header;
-			payload_t payload;
+			sensor_payload_t payload;
 			network.read(header, &payload, sizeof(payload));
 
 			float humidity = ((float)payload.humidity)/10;
@@ -107,10 +108,9 @@ int main(int argc, char *argv[])
 
 			if (cs > 0) {
 				char buf[1024];
-				int n = sprintf(buf, "#%d from %d %u at %d: %d %d %3.1f %3.1f %4.2f\n", 
-						header.id, header.from_node, header.type,
-						payload.ms, payload.status, payload.light, 
-						humidity, temperature, battery);
+				int n = sprintf(buf, "%d\t%u\t%d\t%u\t%d\t%3.1f\t%3.1f\t%4.2f\t%d\n", 
+						header.id, payload.ms / 1000, header.from_node, header.type, 
+						payload.light, temperature, humidity, battery, payload.status);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);
@@ -123,13 +123,8 @@ int main(int argc, char *argv[])
 				sprintf(buf, "INSERT INTO sensordata (node_id,node_ms,light,humidity,temperature,battery,th_status,msg_id,device_type_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d,%u)", 
 						header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id, header.type);
 
-				if (verbose) {
+				if (verbose)
 					puts(buf);
-					printf("#%d from %d %u at %d: %d %d %3.1f %3.1f %4.2f\n", 
-						header.id, header.from_node, header.type, 
-						payload.ms, payload.status, payload.light, 
-						humidity, temperature, battery);
-				}
 
 				if (mysql_query(db_conn, buf))
 					close_exit("insert", db_conn);
@@ -153,6 +148,8 @@ int main(int argc, char *argv[])
 			cs = accept(ss, (struct sockaddr *)&client, &addrlen);
 			if (cs < 0)
 				perror("accept");
+			else
+				write(cs, header, strlen(header));
 		}
 	}
 	return 0;
