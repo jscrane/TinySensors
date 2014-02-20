@@ -21,9 +21,8 @@ struct sensor_payload_t
 static MYSQL *db_conn;
 static int ss, cs;
 
-void signal_handler(int signo)
+void close_exit()
 {
-	fprintf(stderr, "Caught %d\n", signo);
 	if (db_conn)
 		mysql_close(db_conn);
 	if (cs > 0)
@@ -33,11 +32,15 @@ void signal_handler(int signo)
 	exit(1);
 }
 
-void close_exit(const char *msg, MYSQL *db_conn)
+void fatal(const char *op, const char *error)
 {
-	fprintf(stderr, "%s: %s\n", msg, mysql_error(db_conn));
-	mysql_close(db_conn);
-	exit(1);
+	fprintf(stderr, "%s: %s\n", op, error);
+	close_exit();
+}
+
+void signal_handler(int signo)
+{
+	fatal("caught", strsignal(signo));
 }
 
 int main(int argc, char *argv[])
@@ -90,25 +93,22 @@ int main(int argc, char *argv[])
 	MYSQL *db_conn = mysql_init(0);
 
 	if (mysql_real_connect(db_conn, "localhost", "sensors", "s3ns0rs", "sensors", 0, NULL, 0) == NULL)
-		close_exit("mysql_real_connect", db_conn);
+		fatal("mysql_real_connect", mysql_error(db_conn));
 
 	if (sock) {
 		ss = socket(AF_INET, SOCK_STREAM, 0);
-		if (ss < 0) {
-			perror("socket");
-			sock = false;
-		} else {
-			struct sockaddr_in serv;
-			memset(&serv, 0, sizeof(serv));
-			serv.sin_family = AF_INET;
-			serv.sin_addr.s_addr = htonl(INADDR_ANY);
-			serv.sin_port = htons(5555);
-			if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr))) {
-				perror("bind");
-			} else if (0 > listen(ss, 1)) {
-				perror("listen");
-			}
-		}
+		if (ss < 0)
+			fatal("socket", strerror(errno));
+
+		struct sockaddr_in serv;
+		memset(&serv, 0, sizeof(serv));
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = htonl(INADDR_ANY);
+		serv.sin_port = htons(5555);
+		if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr)))
+			fatal("bind", strerror(errno));
+		if (0 > listen(ss, 1))
+			fatal("listen", strerror(errno));
 	}
 
 	RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_26, BCM2835_SPI_SPEED_8MHZ);	
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 					puts(buf);
 
 				if (mysql_query(db_conn, buf))
-					close_exit("insert", db_conn);
+					fatal("insert", mysql_error(db_conn));
 			}
 		}
 
@@ -169,9 +169,9 @@ int main(int argc, char *argv[])
 			socklen_t addrlen = sizeof(struct sockaddr_in);
 			cs = accept(ss, (struct sockaddr *)&client, &addrlen);
 			if (cs < 0)
-				perror("accept");
-			else
-				write(cs, header, strlen(header));
+				fatal("accept", strerror(errno));
+
+			write(cs, header, strlen(header));
 		}
 	}
 	return 0;
