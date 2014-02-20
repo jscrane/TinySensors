@@ -13,6 +13,7 @@ const uint16_t master_node = 0;
 uint16_t this_node;
 
 const unsigned long interval = 60000; //ms
+const unsigned char node_type = 0;
 
 struct payload_t
 {
@@ -50,7 +51,7 @@ void loop(void)
   uint16_t battery = analogRead(A0);
 
   payload_t payload = { millis(), light, dht.getStatus(), dht.getHumidity(), dht.getTemperature(), battery };
-  RF24NetworkHeader header(master_node);
+  RF24NetworkHeader header(master_node, node_type);
   bool ok = network.write(header, &payload, sizeof(payload));
 
   radio.powerDown();
