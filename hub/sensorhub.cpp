@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 			if (cs < 0)
 				fatal("accept", strerror(errno));
 
-			const char *header = "node\tlight\ttemp-C\thum-%\tstat\tbatt-V\ttype\tmsg-id\ttime\n";
+			const char *header = "node\tlight\tdegC\thum%\tstat\tVbatt\ttype\tmsg-id\ttime\n";
 			write(cs, header, strlen(header));
 		}
 	}
