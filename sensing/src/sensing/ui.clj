@@ -6,7 +6,7 @@
     (org.jfree.chart ChartPanel)
     (org.joda.time Hours))
   (:use
-    [sensing.data :only (make-charts combine-sensor-data sensors locations)]))
+    [sensing.data :only [make-initial-chart make-chart add-location sensors locations]]))
 
 (def plot-area (atom nil))
 
@@ -27,17 +27,18 @@
 (def curr-period (atom (periods "6h")))
 
 (defn make-plot [sensor locations period]
-  (let [chart (make-charts (sensors sensor) (combine-sensor-data sensor period locations))]
-    (if @plot-area
-      (do
-        (.setChart @plot-area chart)
-        @plot-area)
-      (reset! plot-area (ChartPanel. chart)))))
+  (.setChart @plot-area (make-chart sensor locations period)))
+
+(defn make-initial-plot [sensor locations period]
+  (reset! plot-area (ChartPanel. (make-initial-chart sensor (first locations) period))))
 
 (defn location-action [id]
-  (let [l @curr-locations
-        locs (if (contains? l id) (disj l id) (conj l id))]
-    (make-plot @curr-sensor (reset! curr-locations locs) @curr-period)))
+  (let [l @curr-locations]
+    (if (contains? l id)
+      (make-plot @curr-sensor (reset! curr-locations (disj l id)) @curr-period)
+      (let [chart (add-location (.getChart @plot-area) @curr-sensor id @curr-period)
+            _ (reset! curr-locations (conj l id))]
+        chart))))
 
 (defn sensor-action [id]
   (make-plot (reset! curr-sensor id) @curr-locations @curr-period))
@@ -61,7 +62,7 @@
 (defn -main [& args]
   (s/invoke-later
     (-> (s/frame :title "Sensors",
-                 :content (make-plot @curr-sensor @curr-locations @curr-period),
+                 :content (make-initial-plot @curr-sensor @curr-locations @curr-period),
                  :on-close :exit
                  :menubar (s/menubar
                             :items
@@ -108,6 +109,7 @@
                                                            :key (k/keystroke "RIGHT")
                                                            :handler (fn [e] (next-action)))
                                                  (s/action :name "Out"
+                                                           :mnemonic \O
                                                            :key (k/keystroke "DOWN")
                                                            :handler (fn [e] (zoom-out-action)))
                                                  (s/action :name "Now"

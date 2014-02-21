@@ -50,6 +50,15 @@
         (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
         (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]}))))
 
+(defn query-location [sensor loc time-window]
+  (-> (k/select* sensordata)
+      (k/fields :time sensor)
+      (k/where {:node_id [= loc]})
+      (k/where {:th_status 0})
+      (k/order :time)
+      (window time-window)
+      (k/select)))
+
 (defn query-locations [sensor locs time-window]
   (partition-by :node_id
                 (-> (k/select* sensordata)
@@ -77,17 +86,27 @@
        (valid key)
        (avg (inc (int (/ (count data) 250))))))
 
-; combines sensors from multiple locations in a form suitable for make-charts
-(defn combine-sensor-data [sensor time-window ids]
-  (let [ids (vec (sort ids))]
-    (map (fn [data id]
-           [(get-time data) (smooth sensor data) (locations id)])
-         (query-locations sensor ids time-window)
-         ids)))
+(defn- smooth-data [sens-id data]
+  [(get-time data) (smooth sens-id data)])
 
-(defn make-charts [title combined]
-  (let [[t d l] (first combined)
-        c (charts/time-series-plot t d :x-label "Time" :y-label title :series-label l :legend true)]
-    (doseq [[t d l] (rest combined)]
-      (charts/add-lines c t d :x-label "Time" :y-label title :series-label l))
-    c))
+(defn- create-chart [sens-id loc-id data]
+  (let [[x y] (smooth-data sens-id data)]
+    (charts/time-series-plot x y :x-label "Time" :y-label (sensors sens-id) :series-label (locations loc-id) :legend true)))
+
+(defn- add-to-chart [chart sens-id loc-id data]
+  (let [[x y] (smooth-data sens-id data)]
+    (charts/add-lines chart x y :series-label (locations loc-id))))
+
+(defn make-initial-chart [sens-id loc-id period]
+  (create-chart sens-id loc-id (query-location sens-id loc-id period)))
+
+(defn add-location [chart sens-id loc-id period]
+  (add-to-chart chart sens-id loc-id (query-location sens-id loc-id period)))
+
+(defn make-chart [sens-id loc-ids period]
+  (let [loc-ids (vec (sort loc-ids))
+        data (vec (query-locations sens-id loc-ids period))]
+    (reduce (fn [chart i]
+              (add-to-chart chart sens-id (loc-ids i) (data i)))
+            (create-chart sens-id (first loc-ids) (first data))
+            (range 1 (count loc-ids)))))
