@@ -11,36 +11,6 @@
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
 
-(defn- query-window [q [off dur]]
-  (let [now (local/local-now)
-        start (t/minus now off)
-        end (t/plus start dur)]
-    (-> q
-        (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
-        (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]})
-        (k/where {:th_status 0})
-        (k/select))))
-
-; computes a rolling average of the data
-(defn- avg [n data]
-  (let [f (take n data)]
-    (first
-      (reduce (fn [[r w s] d]
-                (let [s (+ s d (- (w 0)))]
-                  [(conj r (/ s n)) (conj (subvec w 1) d) s]))
-              [[] (vec f) (apply + f)]
-              (drop n data)))))
-
-(defn- valid [key data]
-  (let [ranges {:light [0 255], :battery [0 1.5], :humidity [0 100], :temperature [0 30]}
-        [lo hi] (ranges key)]
-    (filter (fn [d] (and (>= d lo) (<= d hi))) data)))
-
-(def sensors {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
-
-(def locations (reduce (fn [m {:keys [id location]}] (assoc m id location))
-                       {} (k/select nodes (k/fields :id :location))))
-
 (defn- window [q [off dur]]
   (let [now (local/local-now)
         start (t/minus now off)
@@ -76,6 +46,21 @@
       (window time-window)
       (k/select)))
 
+; computes a rolling average of the data
+(defn- avg [n data]
+  (let [f (take n data)]
+    (first
+      (reduce (fn [[r w s] d]
+                (let [s (+ s d (- (w 0)))]
+                  [(conj r (/ s n)) (conj (subvec w 1) d) s]))
+              [[] (vec f) (apply + f)]
+              (drop n data)))))
+
+(defn- valid [key data]
+  (let [ranges {:light [0 255], :battery [0 1.55], :humidity [0 100], :temperature [0 30]}
+        [lo hi] (ranges key)]
+    (filter (fn [d] (and (>= d lo) (<= d hi))) data)))
+
 (defn get-time [data]
   (map #(.getTime (:time %)) data))
 
@@ -85,3 +70,7 @@
        (valid key)
        (avg (inc (int (/ (count data) 250))))))
 
+(def sensors {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
+
+(def locations (reduce (fn [m {:keys [id location]}] (assoc m id location))
+                       {} (k/select nodes (k/fields :id :location))))
