@@ -39,7 +39,6 @@ void signal_handler(int signo)
 
 int main(int argc, char *argv[])
 {
-	const char *header = "id\ttime\tnode\ttype\tlight\ttemp-C\thum-%\tbatt-V\tstat\n";
 	bool verbose = false, sock = true, daemon = true;
 	int opt;
 	while ((opt = getopt(argc, argv, "vs")) != -1)
@@ -101,6 +100,7 @@ int main(int argc, char *argv[])
 		serv.sin_port = htons(5555);
 		if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr)))
 			fatal("bind", strerror(errno));
+
 		if (0 > listen(ss, 1))
 			fatal("listen", strerror(errno));
 	}
@@ -117,20 +117,21 @@ int main(int argc, char *argv[])
 
 	for (;;) {
 		network.update();
+
 		while (network.available()) {
 			RF24NetworkHeader header;
 			sensor_payload_t payload;
 			network.read(header, &payload, sizeof(payload));
 
-			float humidity = ((float)payload.humidity)/10;
-			float temperature = ((float)payload.temperature)/10;
+			float humidity = ((float)payload.humidity) / 10;
+			float temperature = ((float)payload.temperature) / 10;
 			float battery = ((float)payload.battery) * 3.3 / 1023.0;
 
 			if (cs > 0) {
 				char buf[1024];
-				int n = sprintf(buf, "%d\t%u\t%d\t%u\t%d\t%3.1f\t%3.1f\t%4.2f\t%d\n", 
-						header.id, payload.ms / 1000, header.from_node, header.type, 
-						payload.light, temperature, humidity, battery, payload.status);
+				int n = sprintf(buf, "%d\t%d\t%3.1f\t%3.1f\t%d\t%4.2f\t%u\t%d\t%u\n", 
+						header.from_node, payload.light, temperature, humidity, payload.status, 
+						battery, header.type, header.id, payload.ms / 1000);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);
@@ -165,6 +166,7 @@ int main(int argc, char *argv[])
 			if (cs < 0)
 				fatal("accept", strerror(errno));
 
+			const char *header = "node\tlight\ttemp-C\thum-%\tstat\tbatt-V\ttype\tmsg-id\ttime\n";
 			write(cs, header, strlen(header));
 		}
 	}
