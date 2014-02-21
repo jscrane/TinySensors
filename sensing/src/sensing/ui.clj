@@ -6,7 +6,7 @@
     (org.jfree.chart ChartPanel)
     (org.joda.time Hours))
   (:use
-    [sensing.data :only (make-charts combine-sensor-data query-locations sensors locations)]))
+    [sensing.data :only (make-charts combine-sensor-data sensors locations)]))
 
 (def plot-area (atom nil))
 
