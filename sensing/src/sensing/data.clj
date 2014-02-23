@@ -23,7 +23,7 @@
   (-> (k/select* sensordata)
       (k/fields :time sensor)
       (k/where {:node_id [= loc]})
-      (k/where {:th_status 0})
+      (k/where {:status 0})
       (k/order :time)
       (window time-window)
       (k/select)))
@@ -33,7 +33,7 @@
                 (-> (k/select* sensordata)
                     (k/fields :time :node_id sensor)
                     (k/where {:node_id [in locs]})
-                    (k/where {:th_status 0})
+                    (k/where {:status 0})
                     (k/order :node_id)
                     (k/order :time)
                     (window time-window)
@@ -72,5 +72,5 @@
 
 (def sensors {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
 
-(def locations (reduce (fn [m {:keys [id location]}] (assoc m id location))
-                       {} (k/select nodes (k/fields :id :location))))
+(def locations (apply array-map (flatten (map (comp reverse vals)
+                                              (k/select nodes (k/fields :id :location) (k/order :type))))))
