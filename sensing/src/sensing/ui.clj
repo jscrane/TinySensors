@@ -9,8 +9,6 @@
     [sensing.data :only [sensors locations]]
     [sensing.charts :only [make-initial-chart make-chart add-location]]))
 
-(def plot-area (atom nil))
-
 (defn- period [units length]
   (let [off (.toStandardSeconds (units length))]
     [off off]))
@@ -23,6 +21,7 @@
               "1w"  (period t/weeks 1),
               "4w"  (period t/weeks 4)})
 
+(def plot-area (atom nil))
 (def curr-locations (atom #{3}))
 (def curr-sensor (atom :light))
 (def curr-period (atom (periods "6h")))
