@@ -25,6 +25,10 @@ DROP TABLE IF EXISTS `device_types`;
 CREATE TABLE `device_types` (
   `id` smallint(5) unsigned NOT NULL DEFAULT '0',
   `description` varchar(255) DEFAULT NULL,
+  `has_temperature` tinyint(1) NOT NULL DEFAULT '1',
+  `has_light` tinyint(1) NOT NULL DEFAULT '0',
+  `has_humidity` tinyint(1) NOT NULL DEFAULT '0',
+  `has_battery` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -39,10 +43,10 @@ DROP TABLE IF EXISTS `nodes`;
 CREATE TABLE `nodes` (
   `id` smallint(5) unsigned NOT NULL DEFAULT '0',
   `location` varchar(255) DEFAULT NULL,
-  `type` smallint(5) unsigned DEFAULT NULL,
+  `device_type_id` smallint(5) unsigned NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `type` (`type`),
-  CONSTRAINT `nodes_ibfk_1` FOREIGN KEY (`type`) REFERENCES `device_types` (`id`)
+  KEY `fk_device_type_id` (`device_type_id`),
+  CONSTRAINT `fk_device_type_id` FOREIGN KEY (`device_type_id`) REFERENCES `device_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -64,13 +68,10 @@ CREATE TABLE `sensordata` (
   `status` tinyint(3) unsigned NOT NULL,
   `msg_id` int(10) unsigned DEFAULT '0',
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `device_type_id` smallint(5) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `node_id` (`node_id`),
-  KEY `fk_device_type_id` (`device_type_id`),
-  CONSTRAINT `fk_device_type_id` FOREIGN KEY (`device_type_id`) REFERENCES `device_types` (`id`),
   CONSTRAINT `sensordata_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=692006 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=726064 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -94,7 +95,7 @@ CREATE TABLE `weather` (
   `icon` tinyint(3) unsigned NOT NULL,
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1322 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1362 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -106,4 +107,4 @@ CREATE TABLE `weather` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-02-23 17:22:07
+-- Dump completed on 2014-02-25  9:51:02
