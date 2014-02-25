@@ -1,11 +1,13 @@
 (ns sensing.data
   (:require
+    (clojure (string :as str))
     (korma (db :as db) (core :as k))
     (clj-time (core :as t) (local :as local) (coerce :as coerce))))
 
 (db/defdb sensordb (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
 (k/defentity sensordata (k/database sensordb))
 (k/defentity nodes (k/database sensordb))
+(k/defentity device_types (k/database sensordb))
 (k/defentity weather (k/database sensordb))
 
 (defn- unixtime [d]
@@ -72,5 +74,25 @@
 
 (def sensors {:light "Light", :battery "Battery", :humidity "Humidity", :temperature "Temperature"})
 
-(def locations (apply array-map (flatten (map (comp reverse vals)
-                                              (k/select nodes (k/fields :id :location) (k/order :type))))))
+; map from device_type_id to keyworded-features
+(def device-types
+  (apply array-map
+         (flatten
+           (map (fn [{:keys [id features]}]
+                  [id (into #{} (map keyword (str/split (.toLowerCase features) #", ")))])
+                (k/select device_types (k/fields :id :features))))))
+
+; map from description to node_id
+(def locations
+  (apply array-map
+         (apply concat
+           (map (fn [{:keys [id location device_type_id]}]
+                  [id [location device_type_id]])
+                (k/select nodes (k/fields :id :location :device_type_id) (k/order :device_type_id))))))
+
+(defn- device-types-with-sensor [sens-id]
+  (into #{} (map first (filter (fn [[k v]] (contains? v sens-id)) device-types))))
+
+(defn locations-with-sensor [sens-id]
+  (let [t (device-types-with-sensor sens-id)]
+    (into #{} (map first (filter (fn [[id [name type]]] (contains? t type)) locations)))))
