@@ -7,13 +7,16 @@
 (defn- smooth-data [sens-id data]
   [(get-time data) (smooth sens-id data)])
 
+(defn- location-name [loc-id]
+  (first (locations loc-id)))
+
 (defn- create-chart [sens-id loc-id data]
   (let [[x y] (smooth-data sens-id data)]
-    (charts/time-series-plot x y :x-label "Time" :y-label (sensors sens-id) :series-label (locations loc-id) :legend true)))
+    (charts/time-series-plot x y :x-label "Time" :y-label (sensors sens-id) :series-label (location-name loc-id) :legend true)))
 
 (defn- add-to-chart [chart sens-id loc-id data]
   (let [[x y] (smooth-data sens-id data)]
-    (charts/add-lines chart x y :series-label (locations loc-id))))
+    (charts/add-lines chart x y :series-label (location-name loc-id))))
 
 (defn make-initial-chart [sens-id loc-id period]
   (create-chart sens-id loc-id (query-location sens-id loc-id period)))
