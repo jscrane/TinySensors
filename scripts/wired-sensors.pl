@@ -6,24 +6,30 @@ use sensors;
 
 $dbh = DBI->connect('dbi:mysql:database=sensors;host=rho','sensors','s3ns0rs') or die "Connection Error: $DBI::errstr\n";
 
-$ins_temp = $dbh->prepare_cached('INSERT INTO sensordata (node_id,temperature) VALUES (?,?)');
-die "couldn't prepare query" unless defined $ins_temp;
+$ins = $dbh->prepare_cached('INSERT INTO sensordata (node_id,temperature,light) VALUES (?,?,?)');
+die "couldn't prepare query" unless defined $ins;
 
-# FIXME: light
 while (($key, $value) = each %sensors) {
 
 	my $id = $sensors{$key}{id};
 
 	for (my $i = 0; $i < 10; $i++) {
-		$sensor = `cat /mnt/1-wire/$key/temperature`;
-		if ($sensor && int $sensor ne 85) {
-			print "node=$id temp=$sensor\n";
-			$ins_temp->execute($id, $sensor) or die "failed to execute query: $DBI::errstr\n";
+		$temp = `cat /mnt/1-wire/$key/temperature`;
+		if (!$temp || int $temp eq 85) {
+			sleep 4;
+		} else {
+			my $v = 0;
+			if ($sensors{$key}{light}) {
+				for (my $j = 0; $j < 3; $j++) {
+					$v = `cat /mnt/1-wire/$key/VAD`;
+					last if ($v);
+					sleep 5;
+				}
+			}
+			$ins->execute($id, $temp, ($v / 5.0) * 255) or die "failed to execute query: $DBI::errstr\n";
 			last;
 		}
-		sleep 4;
 	}
-
 }
 
 $dbh->disconnect;

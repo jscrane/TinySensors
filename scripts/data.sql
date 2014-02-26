@@ -25,10 +25,7 @@ DROP TABLE IF EXISTS `device_types`;
 CREATE TABLE `device_types` (
   `id` smallint(5) unsigned NOT NULL DEFAULT '0',
   `description` varchar(255) DEFAULT NULL,
-  `has_temperature` tinyint(1) NOT NULL DEFAULT '1',
-  `has_light` tinyint(1) NOT NULL DEFAULT '0',
-  `has_humidity` tinyint(1) NOT NULL DEFAULT '0',
-  `has_battery` tinyint(1) NOT NULL DEFAULT '0',
+  `features` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -39,7 +36,7 @@ CREATE TABLE `device_types` (
 
 LOCK TABLES `device_types` WRITE;
 /*!40000 ALTER TABLE `device_types` DISABLE KEYS */;
-INSERT INTO `device_types` VALUES (0,'Wireless Sensor v1',1,1,1,1),(1,'Relay',1,1,1,0),(2,'MS-TL 1-wire',1,1,0,0),(3,'T-Sense 1-wire',1,0,0,0),(4,'MS_T 1-wire',1,0,0,0);
+INSERT INTO `device_types` VALUES (0,'Wireless Sensor v1','Battery, Temperature, Light, Humidity'),(1,'Relay',''),(2,'MS-TL 1-wire','Temperature, Light'),(3,'T-Sense 1-wire','Temperature'),(4,'MS_T 1-wire','Temperature');
 /*!40000 ALTER TABLE `device_types` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -79,4 +76,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-02-25  9:52:32
+-- Dump completed on 2014-02-25 10:17:36
