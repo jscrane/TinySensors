@@ -7,6 +7,3 @@ UI
 Hardware
 - design relay (node #1): light, motion, accept commands (prototype with pro mini)
 - design pcb for relay: modify sensor so can handle external power supply and extra devices
-
-Other
-- gathering light from wired sensors
