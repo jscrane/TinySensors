@@ -1,5 +1,5 @@
-Sensors
-=======
+TinySensors
+===========
 See [blog articles](http://programmablehardware.blogspot.ie/search/label/tinysensor).
 
 * hub: lightweight Raspberry Pi server-side for TinySensor
@@ -22,7 +22,7 @@ Software
 * Arduino
   - IDE version [1.5.4](http://arduino.cc/en/Main/Software)
   - [ATtiny core](https://github.com/jscrane/attiny)
-  - SPI library with support for ATtiny [here](https://github.com/jscrane/SPI)
+  - SPI library with support for [ATtiny](https://github.com/jscrane/SPI)
   - Forked [RF24](https://github.com/jscrane/RF24) and 
 [RF24Network](https://github.com/jscrane/RF24Network) libraries
   - [DHT22](https://github.com/jscrane/DHT22) library, slimmed-down for ATtiny
