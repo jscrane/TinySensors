@@ -126,6 +126,10 @@
                                                    (s/action :name "Now"
                                                              :mnemonic \W
                                                              :key (k/keystroke "END")
-                                                             :handler (fn [e] (period-action (periods "6h"))))])))]))
+                                                             :handler (fn [e] (period-action (periods "6h"))))
+                                                   (s/action :name "Refresh"
+                                                             :mnemonic \R
+                                                             :key (k/keystroke "F5")
+                                                             :handler (fn [e] (make-plot @curr-sensor @curr-locations @curr-period)))])))]))
           s/pack!
           s/show!))))
