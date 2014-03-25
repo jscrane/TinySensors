@@ -2,7 +2,7 @@
   (:require
     (clojure (set :as set))
     (seesaw (core :as s) (keystroke :as k))
-    (clj-time (core :as t)))
+    (clj-time (core :as t) (local :as local)))
   (:import
     (org.jfree.chart ChartPanel)
     (org.joda.time Hours))
@@ -11,8 +11,9 @@
     [sensing.charts :only [make-initial-chart make-chart add-location]]))
 
 (defn- period [units length]
-  (let [off (.toStandardSeconds (units length))]
-    [off off]))
+  (let [dur (.toStandardSeconds (units length))
+        now (local/local-now)]
+    [(t/minus now dur) dur]))
 
 ; val is [offset duration]
 (def periods {"6h"  (period t/hours 6),
@@ -56,13 +57,14 @@
   (make-plot @curr-sensor @curr-locations (reset! curr-period p)))
 
 (defn prev-action []
-  (let [[o d] @curr-period]
-    (period-action [(.plus o d) d])))
+  (let [[start dur] @curr-period]
+    (period-action [(.minus start dur) dur])))
 
 (defn next-action []
-  (let [[o d] @curr-period
-        n (.minus o d)]
-    (period-action [(if (.isGreaterThan n Hours/ZERO) n o) d])))
+  (let [[start dur] @curr-period
+        n (.plus start dur)]
+    (if (.isBeforeNow n)
+      (period-action [n dur]))))
 
 (defn zoom-out-action []
   (let [[o d] @curr-period]
