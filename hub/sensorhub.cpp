@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
 			if (header.from_node > 0) {
 				char buf[1024];
-				sprintf(buf, "INSERT INTO sensordata (node_id,node_ms,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
+				sprintf(buf, "INSERT INTO sensor_data (node_id,node_ms,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
 						header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
 
 				if (verbose)

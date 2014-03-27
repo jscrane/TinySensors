@@ -20,7 +20,7 @@ CREATE TABLE `nodes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `sensordata` (
+CREATE TABLE `sensor_data` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `node_id` smallint(5) unsigned NOT NULL,
   `node_ms` int(10) unsigned NOT NULL,
@@ -33,12 +33,21 @@ CREATE TABLE `sensordata` (
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `node_id` (`node_id`),
-  CONSTRAINT `sensordata_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=751089 DEFAULT CHARSET=latin1;
+  CONSTRAINT `sensor_data_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1396808 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `weather` (
+CREATE TABLE `stations` (
+  `id` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `code` varchar(8) DEFAULT NULL,
+  `name` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `weather_data` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `last_updated` varchar(24) NOT NULL,
   `temperature` tinyint(4) NOT NULL,
@@ -51,6 +60,9 @@ CREATE TABLE `weather` (
   `gust` tinyint(3) unsigned NOT NULL,
   `icon` tinyint(3) unsigned NOT NULL,
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1388 DEFAULT CHARSET=latin1;
+  `station_id` smallint(5) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `fk_station_id` (`station_id`),
+  CONSTRAINT `fk_station_id` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2080 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
