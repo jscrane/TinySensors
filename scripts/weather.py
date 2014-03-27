@@ -14,7 +14,7 @@ db = MySQLdb.connect(host='localhost', user='sensors', passwd='s3ns0rs', db='sen
 cursor = db.cursor()
 
 cursor.execute("""
-	INSERT INTO weather(last_updated,temperature,humidity,visibility,pressure,feels_like,direction,speed,gust,icon)
+	INSERT INTO weather_data(last_updated,temperature,humidity,visibility,pressure,feels_like,direction,speed,gust,icon)
 	VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
 	""", (w['last_updated'], w['temperature'], w['humidity'], w['visibility'], w['barometer']['reading'], w['feels_like'], w['wind']['direction'], w['wind']['speed'], w['wind']['gust'], w['icon']))
 
