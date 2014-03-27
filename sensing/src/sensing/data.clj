@@ -5,10 +5,11 @@
     (clj-time (core :as t) (coerce :as coerce))))
 
 (db/defdb sensordb (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
-(k/defentity sensordata (k/database sensordb))
+(k/defentity sensordata (k/database sensordb) (k/table :sensor_data))
 (k/defentity nodes (k/database sensordb))
-(k/defentity device_types (k/database sensordb))
-(k/defentity weather (k/database sensordb))
+(k/defentity sensortypes (k/database sensordb) (k/table :device_types))
+(k/defentity weatherdata (k/database sensordb) (k/table :weather_data))
+(k/defentity stations (k/database sensordb))
 
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
@@ -19,29 +20,30 @@
         (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
         (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]}))))
 
-(defn query-location [loc sensor time-window]
+(defn query-location [location-id sensor time-window]
   (-> (k/select* sensordata)
       (k/fields :time sensor)
-      (k/where {:node_id [= loc]})
+      (k/where {:node_id [= location-id]})
       (k/where {:status 0})
       (k/order :time)
       (window time-window)
       (k/select)))
 
-(defn query-locations [locs sensor time-window]
+(defn query-locations [location-ids sensor time-window]
   (partition-by :node_id
                 (-> (k/select* sensordata)
                     (k/fields :time :node_id sensor)
-                    (k/where {:node_id [in locs]})
+                    (k/where {:node_id [in location-ids]})
                     (k/where {:status 0})
                     (k/order :node_id)
                     (k/order :time)
                     (window time-window)
                     (k/select))))
 
-(defn query-weather [time-window]
-  (-> (k/select* weather)
+(defn query-weather [station-id time-window]
+  (-> (k/select* weatherdata)
       (k/fields :temperature :humidity :visibility :pressure :feels_like :direction :speed :gust :icon :time)
+      (k/where {:id [= station-id]})
       (k/order :time)
       (window time-window)
       (k/select)))
@@ -78,7 +80,7 @@
          (flatten
            (map (fn [{:keys [id features]}]
                   [id (into #{} (map keyword (str/split (.toLowerCase features) #", ")))])
-                (k/select device_types (k/fields :id :features))))))
+                (k/select sensortypes (k/fields :id :features))))))
 
 ; map from description to node_id
 (def locations
@@ -88,9 +90,9 @@
                   [id [location device_type_id]])
                 (k/select nodes (k/fields :id :location :device_type_id) (k/order :device_type_id))))))
 
-(defn- device-types-with-sensor [sens-id]
-  (into #{} (map first (filter (fn [[k v]] (contains? v sens-id)) device-types))))
+(defn- device-types-with-sensor [sensor-id]
+  (into #{} (map first (filter (fn [[k v]] (contains? v sensor-id)) device-types))))
 
-(defn locations-with-sensor [sens-id]
-  (let [t (device-types-with-sensor sens-id)]
+(defn locations-with-sensor [sensor-id]
+  (let [t (device-types-with-sensor sensor-id)]
     (into #{} (map first (filter (fn [[id [name type]]] (contains? t type)) locations)))))
