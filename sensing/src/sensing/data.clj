@@ -43,7 +43,7 @@
 (defn query-weather [station-id time-window]
   (-> (k/select* weatherdata)
       (k/fields :temperature :humidity :visibility :pressure :feels_like :direction :speed :gust :icon :time)
-      (k/where {:id [= station-id]})
+      (k/where {:station_id [= station-id]})
       (k/order :time)
       (window time-window)
       (k/select)))
