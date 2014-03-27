@@ -5,7 +5,7 @@ import pywapi
 import pprint
 
 auth = {}
-with open("auth") as myfile:
+with open("/home/pi/Sensorhub/scripts/auth") as myfile:
     for line in myfile:
         name, var = line.partition("=")[::2]
         auth[name] = var.strip()
