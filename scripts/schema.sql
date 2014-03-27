@@ -34,7 +34,7 @@ CREATE TABLE `sensor_data` (
   PRIMARY KEY (`id`),
   KEY `node_id` (`node_id`),
   CONSTRAINT `sensor_data_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1396663 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1396808 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;

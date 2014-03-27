@@ -1,4 +1,4 @@
-include auth.mk
+include auth
 
 dump: schema data
 
