@@ -2,7 +2,7 @@
   (:require
     (clojure (string :as str))
     (korma (db :as db) (core :as k))
-    (clj-time (core :as t) (local :as local) (coerce :as coerce))))
+    (clj-time (core :as t) (coerce :as coerce))))
 
 (db/defdb sensordb (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
 (k/defentity sensordata (k/database sensordb))
@@ -13,15 +13,13 @@
 (defn- unixtime [d]
   (long (/ (coerce/to-long d) 1000)))
 
-(defn- window [q [off dur]]
-  (let [now (local/local-now)
-        start (t/minus now off)
-        end (t/plus start dur)]
+(defn- window [q [start dur]]
+  (let [end (.plus start dur)]
     (-> q
         (k/where {:time [> (k/sqlfn from_unixtime (unixtime start))]})
         (k/where {:time [< (k/sqlfn from_unixtime (unixtime end))]}))))
 
-(defn query-location [sensor loc time-window]
+(defn query-location [loc sensor time-window]
   (-> (k/select* sensordata)
       (k/fields :time sensor)
       (k/where {:node_id [= loc]})
@@ -30,7 +28,7 @@
       (window time-window)
       (k/select)))
 
-(defn query-locations [sensor locs time-window]
+(defn query-locations [locs sensor time-window]
   (partition-by :node_id
                 (-> (k/select* sensordata)
                     (k/fields :time :node_id sensor)

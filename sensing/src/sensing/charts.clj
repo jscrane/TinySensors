@@ -18,15 +18,15 @@
   (let [[x y] (smooth-data sens-id data)]
     (charts/add-lines chart x y :series-label (location-name loc-id))))
 
-(defn make-initial-chart [sens-id loc-id period]
-  (create-chart sens-id loc-id (query-location sens-id loc-id period)))
+(defn make-initial-chart [sens-id loc-id time-window]
+  (create-chart sens-id loc-id (query-location loc-id sens-id time-window)))
 
-(defn add-location [chart sens-id loc-id period]
-  (add-to-chart chart sens-id loc-id (query-location sens-id loc-id period)))
+(defn add-location [chart sens-id loc-id time-window]
+  (add-to-chart chart sens-id loc-id (query-location loc-id sens-id time-window)))
 
-(defn make-chart [sens-id loc-ids period]
+(defn make-chart [sens-id loc-ids time-window]
   (let [loc-ids (vec (sort loc-ids))
-        data (vec (query-locations sens-id loc-ids period))]
+        data (vec (query-locations loc-ids sens-id time-window))]
     (reduce (fn [chart i]
               (add-to-chart chart sens-id (loc-ids i) (data i)))
             (create-chart sens-id (first loc-ids) (first data))
