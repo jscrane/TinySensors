@@ -8,12 +8,8 @@
     (org.joda.time Hours))
   (:use
     [sensing.data :only [sensors locations locations-with-sensor]]
-    [sensing.charts :only [make-initial-chart make-chart add-location]]))
-
-(defn- period [units length]
-  (let [dur (.toStandardSeconds (units length))
-        now (local/local-now)]
-    [(t/minus now dur) dur]))
+    [sensing.charts :only [make-initial-chart make-chart add-location]]
+    [sensing.misc :only [period]]))
 
 ; val is [offset duration]
 (def periods {"6h"  (period t/hours 6),

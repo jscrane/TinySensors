@@ -2,7 +2,8 @@
   (:require
     (incanter (charts :as charts)))
   (:use
-    [sensing.data :only [sensors locations get-time smooth query-location query-locations]]))
+    [sensing.data :only [sensors locations query-location query-locations]]
+    [sensing.misc :only [get-time smooth]]))
 
 (defn- smooth-data [sens-id data]
   [(get-time data) (smooth sens-id data)])
