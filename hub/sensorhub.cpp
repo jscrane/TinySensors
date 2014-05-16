@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 	if (verbose) 
 		printf("MySQL client version: %s\n", mysql_get_client_info());
 
-	MYSQL *db_conn = mysql_init(0);
+	db_conn = mysql_init(0);
 
 	if (mysql_real_connect(db_conn, "localhost", USER, PASS, "sensors", 0, NULL, 0) == NULL)
 		fatal("mysql_real_connect", mysql_error(db_conn));
