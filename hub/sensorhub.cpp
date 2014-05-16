@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
 	MYSQL *db_conn = mysql_init(0);
 
-	if (mysql_real_connect(db_conn, "localhost", "sensors", "s3ns0rs", "sensors", 0, NULL, 0) == NULL)
+	if (mysql_real_connect(db_conn, "localhost", USER, PASS, "sensors", 0, NULL, 0) == NULL)
 		fatal("mysql_real_connect", mysql_error(db_conn));
 
 	if (sock) {
