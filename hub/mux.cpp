@@ -133,13 +133,14 @@ int main(int argc, char *argv[])
 	if (0 > connect(cs, (struct sockaddr *)&srvr, sizeof(struct sockaddr)))
 		fatal("connect", strerror(errno));
 
-	int clients[NCLIENTS];
+	int clients[NCLIENTS], nclients = 0;
 	for (int i = 0; i < NCLIENTS; i++)
 		clients[i] = 0;
 	for (;;) {
 		fd_set rd;
 		FD_ZERO(&rd);
-		FD_SET(ss, &rd);
+		if (nclients < NCLIENTS)
+			FD_SET(ss, &rd);
 		FD_SET(cs, &rd);
 
 		if (select(cs + 1, &rd, 0, 0, 0) < 0)
@@ -152,8 +153,8 @@ int main(int argc, char *argv[])
 			if (c < 0)
 				fatal("accept", strerror(errno));
 
-			clients[c] = 1;
-			const char *header = "node\tlight\tdegC\thum%\tVbatt\n";
+			clients[nclients++] = c;
+			const char *header = "location,id,light,degC,hum%,Vbatt\n";
 			write(c, header, strlen(header));
 		}
 		if (FD_ISSET(cs, &rd)) {
@@ -163,11 +164,12 @@ int main(int argc, char *argv[])
 			read(cs, buf, sizeof(buf));
 			int f = sscanf(buf, "%d\t%d\t%f\t%f\t%*d\t%f", &id, &light, &temperature, &humidity, &battery);
 			if (f == 5) {
-				int n = sprintf(buf, "%s\t%d\t%3.1f\t%3.1f\t%4.2f\n", nodes[id], light, temperature, humidity, battery);
+				int n = sprintf(buf, "%s,%d,%d,%3.1f,%3.1f,%4.2f\n", nodes[id], id, light, temperature, humidity, battery);
 				for (int i = 0; i < NCLIENTS; i++)
-					if (clients[i] && 0 > write(i, buf, n)) {
+					if (clients[i] && 0 > write(clients[i], buf, n)) {
 						close(clients[i]);
 						clients[i] = 0;
+						nclients--;
 					}
 			}
 		}
