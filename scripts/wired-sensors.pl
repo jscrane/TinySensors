@@ -6,7 +6,7 @@ use sensors;
 
 $dbh = DBI->connect('dbi:mysql:database=sensors;host=rho','sensors','s3ns0rs') or die "Connection Error: $DBI::errstr\n";
 
-$ins = $dbh->prepare_cached('INSERT INTO sensordata (node_id,temperature,light) VALUES (?,?,?)');
+$ins = $dbh->prepare_cached('INSERT INTO sensor_data (node_id,temperature,light) VALUES (?,?,?)');
 die "couldn't prepare query" unless defined $ins;
 
 while (($key, $value) = each %sensors) {
