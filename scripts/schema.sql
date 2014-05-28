@@ -1,9 +1,37 @@
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `batteries` (
+  `id` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `description` varchar(64) NOT NULL,
+  `type` varchar(16) NOT NULL,
+  `first_id` int(10) unsigned NOT NULL,
+  `last_id` int(10) unsigned NOT NULL,
+  `count` int(10) NOT NULL,
+  `firmware_id` smallint(5) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_first_id` (`first_id`),
+  KEY `fk_last_id` (`last_id`),
+  KEY `fk_firmware_id` (`firmware_id`),
+  CONSTRAINT `fk_first_id` FOREIGN KEY (`first_id`) REFERENCES `sensor_data` (`id`),
+  CONSTRAINT `fk_last_id` FOREIGN KEY (`last_id`) REFERENCES `sensor_data` (`id`),
+  CONSTRAINT `fk_firmware_id` FOREIGN KEY (`firmware_id`) REFERENCES `firmware` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `device_types` (
   `id` smallint(5) unsigned NOT NULL DEFAULT '0',
   `description` varchar(255) DEFAULT NULL,
   `features` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `firmware` (
+  `id` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `description` varchar(255) NOT NULL,
+  `hash` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -34,7 +62,7 @@ CREATE TABLE `sensor_data` (
   PRIMARY KEY (`id`),
   KEY `node_id` (`node_id`),
   CONSTRAINT `sensor_data_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1396808 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1982909 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -64,5 +92,5 @@ CREATE TABLE `weather_data` (
   PRIMARY KEY (`id`),
   KEY `fk_station_id` (`station_id`),
   CONSTRAINT `fk_station_id` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2080 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4178 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
