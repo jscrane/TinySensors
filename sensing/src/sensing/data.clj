@@ -2,7 +2,8 @@
   (:require
     (clojure (string :as str))
     (korma (db :as db) (core :as k))
-    (clj-time (core :as t) (coerce :as coerce))))
+    (clj-time.core :as t)
+    (clj-time.coerce :as coerce)))
 
 (db/defdb sensordb (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
 (k/defentity sensordata (k/database sensordb) (k/table :sensor_data))
@@ -67,8 +68,8 @@
                 (k/select nodes (k/fields :id :location :device_type_id) (k/order :device_type_id))))))
 
 (defn- device-types-with-sensor [sensor-id]
-  (into #{} (map first (filter (fn [[k v]] (contains? v sensor-id)) device-types))))
+  (into #{} (map first (filter (fn [[_ v]] (contains? v sensor-id)) device-types))))
 
 (defn locations-with-sensor [sensor-id]
   (let [t (device-types-with-sensor sensor-id)]
-    (into #{} (map first (filter (fn [[id [name type]]] (contains? t type)) locations)))))
+    (into #{} (map first (filter (fn [[_ [_ type]]] (contains? t type)) locations)))))

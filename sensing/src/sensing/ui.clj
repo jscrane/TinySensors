@@ -2,7 +2,7 @@
   (:require
     (clojure (set :as set))
     (seesaw (core :as s) (keystroke :as k))
-    (clj-time (core :as t) (local :as local)))
+    (clj-time.core :as t))
   (:import
     (org.jfree.chart ChartPanel)
     (org.joda.time Hours))
@@ -66,7 +66,7 @@
   (let [[o d] @curr-period]
     (period-action [o (.plus d d)])))
 
-(defn -main [& args]
+(defn -main [& _]
   (let [enabled-locations (locations-with-sensor @curr-sensor)]
     (s/invoke-later
       (-> (s/frame :title "Sensors",
@@ -79,7 +79,7 @@
                                        :items [(s/action :name "Quit"
                                                          :mnemonic \Q
                                                          :key (k/keystroke "ctrl Q")
-                                                         :handler (fn [e] (System/exit 0)))])
+                                                         :handler (fn [_] (System/exit 0)))])
                                (s/menu :text "Sensor"
                                        :mnemonic \S
                                        :items (let [g (s/button-group)]
@@ -96,7 +96,7 @@
                                                                            :id (str k)
                                                                            :enabled? (contains? enabled-locations k)
                                                                            :selected? (contains? @curr-locations k)
-                                                                           :listen [:action (fn [e] (location-action k))]))
+                                                                           :listen [:action (fn [_] (location-action k))]))
                                                    locations))
                                (s/menu :text "Period"
                                        :mnemonic \P
@@ -106,28 +106,28 @@
                                                          (s/radio-menu-item :text k
                                                                             :group g
                                                                             :selected? (= v @curr-period)
-                                                                            :listen [:action (fn [e] (period-action v))]))
+                                                                            :listen [:action (fn [_] (period-action v))]))
                                                        periods)
                                                   [(s/separator)
                                                    (s/action :name "Prev"
                                                              :mnemonic \P
                                                              :key (k/keystroke "LEFT")
-                                                             :handler (fn [e] (prev-action)))
+                                                             :handler (fn [_] (prev-action)))
                                                    (s/action :name "Next"
                                                              :mnemonic \N
                                                              :key (k/keystroke "RIGHT")
-                                                             :handler (fn [e] (next-action)))
+                                                             :handler (fn [_] (next-action)))
                                                    (s/action :name "Out"
                                                              :mnemonic \O
                                                              :key (k/keystroke "DOWN")
-                                                             :handler (fn [e] (zoom-out-action)))
+                                                             :handler (fn [_] (zoom-out-action)))
                                                    (s/action :name "Now"
                                                              :mnemonic \W
                                                              :key (k/keystroke "END")
-                                                             :handler (fn [e] (period-action (periods "6h"))))
+                                                             :handler (fn [_] (period-action (periods "6h"))))
                                                    (s/action :name "Refresh"
                                                              :mnemonic \R
                                                              :key (k/keystroke "F5")
-                                                             :handler (fn [e] (make-plot @curr-sensor @curr-locations @curr-period)))])))]))
+                                                             :handler (fn [_] (make-plot @curr-sensor @curr-locations @curr-period)))])))]))
           s/pack!
           s/show!))))
