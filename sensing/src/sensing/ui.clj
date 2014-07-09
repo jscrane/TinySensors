@@ -1,8 +1,9 @@
 (ns sensing.ui
+  (:gen-class)
   (:require
-    (clojure (set :as set))
-    (seesaw (core :as s) (keystroke :as k))
-    (clj-time.core :as t))
+    [clojure [set :as set]]
+    [seesaw [core :as s] [keystroke :as k]]
+    [clj-time.core :as t])
   (:import
     (org.jfree.chart ChartPanel)
     (org.joda.time Hours))

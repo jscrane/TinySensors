@@ -1,10 +1,10 @@
 (ns sensing.experiments
   (:require
-    (clj-time (core :as t) (local :as l) (coerce :as c))
-    (incanter (charts :as charts) (core :as i) (stats :as stats)))
+    [clj-time [core :as t] [local :as l] [coerce :as c]]
+    [incanter [charts :as charts] [core :as i] [stats :as stats]])
   (:import
-    (org.joda.time Hours)
-    (java.util Date))
+    [org.joda.time Hours]
+    [java.util Date])
   (:use
     [sensing.data :only [sensors locations query-location query-weather]]
     [sensing.misc :only [get-time smooth period]]))

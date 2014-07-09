@@ -1,6 +1,6 @@
 (ns sensing.charts
   (:require
-    (incanter (charts :as charts)))
+    [incanter [charts :as charts]])
   (:use
     [sensing.data :only [sensors locations query-location query-locations]]
     [sensing.misc :only [get-time smooth]]))

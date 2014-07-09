@@ -1,9 +1,9 @@
 (ns sensing.data
   (:require
-    (clojure (string :as str))
-    (korma (db :as db) (core :as k))
-    (clj-time.core :as t)
-    (clj-time.coerce :as coerce)))
+    [clojure [string :as str]]
+    [korma [db :as db] [core :as k]]
+    [clj-time.core :as t]
+    [clj-time.coerce :as coerce]))
 
 (db/defdb sensordb (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
 (k/defentity sensordata (k/database sensordb) (k/table :sensor_data))

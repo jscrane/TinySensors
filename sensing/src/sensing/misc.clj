@@ -1,6 +1,6 @@
 (ns sensing.misc
   (:require
-    (clj-time (core :as t) (local :as local))))
+    [clj-time [core :as t] [local :as local]]))
 
 ; computes a rolling average of the data
 (defn avg [n data]
