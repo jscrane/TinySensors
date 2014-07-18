@@ -32,4 +32,6 @@ Software
   - [RF24-rpi](https://github.com/jscrane/RF24-rpi)
 
 * Viewer
-  - Leiningen
+  - [Leiningen](http://leiningen.org) v2.0, or
+  - [IntelliJ](http://www.jetbrains.com/idea) with the
+[Cursive](https://cursiveclojure.com) plugin
