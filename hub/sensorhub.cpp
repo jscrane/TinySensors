@@ -152,22 +152,24 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		struct timeval timeout;
-		timeout.tv_usec = 100000;
-		timeout.tv_sec = 0;
-		fd_set rd;
-		FD_ZERO(&rd);
-		if (ss > 0)
-			FD_SET(ss, &rd);
-		if (select(ss + 1, &rd, 0, 0, &timeout) > 0) {
-			struct sockaddr_in client;
-			socklen_t addrlen = sizeof(struct sockaddr_in);
-			cs = accept(ss, (struct sockaddr *)&client, &addrlen);
-			if (cs < 0)
-				fatal("accept", strerror(errno));
-
-			const char *header = "node\tlight\tdegC\thum%\tstat\tVbatt\ttype\tmsg-id\ttime\n";
-			write(cs, header, strlen(header));
+		if (!cs) {
+			struct timeval timeout;
+			timeout.tv_usec = 100000;
+			timeout.tv_sec = 0;
+			fd_set rd;
+			FD_ZERO(&rd);
+			if (ss > 0)
+				FD_SET(ss, &rd);
+			if (select(ss + 1, &rd, 0, 0, &timeout) > 0) {
+				struct sockaddr_in client;
+				socklen_t addrlen = sizeof(struct sockaddr_in);
+				cs = accept(ss, (struct sockaddr *)&client, &addrlen);
+				if (cs < 0)
+					fatal("accept", strerror(errno));
+	
+				const char *header = "node\tlight\tdegC\thum%\tstat\tVbatt\ttype\tmsg-id\ttime\n";
+				write(cs, header, strlen(header));
+			}
 		}
 	}
 	return 0;

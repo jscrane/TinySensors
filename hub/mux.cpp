@@ -10,6 +10,7 @@
 #include <string.h>
 
 #define NCLIENTS 16
+#define NODES 20
 
 MYSQL *db_conn;
 int ss, cs;
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
 	}
 
 	signal(SIGINT, signal_handler);
+	signal(SIGPIPE, SIG_IGN);
 
 	if (verbose) 
 		printf("MySQL client version: %s\n", mysql_get_client_info());
@@ -97,7 +99,9 @@ int main(int argc, char *argv[])
 		db_fatal("mysql_store_result");
 
 	MYSQL_ROW row;
-	char *nodes[20];
+	char *nodes[NODES];
+	for (int i = 0; i < NODES; i++)
+		nodes[i] = 0;
 	while ((row = mysql_fetch_row(rs))) {
 		int id = atoi(row[0]);
 		nodes[id] = strdup(row[1]);
@@ -168,7 +172,7 @@ int main(int argc, char *argv[])
 				float temperature, humidity, battery;
 				char obuf[256];
 				int f = sscanf(ibuf, "%u\t%u\t%f\t%f\t%*d\t%f\n", &id, &light, &temperature, &humidity, &battery);
-				if (f == 5 && id < sizeof(nodes) / sizeof(nodes[0]) && nodes[id]) {
+				if (f == 5 && id < NODES && nodes[id]) {
 					n = snprintf(obuf, sizeof(obuf), "%s,%d,%d,%3.1f,%3.1f,%4.2f\n", nodes[id], id, light, temperature, humidity, battery);
 					for (int i = 0; i < NCLIENTS; i++)
 						if (clients[i] && 0 > write(clients[i], obuf, n)) {
