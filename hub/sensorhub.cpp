@@ -123,8 +123,12 @@ int main(int argc, char *argv[])
 			sensor_payload_t payload;
 			network.read(header, &payload, sizeof(payload));
 
+			// fixup for negative temperature
+			short temp = payload.temperature;
+			if ((temp >> 8) == 0x7f)
+				temp = temp - 32768;
+			float temperature = ((float)temp) / 10;
 			float humidity = ((float)payload.humidity) / 10;
-			float temperature = ((float)payload.temperature) / 10;
 			float battery = ((float)payload.battery) * 3.3 / 1023.0;
 
 			if (cs > 0) {
