@@ -1,13 +1,13 @@
 TinySensors' Hub
 ================
 
-A couple of programs, sensorhub and mux, to connect TinySensors to the
-internet. Prototyped and run on a Raspberry Pi with an nrf24l01+ connected
+A couple of programs, _sensorhub_ and _mux_, to connect TinySensors to the
+Internet. Prototyped and run on a Raspberry Pi with an nrf24l01+ connected
 to its GPIO port, as described [here](https://github.com/jscrane/RF24-rpi).
 
 sensorhub
 ---------
-- must be run as root
+- must be run as root (for access to /dev/watchdog and /dev/spidev)
 - polls the RF24 device for messages from sensors
 - writes sensor readings into a MySQL database
 
@@ -24,5 +24,5 @@ See [here](http://blog.ricardoarturocabral.com/2013/01/auto-reboot-hung-raspberr
 mux
 ---
 - connects to sensorhub's port 5555
-- listens for up to 20 clients on port 5678 and relays sensor readings
+- listens for up to 20 clients on port 5678 and relays sensor readings to them
 - by default runs as a daemon (disable with -v, also enables verbose mode)
