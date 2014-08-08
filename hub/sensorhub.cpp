@@ -156,10 +156,10 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		struct timeval timeout;
+		timeout.tv_usec = 100000;
+		timeout.tv_sec = 0;
 		if (!cs) {
-			struct timeval timeout;
-			timeout.tv_usec = 100000;
-			timeout.tv_sec = 0;
 			fd_set rd;
 			FD_ZERO(&rd);
 			if (ss > 0)
@@ -174,6 +174,9 @@ int main(int argc, char *argv[])
 				const char *header = "node\tlight\tdegC\thum%\tstat\tVbatt\ttype\tmsg-id\ttime\n";
 				write(cs, header, strlen(header));
 			}
+		} else {
+			// we have a client, just sleep
+			usleep(timeout.tv_usec);
 		}
 	}
 	return 0;
