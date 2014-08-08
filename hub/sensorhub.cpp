@@ -37,11 +37,13 @@ void signal_handler(int signo)
 	fatal("caught", strsignal(signo));
 }
 
+#define IDLE_SECONDS 300
+
 int main(int argc, char *argv[])
 {
-	bool verbose = false, sock = true, daemon = true;
+	bool verbose = false, sock = true, daemon = true, watchdog = true;
 	int opt;
-	while ((opt = getopt(argc, argv, "vs")) != -1)
+	while ((opt = getopt(argc, argv, "vsw")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
@@ -50,8 +52,11 @@ int main(int argc, char *argv[])
 		case 's':
 			sock = false;
 			break;
+		case 'w':
+			watchdog = false;
+			break;
 		default:
-			fprintf(stderr, "Usage: %s [-v] [-s]\n", argv[0]);
+			fprintf(stderr, "Usage: %s [-v] [-s] [-w]\n", argv[0]);
 			exit(1);
 		}
 
@@ -115,6 +120,9 @@ int main(int argc, char *argv[])
 	RF24Network network(radio);
 	network.begin(90, this_node);
 
+	time_t last_reading;
+	if (watchdog)
+		time(&last_reading);
 	for (;;) {
 		network.update();
 
@@ -154,6 +162,8 @@ int main(int argc, char *argv[])
 				if (mysql_query(db_conn, buf))
 					fatal("insert", mysql_error(db_conn));
 			}
+			if (watchdog)
+				time(&last_reading);
 		}
 
 		struct timeval timeout;
@@ -177,6 +187,22 @@ int main(int argc, char *argv[])
 		} else {
 			// we have a client, just sleep
 			usleep(timeout.tv_usec);
+		}
+		if (watchdog) {
+			time_t now;
+			time(&now);
+			if (now - last_reading > IDLE_SECONDS) {
+				// start the destruct sequence
+				if (verbose)
+					printf("triggering watchdog\n");
+				int fd = open("/dev/watchdog", O_RDONLY);
+				if (0 > fd)
+					perror("opening watchdog");
+				else
+					close(fd);
+				// bail out
+				break;
+			}
 		}
 	}
 	return 0;
