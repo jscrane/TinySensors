@@ -181,8 +181,16 @@ int main(int argc, char *argv[])
 							nclients--;
 						}
 				}
+			} else if (n == 0) {
+				if (verbose)
+					printf("server died\n");
+				break;
 			}
 		}
 	}
+	close(cs);
+	for (int i = 0; i < NCLIENTS; i++)
+		if (clients[i])
+			close(clients[i]);
 	return 0;
 }
