@@ -13,7 +13,7 @@
               (drop n data)))))
 
 (defn- valid [key data]
-  (let [ranges {:light [0 255], :battery [0 1.55], :humidity [0 100], :temperature [0 30]}
+  (let [ranges {:light [0 255], :battery [0 1.55], :humidity [0 100], :temperature [-20 30]}
         [lo hi] (ranges key)]
     (filter (fn [d] (and (>= d lo) (<= d hi))) data)))
 
