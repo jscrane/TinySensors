@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
@@ -91,7 +92,7 @@ typedef struct sensor {
 	struct timeval last_update;
 } sensor_t;
 
-#define MAX_SENSORS	8
+#define MAX_SENSORS	7
 sensor_t sensors[MAX_SENSORS];
 
 void parse_sensor_data(char *buf, sensor_t *s) {
@@ -125,6 +126,7 @@ void parse_sensor_data(char *buf, sensor_t *s) {
 		}
 		i++;
 	}
+	gettimeofday(&s->last_update, 0);
 }
 
 int update_sensor_data(sensor_t *s) {
@@ -137,7 +139,7 @@ int update_sensor_data(sensor_t *s) {
 			t->temperature = s->temperature;
 			t->humidity = s->humidity;
 			t->battery = s->battery;
-			gettimeofday(&t->last_update, 0);
+			t->last_update = s->last_update;
 			return i;
 		}
 	}
@@ -153,8 +155,10 @@ void update_lcd(int i, sensor_t *s) {
 		y -= 4;
 		x += 10;
 	}
-	int n = snprintf(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", i, x, y, t);
-	write(lcd, buf, n);
+	lcdproc(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", i, x, y, t);
+	time_t now = s->last_update.tv_sec;
+	strftime(t, sizeof(t), "%H:%M:%S", localtime(&now));
+	lcdproc(buf, sizeof(buf), "widget_set sens update %d %d {%s}\n", 11, 4, t);
 }
 
 int main(int argc, char *argv[]) {
@@ -209,6 +213,7 @@ int main(int argc, char *argv[]) {
 	lcdproc(buf, sizeof(buf), "screen_set sens name {Sensors}\n");
 	for (int i = 0; i < MAX_SENSORS; i++)
 		lcdproc(buf, sizeof(buf), "widget_add sens sensor%d string\n", i);
+	lcdproc(buf, sizeof(buf), "widget_add sens update string\n");
 
 	for (;;) {
 		fd_set rd;
