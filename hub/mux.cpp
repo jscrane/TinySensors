@@ -67,12 +67,6 @@ int main(int argc, char *argv[])
 		if (setsid() < 0)
 			exit(-1);
 
-		pid = fork();
-		if (pid < 0)
-			exit(-1);
-		if (pid > 0)
-			exit(0);
-
 		umask(0);
 		chdir("/tmp");
 		close(0);
