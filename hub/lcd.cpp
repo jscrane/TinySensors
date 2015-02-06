@@ -146,19 +146,38 @@ int update_sensor_data(sensor_t *s) {
 	return -1;
 }
 
+int width, height;
+
+void parse_lcdproc_header(char *buf, int n) {
+	int i = 0;
+	for (char *p = buf, *q = 0; p; p = q) {
+		q = strchr(p, ' ');
+		if (q)
+			*q++ = 0;
+		switch (i) {
+		case 7:
+			width = atoi(p);
+			break;
+		case 9:
+			height = atoi(p);
+			break;
+		}
+		i++;
+	}
+}
+
 void update_lcd(int i, sensor_t *s) {
 	char t[16], buf[64];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s->location, s->temperature);
 	int x = 1, y = i+1;
-	// FIXME: hardwired screen size
-	if (y > 4) {
-		y -= 4;
-		x += 10;
+	if (y > height) {
+		y -= height;
+		x += width / 2;
 	}
 	lcdproc(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", i, x, y, t);
 	time_t now = s->last_update.tv_sec;
 	strftime(t, sizeof(t), "%H:%M:%S", localtime(&now));
-	lcdproc(buf, sizeof(buf), "widget_set sens update %d %d {%s}\n", 11, 4, t);
+	lcdproc(buf, sizeof(buf), "widget_set sens update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
 
 int main(int argc, char *argv[]) {
@@ -208,6 +227,8 @@ int main(int argc, char *argv[]) {
 
 	char buf[128];
 	int n = lcdproc(buf, sizeof(buf), "hello\n");
+	parse_lcdproc_header(buf, n);
+
 	lcdproc(buf, sizeof(buf), "client_set name {Sensors}\n");
 	lcdproc(buf, sizeof(buf), "screen_add sens\n");
 	lcdproc(buf, sizeof(buf), "screen_set sens name {Sensors}\n");
