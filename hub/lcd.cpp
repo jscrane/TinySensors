@@ -97,7 +97,6 @@ sensor_t sensors[MAX_SENSORS];
 
 void parse_sensor_data(char *buf, sensor_t *s) {
 	int i = 0;
-	char *x;
 	for (char *p = buf, *q = 0; p; p = q) {
 		q = strchr(p, ',');
 		if (q)
@@ -235,6 +234,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < MAX_SENSORS; i++)
 		lcdproc(buf, sizeof(buf), "widget_add sens sensor%d string\n", i);
 	lcdproc(buf, sizeof(buf), "widget_add sens update string\n");
+	lcdproc(buf, sizeof(buf), "backlight off\n");
 
 	for (;;) {
 		fd_set rd;
