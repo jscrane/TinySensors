@@ -97,7 +97,6 @@ sensor_t sensors[MAX_SENSORS];
 
 void parse_sensor_data(char *buf, sensor_t *s) {
 	int i = 0;
-	char *x;
 	for (char *p = buf, *q = 0; p; p = q) {
 		q = strchr(p, ',');
 		if (q)
