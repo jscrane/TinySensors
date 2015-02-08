@@ -3,74 +3,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <sys/select.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#include <errno.h>
 #include <string.h>
-#include <netdb.h>
+#include <errno.h>
+
+#include "sensorlib.h"
 
 int lcd, mux;
 bool verbose = false;
 
-void close_exit() {
+void close_sockets() {
 	if (lcd >= 0)
 		close(lcd);
 	if (mux >= 0)
 		close(mux);
-	exit(1);
-}
-
-void fatal(const char *op, const char *error) {
-	fprintf(stderr, "%s: %s\n", op, error);
-	close_exit();
 }
 
 void signal_handler(int signo) {
 	fatal("caught", strsignal(signo));
-}
-
-int connect_socket(const char *s, int defport) {
-	int port = defport;
-	char *sep = (char *)strchr(s, ':');
-	if (sep) {
-		*sep++ = 0;
-		port = atoi(sep);
-	}
-
-	struct hostent *he = gethostbyname(s);
-	if (!he)
-		fatal("gethostbyname", s);
-
-	struct sockaddr_in addr;
-	memset((void *)&addr, 0, sizeof(sockaddr_in));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr = *(in_addr *)he->h_addr;
-
-	int sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (0 > sock)
-		fatal("socket", strerror(errno));
-	if (0 > connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)))
-		fatal(s, strerror(errno));
-
-	return sock;
-}
-
-int sock_read_line(int s, char *buf, int len) {
-	int n = read(s, buf, len);
-	char *eol = strchr(buf, '\n');
-	if (eol)
-		*eol = 0;
-	if (verbose)
-		printf("%d: %d [%s]\n", s, n, buf);
-	return n;
 }
 
 int lcdproc(char *buf, int len, const char *fmt, ...) {
@@ -81,52 +34,14 @@ int lcdproc(char *buf, int len, const char *fmt, ...) {
 		printf("%d: %s", lcd, buf);
 	write(lcd, buf, n);
 	n = sock_read_line(lcd, buf, len);
+	if (verbose)
+		printf("%d: %d [%s]\n", lcd, n, buf);
 	va_end(args);
 	return n;
 }
 
-typedef struct sensor {
-	char location[16];
-	unsigned id, light;
-	float temperature, humidity, battery;
-	struct timeval last_update;
-} sensor_t;
-
 #define MAX_SENSORS	7
 sensor_t sensors[MAX_SENSORS];
-
-void parse_sensor_data(char *buf, sensor_t *s) {
-	int i = 0;
-	for (char *p = buf, *q = 0; p; p = q) {
-		q = strchr(p, ',');
-		if (q)
-			*q++ = 0;
-		switch(i) {
-		case 0:	
-			strncpy(s->location, p, sizeof(s->location));
-			for (char *x = s->location; *x; x++)
-				*x = tolower(*x);
-			break;
-		case 1:
-			s->id = atoi(p);
-			break;
-		case 2:
-			s->light = atoi(p);
-			break;
-		case 3:
-			s->temperature = atof(p);
-			break;
-		case 4:
-			s->humidity = atof(p);
-			break;
-		case 5:
-			s->battery = atof(p);
-			break;
-		}
-		i++;
-	}
-	gettimeofday(&s->last_update, 0);
-}
 
 int update_sensor_data(sensor_t *s) {
 	for (int i = 0; i < MAX_SENSORS; i++) {
@@ -182,6 +97,8 @@ void update_lcd(int i, sensor_t *s) {
 int main(int argc, char *argv[]) {
 	int opt;
 	bool daemon = true;
+
+	atexit(close_sockets);
 	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
 		switch (opt) {
 		case 'l':
@@ -206,21 +123,9 @@ int main(int argc, char *argv[]) {
 	if (!mux)
 		mux = connect_socket("localhost", 5678);
 		
-	if (daemon) {
-		pid_t pid = fork();
-		if (pid < 0)		// fork failed
-			exit(-1);
-		if (pid > 0)		// i'm the parent
-			exit(0);
-		if (setsid() < 0)	// new session
-			exit(-1);
+	if (daemon)
+		daemon_mode();
 
-		umask(0);
-		chdir("/tmp");
-		close(0);
-		close(1);
-		close(2);
-	}
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
@@ -246,10 +151,14 @@ int main(int argc, char *argv[]) {
 
 		if (FD_ISSET(lcd, &rd)) {
 			n = sock_read_line(lcd, buf, sizeof(buf));
+			if (verbose)
+				printf("%d: %d [%s]\n", lcd, n, buf);
 			// FIXME?
 		}
 		if (FD_ISSET(mux, &rd)) {
 			n = sock_read_line(mux, buf, sizeof(buf));
+			if (verbose)
+				printf("%d: %d [%s]\n", mux, n, buf);
 			if (n > 0) {
 				sensor_t s;
 				parse_sensor_data(buf, &s);
