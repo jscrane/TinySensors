@@ -1,24 +1,23 @@
 #include <RF24Network.h>
 #include <RF24.h>
-#include <my_global.h>
-#include <mysql.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include <tinysensor.h>
 
-static MYSQL *db_conn;
 static int ss, cs;
 
 void close_exit()
 {
-	if (db_conn)
-		mysql_close(db_conn);
 	if (cs > 0)
 		close(cs);
 	if (ss > 0)
@@ -78,14 +77,7 @@ int main(int argc, char *argv[])
 	}
 
 	signal(SIGINT, signal_handler);
-
-	if (verbose) 
-		printf("MySQL client version: %s\n", mysql_get_client_info());
-
-	db_conn = mysql_init(0);
-
-	if (mysql_real_connect(db_conn, "localhost", USER, PASS, "sensors", 0, NULL, 0) == NULL)
-		fatal("mysql_real_connect", mysql_error(db_conn));
+	signal(SIGPIPE, SIG_IGN);
 
 	if (sock) {
 		ss = socket(AF_INET, SOCK_STREAM, 0);
@@ -142,18 +134,6 @@ int main(int argc, char *argv[])
 					close(cs);
 					cs = 0;
 				}
-			}
-
-			if (header.from_node > 0) {
-				char buf[1024];
-				sprintf(buf, "INSERT INTO sensor_data (node_id,node_ms,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
-						header.from_node, payload.ms, payload.light, humidity, temperature, battery, payload.status, header.id);
-
-				if (verbose)
-					puts(buf);
-
-				if (mysql_query(db_conn, buf))
-					fatal("insert", mysql_error(db_conn));
 			}
 			if (watchdog)
 				time(&last_reading);

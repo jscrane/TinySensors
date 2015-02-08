@@ -7,7 +7,7 @@ CXXFLAGS=-Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jz
 CPPFLAGS=-I$(prefix)/include -I/usr/include/mysql -I../tinysensor -DBIG_JOINS=1 -DUSER=\"${USER}\" -DPASS=\"${PASSWORD}\"
 LDFLAGS=-L$(prefix)/lib -lrf24-bcm -lrf24-network -lmysqlclient -lpthread -lz -lm -lrt -ldl
 
-PROGRAMS = sensorhub mux lcd
+PROGRAMS = sensorhub mux lcd mysqlmux
 SOURCES = ${wildcard *.cpp}
 OBJECTS = ${SOURCES:.cpp=.o}
 
@@ -18,6 +18,8 @@ sensorhub: sensorhub.o
 mux: mux.o
 
 lcd: lcd.o sensorlib.o
+
+mysqlmux: mysqlmux.o sensorlib.o
 
 clean:
 	rm -rf $(PROGRAMS) $(OBJECTS)
