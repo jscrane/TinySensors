@@ -23,13 +23,12 @@ void close_exit()
 		close(cs);
 	if (ss > 0)
 		close(ss);
-	exit(1);
 }
 
 void fatal(const char *op, const char *error)
 {
 	fprintf(stderr, "%s: %s\n", op, error);
-	close_exit();
+	exit(1);
 }
 
 void signal_handler(int signo)
@@ -43,6 +42,7 @@ int main(int argc, char *argv[])
 {
 	bool verbose = false, sock = true, daemon = true, watchdog = true;
 	int opt;
+	atexit(close_exit);
 	while ((opt = getopt(argc, argv, "vsw")) != -1)
 		switch(opt) {
 		case 'v':
@@ -69,12 +69,6 @@ int main(int argc, char *argv[])
 			exit(0);
 		if (setsid() < 0)
 			exit(-1);
-
-		pid = fork();
-		if (pid < 0)
-			exit(-1);
-		if (pid > 0)
-			exit(0);
 
 		umask(0);
 		chdir("/tmp");
@@ -143,7 +137,7 @@ int main(int argc, char *argv[])
 				char buf[1024];
 				int n = sprintf(buf, "%d\t%d\t%3.1f\t%3.1f\t%d\t%4.2f\t%u\t%d\t%u\n", 
 						header.from_node, payload.light, temperature, humidity, payload.status, 
-						battery, header.type, header.id, payload.ms / 1000);
+						battery, header.type, header.id, payload.ms);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);

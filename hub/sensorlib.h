@@ -3,9 +3,9 @@
 
 typedef struct sensor {
 	char location[16];
-	unsigned id, light;
+	unsigned light;
 	float temperature, humidity, battery;
-	struct timeval last_update;
+	unsigned node_id, node_millis, node_status, msg_id;
 } sensor_t;
 
 void parse_sensor_data(char *buf, sensor_t *s);

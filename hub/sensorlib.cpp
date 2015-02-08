@@ -1,4 +1,3 @@
-#include <sys/time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -27,7 +26,7 @@ void parse_sensor_data(char *buf, sensor_t *s) {
 				*x = tolower(*x);
 			break;
 		case 1:
-			s->id = atoi(p);
+			s->node_id = atoi(p);
 			break;
 		case 2:
 			s->light = atoi(p);
@@ -41,10 +40,18 @@ void parse_sensor_data(char *buf, sensor_t *s) {
 		case 5:
 			s->battery = atof(p);
 			break;
+		case 6:
+			s->node_millis = atoi(p);
+			break;
+		case 7:
+			s->node_status = atoi(p);
+			break;
+		case 8:
+			s->msg_id = atoi(p);
+			break;
 		}
 		i++;
 	}
-	gettimeofday(&s->last_update, 0);
 }
 
 void daemon_mode() {

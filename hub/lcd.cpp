@@ -23,7 +23,7 @@ void close_sockets() {
 }
 
 void signal_handler(int signo) {
-	fatal("caught", strsignal(signo));
+	fatal("Caught", strsignal(signo));
 }
 
 int lcdproc(char *buf, int len, const char *fmt, ...) {
@@ -46,14 +46,13 @@ sensor_t sensors[MAX_SENSORS];
 int update_sensor_data(sensor_t *s) {
 	for (int i = 0; i < MAX_SENSORS; i++) {
 		sensor_t *t = &sensors[i];
-		if (!t->location[0] || t->id == s->id) {
+		if (!t->location[0] || t->node_id == s->node_id) {
 			strcpy(t->location, s->location);
-			t->id = s->id;
+			t->node_id = s->node_id;
 			t->light = s->light;
 			t->temperature = s->temperature;
 			t->humidity = s->humidity;
 			t->battery = s->battery;
-			t->last_update = s->last_update;
 			return i;
 		}
 	}
@@ -83,13 +82,15 @@ void parse_lcdproc_header(char *buf, int n) {
 void update_lcd(int i, sensor_t *s) {
 	char t[16], buf[64];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s->location, s->temperature);
-	int x = 1, y = s->id;
+	int x = 1, y = s->node_id;
 	if (y > height) {
 		y -= height;
 		x += width / 2;
 	}
 	lcdproc(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", i, x, y, t);
-	time_t now = s->last_update.tv_sec;
+	struct timeval tv;
+	gettimeofday(&tv, 0);
+	time_t now = tv.tv_sec;
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
 	lcdproc(buf, sizeof(buf), "widget_set sens update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
