@@ -83,14 +83,14 @@ void parse_lcdproc_header(char *buf, int n) {
 void update_lcd(int i, sensor_t *s) {
 	char t[16], buf[64];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s->location, s->temperature);
-	int x = 1, y = i+1;
+	int x = 1, y = s->id;
 	if (y > height) {
 		y -= height;
 		x += width / 2;
 	}
 	lcdproc(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", i, x, y, t);
 	time_t now = s->last_update.tv_sec;
-	strftime(t, sizeof(t), "%H:%M:%S", localtime(&now));
+	strftime(t, sizeof(t), "%H:%M", localtime(&now));
 	lcdproc(buf, sizeof(buf), "widget_set sens update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
 
@@ -139,6 +139,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < MAX_SENSORS; i++)
 		lcdproc(buf, sizeof(buf), "widget_add sens sensor%d string\n", i);
 	lcdproc(buf, sizeof(buf), "widget_add sens update string\n");
+	lcdproc(buf, sizeof(buf), "backlight off\n");
 
 	for (;;) {
 		fd_set rd;

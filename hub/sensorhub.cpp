@@ -37,7 +37,7 @@ void signal_handler(int signo)
 	fatal("caught", strsignal(signo));
 }
 
-#define IDLE_SECONDS 300
+#define IDLE_SECONDS 3600
 
 int main(int argc, char *argv[])
 {
