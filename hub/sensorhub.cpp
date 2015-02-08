@@ -14,13 +14,13 @@
 
 #include <tinysensor.h>
 
-static int ss, cs;
+static int ss = -1, cs = -1;
 
 void close_exit()
 {
-	if (cs > 0)
+	if (cs >= 0)
 		close(cs);
-	if (ss > 0)
+	if (ss >= 0)
 		close(ss);
 }
 
@@ -39,23 +39,20 @@ void signal_handler(int signo)
 
 int main(int argc, char *argv[])
 {
-	bool verbose = false, sock = true, daemon = true, watchdog = true;
+	bool verbose = false, daemon = true, watchdog = true;
 	int opt;
 	atexit(close_exit);
-	while ((opt = getopt(argc, argv, "vsw")) != -1)
+	while ((opt = getopt(argc, argv, "vw")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
 			daemon = false;
 			break;
-		case 's':
-			sock = false;
-			break;
 		case 'w':
 			watchdog = false;
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-v] [-s] [-w]\n", argv[0]);
+			fprintf(stderr, "Usage: %s [-v] [-w]\n", argv[0]);
 			exit(1);
 		}
 
@@ -79,22 +76,20 @@ int main(int argc, char *argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
-	if (sock) {
-		ss = socket(AF_INET, SOCK_STREAM, 0);
-		if (ss < 0)
-			fatal("socket", strerror(errno));
+	ss = socket(AF_INET, SOCK_STREAM, 0);
+	if (ss < 0)
+		fatal("socket", strerror(errno));
 
-		struct sockaddr_in serv;
-		memset(&serv, 0, sizeof(serv));
-		serv.sin_family = AF_INET;
-		serv.sin_addr.s_addr = htonl(INADDR_ANY);
-		serv.sin_port = htons(5555);
-		if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr)))
-			fatal("bind", strerror(errno));
+	struct sockaddr_in serv;
+	memset(&serv, 0, sizeof(serv));
+	serv.sin_family = AF_INET;
+	serv.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv.sin_port = htons(5555);
+	if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr)))
+		fatal("bind", strerror(errno));
 
-		if (0 > listen(ss, 1))
-			fatal("listen", strerror(errno));
-	}
+	if (0 > listen(ss, 1))
+		fatal("listen", strerror(errno));
 
 	RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_26, BCM2835_SPI_SPEED_8MHZ);	
 	radio.begin();
@@ -125,14 +120,14 @@ int main(int argc, char *argv[])
 			float humidity = ((float)payload.humidity) / 10;
 			float battery = ((float)payload.battery) * 3.3 / 1023.0;
 
-			if (cs > 0) {
+			if (cs >= 0) {
 				char buf[1024];
 				int n = sprintf(buf, "%d\t%d\t%3.1f\t%3.1f\t%4.2f\t%u\t%u\t%u\n", 
 						header.from_node, payload.light, temperature, humidity, battery, payload.status, header.id, payload.ms);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);
-					cs = 0;
+					cs = -1;
 				}
 			}
 			if (watchdog)
@@ -142,11 +137,10 @@ int main(int argc, char *argv[])
 		struct timeval timeout;
 		timeout.tv_usec = 100000;
 		timeout.tv_sec = 0;
-		if (!cs) {
+		if (cs < 0) {
 			fd_set rd;
 			FD_ZERO(&rd);
-			if (ss > 0)
-				FD_SET(ss, &rd);
+			FD_SET(ss, &rd);
 			if (select(ss + 1, &rd, 0, 0, &timeout) > 0) {
 				struct sockaddr_in client;
 				socklen_t addrlen = sizeof(struct sockaddr_in);

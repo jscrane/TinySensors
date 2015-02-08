@@ -1,7 +1,5 @@
 - maybe run lcd client in a loop?
 - aggregate wired sensor data (at sensorhub instead of the database?)
-- split out mysql storage into new mux client process
 - add status mux client (for status LEDs on rpi)
 - add mux client for mqtt (https://opensensors.io/)
 - merge mux into hub
-- library for mux-clients (parsing data, etc.)
