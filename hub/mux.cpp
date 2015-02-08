@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 				fatal("accept", strerror(errno));
 
 			clients[nclients++] = c;
-			const char *header = "location,id,light,degC,hum%,Vbatt\n";
+			const char *header = "location,id,light,degC,hum%,Vbatt,status,msg_id,millis\n";
 			write(c, header, strlen(header));
 		}
 		if (FD_ISSET(cs, &rd)) {
@@ -164,10 +164,13 @@ int main(int argc, char *argv[])
 					printf("%s", ibuf);
 				unsigned int id, light;
 				float temperature, humidity, battery;
+				unsigned millis, status, msg_id;
 				char obuf[256];
-				int f = sscanf(ibuf, "%u\t%u\t%f\t%f\t%*d\t%f\n", &id, &light, &temperature, &humidity, &battery);
-				if (f == 5 && id < NODES && nodes[id]) {
-					n = snprintf(obuf, sizeof(obuf), "%s,%d,%d,%3.1f,%3.1f,%4.2f\n", nodes[id], id, light, temperature, humidity, battery);
+				int f = sscanf(ibuf, "%u\t%u\t%f\t%f\t%f\t%u\t%u\t%u\n", &id, &light, &temperature, &humidity, &battery, &status, &msg_id, &millis);
+				if (f == 8 && id < NODES && nodes[id]) {
+					n = snprintf(obuf, sizeof(obuf), "%s,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n", nodes[id], id, light, temperature, humidity, battery, status, msg_id, millis);
+					if (verbose)
+						printf("%s", obuf);
 					for (int i = 0; i < NCLIENTS; i++)
 						if (clients[i] && 0 > write(clients[i], obuf, n)) {
 							close(clients[i]);

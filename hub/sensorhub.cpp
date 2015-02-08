@@ -135,9 +135,8 @@ int main(int argc, char *argv[])
 
 			if (cs > 0) {
 				char buf[1024];
-				int n = sprintf(buf, "%d\t%d\t%3.1f\t%3.1f\t%d\t%4.2f\t%u\t%d\t%u\n", 
-						header.from_node, payload.light, temperature, humidity, payload.status, 
-						battery, header.type, header.id, payload.ms);
+				int n = sprintf(buf, "%d\t%d\t%3.1f\t%3.1f\t%4.2f\t%u\t%u\t%u\n", 
+						header.from_node, payload.light, temperature, humidity, battery, payload.status, header.id, payload.ms);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);
@@ -175,7 +174,7 @@ int main(int argc, char *argv[])
 				if (cs < 0)
 					fatal("accept", strerror(errno));
 	
-				const char *header = "node\tlight\tdegC\thum%\tstat\tVbatt\ttype\tmsg-id\ttime\n";
+				const char *header = "node\tlight\tdegC\thum%\tVbatt\tstat\tmsg-id\ttime\n";
 				write(cs, header, strlen(header));
 			}
 		} else {
