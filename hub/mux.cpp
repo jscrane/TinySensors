@@ -9,27 +9,22 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define NCLIENTS 16
-#define NODES 20
+#include "sensorlib.h"
 
+#define NCLIENTS 16
+
+sensor_t sensors[MAX_SENSORS];
 MYSQL *db_conn;
-int ss, cs;
+int ss = -1, cs = -1;
 
 void close_exit()
 {
 	if (db_conn)
 		mysql_close(db_conn);
-	if (ss > 0)
+	if (ss >= 0)
 		close(ss);
-	if (cs > 0)
+	if (cs >= 0)
 		close(cs);
-	exit(1);
-}
-
-void fatal(const char *op, const char *error)
-{
-	fprintf(stderr, "%s: %s\n", op, error);
-	close_exit();
 }
 
 void db_fatal(const char *op)
@@ -42,40 +37,39 @@ void signal_handler(int signo)
 	fatal("caught", strsignal(signo));
 }
 
+int update_sensor_data(sensor_t *s) {
+	for (int i = 0; i < MAX_SENSORS; i++) {
+		sensor_t *t = &sensors[i];
+		if (t->node_id == s->node_id) {
+			t->node_id = s->node_id;
+			t->light = s->light;
+			t->temperature = s->temperature;
+			t->humidity = s->humidity;
+			t->battery = s->battery;
+			return i;
+		}
+	}
+	return -1;
+}
+
 int main(int argc, char *argv[])
 {
 	bool verbose = false, daemon = true;
 	int opt;
-	while ((opt = getopt(argc, argv, "v")) != -1)
+	atexit(close_exit);
+	while ((opt = getopt(argc, argv, "vs:")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
 			daemon = false;
 			break;
+		case 's':
+			cs = connect_socket(optarg, 5555);
+			break;
 		default:
-			fprintf(stderr, "Usage: %s [-v]\n", argv[0]);
+			fprintf(stderr, "Usage: %s [-s svr:port] [-v]\n", argv[0]);
 			exit(1);
 		}
-
-	if (daemon) {
-		pid_t pid = fork();
-
-		if (pid < 0)
-			exit(-1);
-		if (pid > 0)
-			exit(0);
-		if (setsid() < 0)
-			exit(-1);
-
-		umask(0);
-		chdir("/tmp");
-		close(0);
-		close(1);
-		close(2);
-	}
-
-	signal(SIGINT, signal_handler);
-	signal(SIGPIPE, SIG_IGN);
 
 	if (verbose) 
 		printf("MySQL client version: %s\n", mysql_get_client_info());
@@ -93,12 +87,9 @@ int main(int argc, char *argv[])
 		db_fatal("mysql_store_result");
 
 	MYSQL_ROW row;
-	char *nodes[NODES];
-	for (int i = 0; i < NODES; i++)
-		nodes[i] = 0;
-	while ((row = mysql_fetch_row(rs))) {
-		int id = atoi(row[0]);
-		nodes[id] = strdup(row[1]);
+	for (int i = 0; i < MAX_SENSORS && (row = mysql_fetch_row(rs)); i++) {
+		sensors[i].node_id = atoi(row[0]);
+		strncpy(sensors[i].location, row[1], sizeof(sensors[i].location));
 	}
 	
 	mysql_close(db_conn);
@@ -119,17 +110,14 @@ int main(int argc, char *argv[])
 	if (0 > listen(ss, 1))
 		fatal("listen", strerror(errno));
 
-	cs = socket(AF_INET, SOCK_STREAM, 0);
 	if (cs < 0)
-		fatal("socket", strerror(errno));
+		cs = connect_socket("localhost", 5555);
 
-	struct sockaddr_in srvr;
-	memset(&lsnr, 0, sizeof(srvr));
-	srvr.sin_family = AF_INET;
-	srvr.sin_addr.s_addr = htonl(INADDR_ANY);
-	srvr.sin_port = htons(5555);
-	if (0 > connect(cs, (struct sockaddr *)&srvr, sizeof(struct sockaddr)))
-		fatal("connect", strerror(errno));
+	if (daemon) 
+		daemon_mode();
+
+	signal(SIGINT, signal_handler);
+	signal(SIGPIPE, SIG_IGN);
 
 	int clients[NCLIENTS], nclients = 0;
 	for (int i = 0; i < NCLIENTS; i++)
@@ -144,6 +132,7 @@ int main(int argc, char *argv[])
 		if (select(cs + 1, &rd, 0, 0, 0) < 0)
 			fatal("select", strerror(errno));
 
+		char obuf[256];
 		if (FD_ISSET(ss, &rd)) {
 			struct sockaddr_in client;
 			socklen_t addrlen = sizeof(struct sockaddr_in);
@@ -151,9 +140,24 @@ int main(int argc, char *argv[])
 			if (c < 0)
 				fatal("accept", strerror(errno));
 
-			clients[nclients++] = c;
+			// find next free slot
+			for (int i = 0; i < NCLIENTS; i++)
+				if (clients[i] == 0) {
+					nclients++;
+					clients[i] = c;
+					break;
+				}
 			const char *header = "location,id,light,degC,hum%,Vbatt,status,msg_id,millis\n";
 			write(c, header, strlen(header));
+			for (int i = 0; i < MAX_SENSORS; i++) {
+				sensor_t *t = &sensors[i];
+				if (t->battery != 0.0) {
+					int n = format_sensor_data(obuf, sizeof(obuf), t);
+					if (verbose)
+						printf("%s", obuf);
+					write(c, obuf, n);
+				}
+			}
 		}
 		if (FD_ISSET(cs, &rd)) {
 			char ibuf[256];
@@ -162,13 +166,11 @@ int main(int argc, char *argv[])
 				ibuf[n] = 0;
 				if (verbose)
 					printf("%s", ibuf);
-				unsigned int id, light;
-				float temperature, humidity, battery;
-				unsigned millis, status, msg_id;
-				char obuf[256];
-				int f = sscanf(ibuf, "%u\t%u\t%f\t%f\t%f\t%u\t%u\t%u\n", &id, &light, &temperature, &humidity, &battery, &status, &msg_id, &millis);
-				if (f == 8 && id < NODES && nodes[id]) {
-					n = snprintf(obuf, sizeof(obuf), "%s,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n", nodes[id], id, light, temperature, humidity, battery, status, msg_id, millis);
+				sensor_t s;
+				int f = sscanf(ibuf, "%u\t%u\t%f\t%f\t%f\t%u\t%u\t%u\n", &s.node_id, &s.light, &s.temperature, &s.humidity, &s.battery, &s.node_status, &s.msg_id, &s.node_millis);
+				if (f == 8 && s.node_id < MAX_SENSORS) {
+					int si = update_sensor_data(&s);
+					n = format_sensor_data(obuf, sizeof(obuf), &sensors[si]);
 					if (verbose)
 						printf("%s", obuf);
 					for (int i = 0; i < NCLIENTS; i++)
@@ -185,6 +187,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+	// FIXME: do this in the exit handler
 	close(cs);
 	for (int i = 0; i < NCLIENTS; i++)
 		if (clients[i])

@@ -40,25 +40,6 @@ int lcdproc(char *buf, int len, const char *fmt, ...) {
 	return n;
 }
 
-#define MAX_SENSORS	7
-sensor_t sensors[MAX_SENSORS];
-
-int update_sensor_data(sensor_t *s) {
-	for (int i = 0; i < MAX_SENSORS; i++) {
-		sensor_t *t = &sensors[i];
-		if (!t->location[0] || t->node_id == s->node_id) {
-			strcpy(t->location, s->location);
-			t->node_id = s->node_id;
-			t->light = s->light;
-			t->temperature = s->temperature;
-			t->humidity = s->humidity;
-			t->battery = s->battery;
-			return i;
-		}
-	}
-	return -1;
-}
-
 int width, height;
 
 void parse_lcdproc_header(char *buf, int n) {
@@ -79,7 +60,7 @@ void parse_lcdproc_header(char *buf, int n) {
 	}
 }
 
-void update_lcd(int i, sensor_t *s) {
+void update_lcd(sensor_t *s) {
 	char t[16], buf[64];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s->location, s->temperature);
 	int x = 1, y = s->node_id;
@@ -87,7 +68,7 @@ void update_lcd(int i, sensor_t *s) {
 		y -= height;
 		x += width / 2;
 	}
-	lcdproc(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", i, x, y, t);
+	lcdproc(buf, sizeof(buf), "widget_set sens sensor%d %d %d {%s}\n", s->node_id, x, y, t);
 	struct timeval tv;
 	gettimeofday(&tv, 0);
 	time_t now = tv.tv_sec;
@@ -153,9 +134,13 @@ int main(int argc, char *argv[]) {
 
 		if (FD_ISSET(lcd, &rd)) {
 			n = sock_read_line(lcd, buf, sizeof(buf));
-			if (verbose)
-				printf("%d: %d [%s]\n", lcd, n, buf);
-			// FIXME?
+			if (n > 0) {
+				if (verbose)
+					printf("%d: %d [%s]\n", lcd, n, buf);
+			} else if (n == 0) {
+				fprintf(stderr, "LCD died\n");
+				break;
+			}
 		}
 		if (FD_ISSET(mux, &rd)) {
 			n = sock_read_line(mux, buf, sizeof(buf));
@@ -164,10 +149,11 @@ int main(int argc, char *argv[]) {
 			if (n > 0) {
 				sensor_t s;
 				parse_sensor_data(buf, &s);
-				if (s.battery != 0.0) {
-					int i = update_sensor_data(&s);
-					update_lcd(i, &s);
-				}
+				if (s.battery != 0.0)
+					update_lcd(&s);
+			} else if (n == 0) {
+				fprintf(stderr, "Mux died\n");
+				break;
 			}
 		}
 	}

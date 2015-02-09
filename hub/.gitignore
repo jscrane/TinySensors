@@ -1,5 +1,5 @@
 sensorhub
 mux
 lcd
-mysqlmux
+mysql
 *.o

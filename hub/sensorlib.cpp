@@ -13,6 +13,14 @@
 
 #include "sensorlib.h"
 
+int format_sensor_data(char *buf, int len, sensor_t *s) {
+	return snprintf(buf, len, "%s,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n", 
+			s->location, s->node_id, s->light, s->temperature, 
+			s->humidity, s->battery, s->node_status, s->msg_id, 
+			s->node_millis);
+
+}
+
 void parse_sensor_data(char *buf, sensor_t *s) {
 	int i = 0;
 	for (char *p = buf, *q = 0; p; p = q) {
@@ -103,9 +111,14 @@ int connect_socket(const char *s, int defport) {
 }
 
 int sock_read_line(int s, char *buf, int len) {
-	int n = read(s, buf, len);
-	char *eol = strchr(buf, '\n');
-	if (eol)
-		*eol = 0;
-	return n;
+	for (int i = 0; i < len; i++) {
+		char c;
+		read(s, &c, 1);
+		if (c == '\n') {
+			buf[i] = 0;
+			return i;
+		}
+		buf[i] = c;
+	}
+	return len;
 }

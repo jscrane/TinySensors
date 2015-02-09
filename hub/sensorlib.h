@@ -8,6 +8,8 @@ typedef struct sensor {
 	unsigned node_id, node_millis, node_status, msg_id;
 } sensor_t;
 
+int format_sensor_data(char *buf, int len, sensor_t *s);
+
 void parse_sensor_data(char *buf, sensor_t *s);
 
 void daemon_mode();

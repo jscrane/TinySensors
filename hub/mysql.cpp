@@ -88,6 +88,9 @@ int main(int argc, char *argv[]) {
 				if (mysql_query(db_conn, buf))
 					fatal("insert", mysql_error(db_conn));
 			}
+		} else if (n == 0) {
+			fprintf(stderr, "Mux died\n");
+			break;
 		}
 	}
 }
