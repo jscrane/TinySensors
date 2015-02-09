@@ -13,7 +13,7 @@
 
 #include "sensorlib.h"
 
-int mux;
+int mux = -1;
 bool verbose = false;
 MYSQL *db_conn;
 
@@ -54,18 +54,18 @@ int main(int argc, char *argv[]) {
 			exit(-1);
 		}
 
-	db_conn = mysql_init(0);
-	if (mysql_real_connect(db_conn, mysql_host, USER, PASS, "sensors", 0, NULL, 0) == NULL)
-		fatal("mysql_real_connect", mysql_error(db_conn));
+	if (daemon)
+		daemon_mode();
 
 	if (verbose) 
 		printf("MySQL client version: %s\n", mysql_get_client_info());
 
-	if (!mux)
+	db_conn = mysql_init(0);
+	if (mysql_real_connect(db_conn, mysql_host, USER, PASS, "sensors", 0, NULL, 0) == NULL)
+		fatal("mysql_real_connect", mysql_error(db_conn));
+
+	if (mux < 0)
 		mux = connect_socket("localhost", 5678);
-		
-	if (daemon)
-		daemon_mode();
 
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);

@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
+#include <syslog.h>
 
 #include "sensorlib.h"
 
@@ -79,7 +80,9 @@ void daemon_mode() {
 }
 
 void fatal(const char *op, const char *error) {
-	fprintf(stderr, "%s: %s\n", op, error);
+	openlog(0, LOG_PID | LOG_PERROR, LOG_DAEMON);
+	syslog(LOG_ERR, "%s: %s\n", op, error);
+	closelog();
 	exit(1);
 }
 
