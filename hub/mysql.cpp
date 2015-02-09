@@ -72,10 +72,17 @@ int main(int argc, char *argv[]) {
 
 	char buf[1024];
 	for (;;) {
+		fd_set rd;
+		FD_ZERO(&rd);
+		FD_SET(mux, &rd);
+
+		if (0 > select(mux+1, &rd, 0, 0, 0))
+			fatal("select", strerror(errno));
+
 		int n = sock_read_line(mux, buf, sizeof(buf));
-		if (verbose)
-			printf("%d: %d [%s]\n", mux, n, buf);
 		if (n > 0) {
+			if (verbose)
+				printf("%d: %d [%s]\n", mux, n, buf);
 			sensor_t s;
 			parse_sensor_data(buf, &s);
 			if (s.battery != 0.0) {

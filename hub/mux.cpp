@@ -46,6 +46,9 @@ int update_sensor_data(sensor_t *s) {
 			t->temperature = s->temperature;
 			t->humidity = s->humidity;
 			t->battery = s->battery;
+			t->node_status = s->node_status;
+			t->node_millis = s->node_millis;
+			t->msg_id = s->msg_id;
 			return i;
 		}
 	}

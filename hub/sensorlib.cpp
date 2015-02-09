@@ -19,7 +19,6 @@ int format_sensor_data(char *buf, int len, sensor_t *s) {
 			s->location, s->node_id, s->light, s->temperature, 
 			s->humidity, s->battery, s->node_status, s->msg_id, 
 			s->node_millis);
-
 }
 
 void parse_sensor_data(char *buf, sensor_t *s) {
@@ -116,7 +115,9 @@ int connect_socket(const char *s, int defport) {
 int sock_read_line(int s, char *buf, int len) {
 	for (int i = 0; i < len; i++) {
 		char c;
-		read(s, &c, 1);
+		int n = read(s, &c, 1);
+		if (n == 0)
+			return i;
 		if (c == '\n') {
 			buf[i] = 0;
 			return i;
