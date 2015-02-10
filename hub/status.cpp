@@ -56,13 +56,13 @@ int main(int argc, char *argv[]) {
 	if (mux < 0)
 		mux = connect_socket("localhost", 5678);
 		
+	if (daemon)
+		daemon_mode();
+
 	if (!bcm2835_init())
 		fatal("initialising bcm2835\n");
 
 	bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
-
-	if (daemon)
-		daemon_mode();
 
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);

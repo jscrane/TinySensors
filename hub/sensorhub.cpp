@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	// because I wired up the CSN and CE pins backwards on the
 	// "Slice of Pi" proto-board...
 	//RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_26, BCM2835_SPI_SPEED_8MHZ);	
-	RF24 radio(RPI_V2_GPIO_P1_26, RPI_V2_GPIO_P1_15, BCM2835_SPI_SPEED_8MHZ);	
+	RF24 radio(RPI_V2_GPIO_P1_26, RPI_V2_GPIO_P1_15, BCM2835_SPI_CLOCK_DIVIDER_32);	
 	radio.begin();
 	radio.enableDynamicPayloads();
 	radio.setAutoAck(true);
