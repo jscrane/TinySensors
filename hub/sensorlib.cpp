@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <syslog.h>
+#include <stdarg.h>
 
 #include "sensorlib.h"
 
@@ -78,10 +79,13 @@ void daemon_mode() {
 	close(2);
 }
 
-void fatal(const char *op, const char *error) {
+void fatal(const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
 	openlog(0, LOG_PID | LOG_PERROR, LOG_DAEMON);
-	syslog(LOG_ERR, "%s: %s\n", op, error);
+	vsyslog(LOG_ERR, fmt, ap);
 	closelog();
+	va_end(ap);
 	exit(1);
 }
 
@@ -95,7 +99,7 @@ int connect_socket(const char *s, int defport) {
 
 	struct hostent *he = gethostbyname(s);
 	if (!he)
-		fatal("gethostbyname", s);
+		fatal("gethostbyname: %s\n", s);
 
 	struct sockaddr_in addr;
 	memset((void *)&addr, 0, sizeof(sockaddr_in));
@@ -105,9 +109,9 @@ int connect_socket(const char *s, int defport) {
 
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (0 > sock)
-		fatal("socket", strerror(errno));
+		fatal("socket: %s\n", strerror(errno));
 	if (0 > connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)))
-		fatal(s, strerror(errno));
+		fatal("connect: %s: %s\n", s, strerror(errno));
 
 	return sock;
 }

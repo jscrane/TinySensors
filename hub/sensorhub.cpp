@@ -13,6 +13,7 @@
 #include <fcntl.h>
 
 #include <tinysensor.h>
+#include "sensorlib.h"
 
 static int ss = -1, cs = -1;
 
@@ -24,15 +25,9 @@ void close_exit()
 		close(ss);
 }
 
-void fatal(const char *op, const char *error)
-{
-	fprintf(stderr, "%s: %s\n", op, error);
-	exit(1);
-}
-
 void signal_handler(int signo)
 {
-	fatal("caught", strsignal(signo));
+	fatal("Caught: %s\n", strsignal(signo));
 }
 
 #define IDLE_SECONDS 3600
@@ -52,33 +47,18 @@ int main(int argc, char *argv[])
 			watchdog = false;
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-v] [-w]\n", argv[0]);
-			exit(1);
+			fatal("Usage: %s [-v] [-w]\n", argv[0]);
 		}
 
-	if (daemon) {
-		pid_t pid = fork();
-
-		if (pid < 0)
-			exit(-1);
-		if (pid > 0)
-			exit(0);
-		if (setsid() < 0)
-			exit(-1);
-
-		umask(0);
-		chdir("/tmp");
-		close(0);
-		close(1);
-		close(2);
-	}
+	if (daemon)
+		daemon_mode();
 
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	ss = socket(AF_INET, SOCK_STREAM, 0);
 	if (ss < 0)
-		fatal("socket", strerror(errno));
+		fatal("socket: %s\n", strerror(errno));
 
 	struct sockaddr_in serv;
 	memset(&serv, 0, sizeof(serv));
@@ -86,10 +66,10 @@ int main(int argc, char *argv[])
 	serv.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv.sin_port = htons(5555);
 	if (0 > bind(ss, (struct sockaddr *)&serv, sizeof(struct sockaddr)))
-		fatal("bind", strerror(errno));
+		fatal("bind: %s\n", strerror(errno));
 
 	if (0 > listen(ss, 1))
-		fatal("listen", strerror(errno));
+		fatal("listen: %s\n", strerror(errno));
 
 	// because I wired up the CSN and CE pins backwards on the
 	// "Slice of Pi" proto-board...
@@ -149,7 +129,7 @@ int main(int argc, char *argv[])
 				socklen_t addrlen = sizeof(struct sockaddr_in);
 				cs = accept(ss, (struct sockaddr *)&client, &addrlen);
 				if (cs < 0)
-					fatal("accept", strerror(errno));
+					fatal("accept: %s\n", strerror(errno));
 	
 				const char *header = "node\tlight\tdegC\thum%\tVbatt\tstat\tmsg-id\ttime\n";
 				write(cs, header, strlen(header));

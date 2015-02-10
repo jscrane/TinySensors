@@ -23,7 +23,7 @@ void close_sockets() {
 }
 
 void signal_handler(int signo) {
-	fatal("Caught", strsignal(signo));
+	fatal("Caught: %s\n", strsignal(signo));
 }
 
 int lcdproc(char *buf, int len, const char *fmt, ...) {
@@ -97,8 +97,7 @@ int main(int argc, char *argv[]) {
 			daemon = false;
 			break;
 		default:
-			fprintf(stderr, "Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
-			exit(-1);
+			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
 		}
 	if (!lcd)
 		lcd = connect_socket("localhost", 13666);
@@ -130,17 +129,15 @@ int main(int argc, char *argv[]) {
 		FD_SET(mux, &rd);
 
 		if (0 > select(mux+1, &rd, 0, 0, 0))
-			fatal("select", strerror(errno));
+			fatal("select: %s\n", strerror(errno));
 
 		if (FD_ISSET(lcd, &rd)) {
 			n = sock_read_line(lcd, buf, sizeof(buf));
 			if (n > 0) {
 				if (verbose)
 					printf("%d: %d [%s]\n", lcd, n, buf);
-			} else if (n == 0) {
-				fprintf(stderr, "LCD died\n");
-				break;
-			}
+			} else if (n == 0)
+				fatal("LCD died\n");
 		}
 		if (FD_ISSET(mux, &rd)) {
 			n = sock_read_line(mux, buf, sizeof(buf));
@@ -151,10 +148,8 @@ int main(int argc, char *argv[]) {
 				parse_sensor_data(buf, &s);
 				if (s.battery != 0.0)
 					update_lcd(&s);
-			} else if (n == 0) {
-				fprintf(stderr, "Mux died\n");
-				break;
-			}
+			} else if (n == 0)
+				fatal("Mux died\n");
 		}
 	}
 }

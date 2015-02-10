@@ -13,7 +13,7 @@ OBJECTS = ${SOURCES:.cpp=.o}
 
 all: ${PROGRAMS}
 
-sensorhub: sensorhub.o
+sensorhub: sensorhub.o sensorlib.o
 
 mux: mux.o sensorlib.o
 

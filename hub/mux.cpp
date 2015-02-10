@@ -11,8 +11,8 @@
 
 #include "sensorlib.h"
 
-#define NCLIENTS 16
-
+#define MAX_CLIENTS 16
+int clients[MAX_CLIENTS];
 sensor_t sensors[MAX_SENSORS];
 MYSQL *db_conn;
 int ss = -1, cs = -1;
@@ -25,16 +25,19 @@ void close_exit()
 		close(ss);
 	if (cs >= 0)
 		close(cs);
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		if (clients[i])
+			close(clients[i]);
 }
 
 void db_fatal(const char *op)
 {
-	fatal(op, mysql_error(db_conn));
+	fatal("%s: $s\n", op, mysql_error(db_conn));
 }
 
 void signal_handler(int signo)
 {
-	fatal("caught", strsignal(signo));
+	fatal("Caught: %s\n", strsignal(signo));
 }
 
 int update_sensor_data(sensor_t *s) {
@@ -70,8 +73,7 @@ int main(int argc, char *argv[])
 			cs = connect_socket(optarg, 5555);
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-s svr:port] [-v]\n", argv[0]);
-			exit(1);
+			fatal("Usage: %s [-s svr:port] [-v]\n", argv[0]);
 		}
 
 	if (verbose) 
@@ -100,7 +102,7 @@ int main(int argc, char *argv[])
 
 	ss = socket(AF_INET, SOCK_STREAM, 0);
 	if (ss < 0)
-		fatal("socket", strerror(errno));
+		fatal("socket: %s\n", strerror(errno));
 
 	struct sockaddr_in lsnr;
 	memset(&lsnr, 0, sizeof(lsnr));
@@ -108,10 +110,10 @@ int main(int argc, char *argv[])
 	lsnr.sin_addr.s_addr = htonl(INADDR_ANY);
 	lsnr.sin_port = htons(5678);
 	if (0 > bind(ss, (struct sockaddr *)&lsnr, sizeof(struct sockaddr)))
-		fatal("bind", strerror(errno));
+		fatal("bind: %s\n", strerror(errno));
 
 	if (0 > listen(ss, 1))
-		fatal("listen", strerror(errno));
+		fatal("listen: %s\n", strerror(errno));
 
 	if (cs < 0)
 		cs = connect_socket("localhost", 5555);
@@ -122,18 +124,16 @@ int main(int argc, char *argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
-	int clients[NCLIENTS], nclients = 0;
-	for (int i = 0; i < NCLIENTS; i++)
-		clients[i] = 0;
+	int nclients = 0;
 	for (;;) {
 		fd_set rd;
 		FD_ZERO(&rd);
-		if (nclients < NCLIENTS)
+		if (nclients < MAX_CLIENTS)
 			FD_SET(ss, &rd);
 		FD_SET(cs, &rd);
 
 		if (select(cs + 1, &rd, 0, 0, 0) < 0)
-			fatal("select", strerror(errno));
+			fatal("select: %s\n", strerror(errno));
 
 		char obuf[256];
 		if (FD_ISSET(ss, &rd)) {
@@ -141,10 +141,10 @@ int main(int argc, char *argv[])
 			socklen_t addrlen = sizeof(struct sockaddr_in);
 			int c = accept(ss, (struct sockaddr *)&client, &addrlen);
 			if (c < 0)
-				fatal("accept", strerror(errno));
+				fatal("accept: %s\n", strerror(errno));
 
 			// find next free slot
-			for (int i = 0; i < NCLIENTS; i++)
+			for (int i = 0; i < MAX_CLIENTS; i++)
 				if (clients[i] == 0) {
 					nclients++;
 					clients[i] = c;
@@ -176,24 +176,16 @@ int main(int argc, char *argv[])
 					n = format_sensor_data(obuf, sizeof(obuf), &sensors[si]);
 					if (verbose)
 						printf("%s", obuf);
-					for (int i = 0; i < NCLIENTS; i++)
+					for (int i = 0; i < MAX_CLIENTS; i++)
 						if (clients[i] && 0 > write(clients[i], obuf, n)) {
 							close(clients[i]);
 							clients[i] = 0;
 							nclients--;
 						}
 				}
-			} else if (n == 0) {
-				if (verbose)
-					printf("server died\n");
-				break;
-			}
+			} else if (n == 0)
+				fatal("Server died\n");
 		}
 	}
-	// FIXME: do this in the exit handler
-	close(cs);
-	for (int i = 0; i < NCLIENTS; i++)
-		if (clients[i])
-			close(clients[i]);
 	return 0;
 }

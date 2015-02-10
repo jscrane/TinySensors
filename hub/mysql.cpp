@@ -50,8 +50,7 @@ int main(int argc, char *argv[]) {
 			daemon = false;
 			break;
 		default:
-			fprintf(stderr, "Usage: %s: -s mysql_host -m mux_host:port [-v] [-f]\n", argv[0]);
-			exit(-1);
+			fatal("Usage: %s: -s mysql_host -m mux_host:port [-v] [-f]\n", argv[0]);
 		}
 
 	if (daemon)
@@ -62,7 +61,7 @@ int main(int argc, char *argv[]) {
 
 	db_conn = mysql_init(0);
 	if (mysql_real_connect(db_conn, mysql_host, USER, PASS, "sensors", 0, NULL, 0) == NULL)
-		fatal("mysql_real_connect", mysql_error(db_conn));
+		fatal("mysql_real_connect: %s\n", mysql_error(db_conn));
 
 	if (mux < 0)
 		mux = connect_socket("localhost", 5678);
@@ -77,7 +76,7 @@ int main(int argc, char *argv[]) {
 		FD_SET(mux, &rd);
 
 		if (0 > select(mux+1, &rd, 0, 0, 0))
-			fatal("select", strerror(errno));
+			fatal("select: %s\n", strerror(errno));
 
 		int n = sock_read_line(mux, buf, sizeof(buf));
 		if (n > 0) {
@@ -93,11 +92,9 @@ int main(int argc, char *argv[]) {
 					puts(buf);
 
 				if (mysql_query(db_conn, buf))
-					fatal("insert", mysql_error(db_conn));
+					fatal("insert: %s\n", mysql_error(db_conn));
 			}
-		} else if (n == 0) {
-			fprintf(stderr, "Mux died\n");
-			break;
-		}
+		} else if (n == 0)
+			fatal("Mux died\n");
 	}
 }
