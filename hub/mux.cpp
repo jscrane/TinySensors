@@ -13,7 +13,7 @@
 
 #define MAX_CLIENTS 16
 int clients[MAX_CLIENTS];
-sensor_t sensors[MAX_SENSORS];
+sensor sensors[MAX_SENSORS];
 MYSQL *db_conn;
 int ss = -1, cs = -1;
 
@@ -40,9 +40,9 @@ void signal_handler(int signo)
 	fatal("Caught: %s\n", strsignal(signo));
 }
 
-int update_sensor_data(sensor_t *s) {
+int update_sensor_data(sensor *s) {
 	for (int i = 0; i < MAX_SENSORS; i++) {
-		sensor_t *t = &sensors[i];
+		sensor *t = &sensors[i];
 		if (t->node_id == s->node_id) {
 			t->node_id = s->node_id;
 			t->light = s->light;
@@ -153,9 +153,9 @@ int main(int argc, char *argv[])
 			const char *header = "location,id,light,degC,hum%,Vbatt,status,msg_id,time\n";
 			write(c, header, strlen(header));
 			for (int i = 0; i < MAX_SENSORS; i++) {
-				sensor_t *t = &sensors[i];
+				sensor *t = &sensors[i];
 				if (t->battery != 0.0) {
-					int n = format_sensor_data(obuf, sizeof(obuf), t);
+					int n = t->to_csv(obuf, sizeof(obuf));
 					if (verbose)
 						printf("%s", obuf);
 					write(c, obuf, n);
@@ -169,11 +169,11 @@ int main(int argc, char *argv[])
 				ibuf[n] = 0;
 				if (verbose)
 					printf("%s", ibuf);
-				sensor_t s;
-				int f = parse_sensor_data(ibuf, &s);
+				sensor s;
+				int f = s.from_csv(ibuf);
 				if (f == 9 && s.node_id < MAX_SENSORS) {
 					int si = update_sensor_data(&s);
-					n = format_sensor_data(obuf, sizeof(obuf), &sensors[si]);
+					n = sensors[si].to_csv(obuf, sizeof(obuf));
 					if (verbose)
 						printf("%s", obuf);
 					for (int i = 0; i < MAX_CLIENTS; i++)

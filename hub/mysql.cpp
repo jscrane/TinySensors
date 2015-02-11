@@ -82,8 +82,8 @@ int main(int argc, char *argv[]) {
 		if (n > 0) {
 			if (verbose)
 				printf("%d: %d [%s]\n", mux, n, buf);
-			sensor_t s;
-			parse_sensor_data(buf, &s);
+			sensor s;
+			s.from_csv(buf);
 			if (s.battery != 0.0) {
 				sprintf(buf, "INSERT INTO sensor_data (node_id,node_ms,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
 					s.node_id, s.node_time, s.light, s.humidity, s.temperature, s.battery, s.node_status, s.msg_id);

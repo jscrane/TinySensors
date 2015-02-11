@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 			if ((temp >> 8) == 0x7f)
 				temp = temp - 32768;
 
-			sensor_t s;
+			sensor s;
 			s.temperature = ((float)temp) / 10;
 			s.humidity = ((float)payload.humidity) / 10;
 			s.battery = ((float)payload.battery) * 3.3 / 1023.0;
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 
 			if (cs >= 0) {
 				char buf[1024];
-				int n = format_sensor_data(buf, sizeof(buf), &s);
+				int n = s.to_csv(buf, sizeof(buf));
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);

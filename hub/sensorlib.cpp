@@ -15,14 +15,14 @@
 
 #include "sensorlib.h"
 
-int format_sensor_data(char *buf, int len, sensor_t *s) {
+int sensor::to_csv(char *buf, int len) {
 	return snprintf(buf, len, "%s,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n", 
-			s->location, s->node_id, s->light, s->temperature, 
-			s->humidity, s->battery, s->node_status, s->msg_id, 
-			s->node_time);
+			location, node_id, light, temperature, 
+			humidity, battery, node_status, msg_id, 
+			node_time);
 }
 
-int parse_sensor_data(char *buf, sensor_t *s) {
+int sensor::from_csv(char *buf) {
 	int i = 0;
 	for (char *p = buf, *q = 0; p; p = q) {
 		q = strchr(p, ',');
@@ -30,33 +30,33 @@ int parse_sensor_data(char *buf, sensor_t *s) {
 			*q++ = 0;
 		switch(i) {
 		case 0:	
-			strncpy(s->location, p, sizeof(s->location));
-			for (char *x = s->location; *x; x++)
+			strncpy(location, p, sizeof(location));
+			for (char *x = location; *x; x++)
 				*x = tolower(*x);
 			break;
 		case 1:
-			s->node_id = atoi(p);
+			node_id = atoi(p);
 			break;
 		case 2:
-			s->light = atoi(p);
+			light = atoi(p);
 			break;
 		case 3:
-			s->temperature = atof(p);
+			temperature = atof(p);
 			break;
 		case 4:
-			s->humidity = atof(p);
+			humidity = *p ? atof(p): -1;
 			break;
 		case 5:
-			s->battery = atof(p);
+			battery = *p? atof(p): -1;
 			break;
 		case 6:
-			s->node_time = atoi(p);
+			node_time = atoi(p);
 			break;
 		case 7:
-			s->node_status = atoi(p);
+			node_status = atoi(p);
 			break;
 		case 8:
-			s->msg_id = atoi(p);
+			msg_id = atoi(p);
 			break;
 		}
 		i++;

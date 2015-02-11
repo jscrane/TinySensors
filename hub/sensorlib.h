@@ -1,16 +1,17 @@
 #ifndef __SENSORLIB_H__
 #define __SENSORLIB_H__
 
-typedef struct sensor {
+class sensor {
+public:
 	char location[16];
 	unsigned light;
 	float temperature, humidity, battery;
 	unsigned node_id, node_time, node_status, msg_id;
-} sensor_t;
 
-int format_sensor_data(char *buf, int len, sensor_t *s);
-
-int parse_sensor_data(char *buf, sensor_t *s);
+	int to_csv(char *buf, int len);
+	int from_csv(char *buf);
+	bool is_wireless() { return humidity >= 0.0; }
+};
 
 void daemon_mode();
 

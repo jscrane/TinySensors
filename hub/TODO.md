@@ -1,4 +1,4 @@
 - maybe run lcd client in a loop?
 - add mux client for mqtt (https://opensensors.io/)
 - aggregate wired sensor data at mux: connect to server on sheeva
-- need more intelligence in sensor_t: make class
+- add rrd client

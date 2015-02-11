@@ -91,13 +91,13 @@ int main(int argc, char *argv[]) {
 			if (verbose)
 				printf("%d: %d [%s]\n", mux, n, buf);
 			if (n > 0) {
-				sensor_t s;
-				parse_sensor_data(buf, &s);
-
-				// FIXME: check it's a wireless one
-				last.tv_sec = now.tv_sec;
-				bcm2835_gpio_write(pin, LOW);
-				bcm2835_gpio_write(pin, HIGH);
+				sensor s;
+				s.from_csv(buf);
+				if (s.is_wireless()) {
+					last.tv_sec = now.tv_sec;
+					bcm2835_gpio_write(pin, LOW);
+					bcm2835_gpio_write(pin, HIGH);
+				}
 			} else if (n == 0)
 				fatal("Mux died\n");
 		}

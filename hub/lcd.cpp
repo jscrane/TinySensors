@@ -60,7 +60,7 @@ void parse_lcdproc_header(char *buf, int n) {
 	}
 }
 
-void update_lcd(sensor_t *s) {
+void update_lcd(sensor *s) {
 	char t[16], buf[64];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s->location, s->temperature);
 	int x = 1, y = s->node_id;
@@ -144,9 +144,9 @@ int main(int argc, char *argv[]) {
 			if (verbose)
 				printf("%d: %d [%s]\n", mux, n, buf);
 			if (n > 0) {
-				sensor_t s;
-				parse_sensor_data(buf, &s);
-				if (s.battery != 0.0)
+				sensor s;
+				s.from_csv(buf);
+				if (s.is_wireless())
 					update_lcd(&s);
 			} else if (n == 0)
 				fatal("Mux died\n");
