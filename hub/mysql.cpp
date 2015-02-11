@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 			parse_sensor_data(buf, &s);
 			if (s.battery != 0.0) {
 				sprintf(buf, "INSERT INTO sensor_data (node_id,node_ms,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
-					s.node_id, s.node_millis, s.light, s.humidity, s.temperature, s.battery, s.node_status, s.msg_id);
+					s.node_id, s.node_time, s.light, s.humidity, s.temperature, s.battery, s.node_status, s.msg_id);
 
 				if (verbose)
 					puts(buf);

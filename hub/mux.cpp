@@ -50,7 +50,7 @@ int update_sensor_data(sensor_t *s) {
 			t->humidity = s->humidity;
 			t->battery = s->battery;
 			t->node_status = s->node_status;
-			t->node_millis = s->node_millis;
+			t->node_time = s->node_time;
 			t->msg_id = s->msg_id;
 			return i;
 		}
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 					clients[i] = c;
 					break;
 				}
-			const char *header = "location,id,light,degC,hum%,Vbatt,status,msg_id,millis\n";
+			const char *header = "location,id,light,degC,hum%,Vbatt,status,msg_id,time\n";
 			write(c, header, strlen(header));
 			for (int i = 0; i < MAX_SENSORS; i++) {
 				sensor_t *t = &sensors[i];
@@ -170,8 +170,8 @@ int main(int argc, char *argv[])
 				if (verbose)
 					printf("%s", ibuf);
 				sensor_t s;
-				int f = sscanf(ibuf, "%u\t%u\t%f\t%f\t%f\t%u\t%u\t%u\n", &s.node_id, &s.light, &s.temperature, &s.humidity, &s.battery, &s.node_status, &s.msg_id, &s.node_millis);
-				if (f == 8 && s.node_id < MAX_SENSORS) {
+				int f = parse_sensor_data(ibuf, &s);
+				if (f == 9 && s.node_id < MAX_SENSORS) {
 					int si = update_sensor_data(&s);
 					n = format_sensor_data(obuf, sizeof(obuf), &sensors[si]);
 					if (verbose)

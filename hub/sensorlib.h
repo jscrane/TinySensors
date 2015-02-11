@@ -5,12 +5,12 @@ typedef struct sensor {
 	char location[16];
 	unsigned light;
 	float temperature, humidity, battery;
-	unsigned node_id, node_millis, node_status, msg_id;
+	unsigned node_id, node_time, node_status, msg_id;
 } sensor_t;
 
 int format_sensor_data(char *buf, int len, sensor_t *s);
 
-void parse_sensor_data(char *buf, sensor_t *s);
+int parse_sensor_data(char *buf, sensor_t *s);
 
 void daemon_mode();
 

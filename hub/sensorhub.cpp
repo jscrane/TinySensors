@@ -99,14 +99,20 @@ int main(int argc, char *argv[])
 			short temp = payload.temperature;
 			if ((temp >> 8) == 0x7f)
 				temp = temp - 32768;
-			float temperature = ((float)temp) / 10;
-			float humidity = ((float)payload.humidity) / 10;
-			float battery = ((float)payload.battery) * 3.3 / 1023.0;
+
+			sensor_t s;
+			s.temperature = ((float)temp) / 10;
+			s.humidity = ((float)payload.humidity) / 10;
+			s.battery = ((float)payload.battery) * 3.3 / 1023.0;
+			s.light = payload.light;
+			s.node_id = header.from_node;
+			s.node_status = payload.status;
+			s.msg_id = header.id;
+			s.node_time = payload.ms;
 
 			if (cs >= 0) {
 				char buf[1024];
-				int n = sprintf(buf, "%d\t%d\t%3.1f\t%3.1f\t%4.2f\t%u\t%u\t%u\n", 
-						header.from_node, payload.light, temperature, humidity, battery, payload.status, header.id, payload.ms);
+				int n = format_sensor_data(buf, sizeof(buf), &s);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);
@@ -130,9 +136,6 @@ int main(int argc, char *argv[])
 				cs = accept(ss, (struct sockaddr *)&client, &addrlen);
 				if (cs < 0)
 					fatal("accept: %s\n", strerror(errno));
-	
-				const char *header = "node\tlight\tdegC\thum%\tVbatt\tstat\tmsg-id\ttime\n";
-				write(cs, header, strlen(header));
 			}
 		} else {
 			// we have a client, just sleep
