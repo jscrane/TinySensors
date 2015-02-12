@@ -12,10 +12,12 @@
 #include "sensorlib.h"
 
 #define MAX_CLIENTS 16
+#define MAX_SERVERS 4
 int clients[MAX_CLIENTS];
 sensor sensors[MAX_SENSORS];
 MYSQL *db_conn;
-int ss = -1, cs = -1;
+int ss = -1;
+int servers[MAX_SERVERS], ns = 0;
 
 void close_exit()
 {
@@ -23,8 +25,8 @@ void close_exit()
 		mysql_close(db_conn);
 	if (ss >= 0)
 		close(ss);
-	if (cs >= 0)
-		close(cs);
+	for (int i = 0; i < ns; i++)
+		close(servers[i]);
 	for (int i = 0; i < MAX_CLIENTS; i++)
 		if (clients[i])
 			close(clients[i]);
@@ -32,7 +34,7 @@ void close_exit()
 
 void db_fatal(const char *op)
 {
-	fatal("%s: $s\n", op, mysql_error(db_conn));
+	fatal("%s: %s\n", op, mysql_error(db_conn));
 }
 
 void signal_handler(int signo)
@@ -61,19 +63,21 @@ int update_sensor_data(sensor *s) {
 int main(int argc, char *argv[])
 {
 	bool verbose = false, daemon = true;
+	const char *mysql_host = "localhost";
 	int opt;
+
 	atexit(close_exit);
-	while ((opt = getopt(argc, argv, "vs:")) != -1)
+	while ((opt = getopt(argc, argv, "vm:")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
 			daemon = false;
 			break;
-		case 's':
-			cs = connect_socket(optarg, 5555);
+		case 'm':
+			mysql_host = optarg;
 			break;
 		default:
-			fatal("Usage: %s [-s svr:port] [-v]\n", argv[0]);
+			fatal("Usage: %s [-m mysql_host] [-v] sensorhost:port ...\n", argv[0]);
 		}
 
 	if (verbose) 
@@ -81,10 +85,10 @@ int main(int argc, char *argv[])
 
 	db_conn = mysql_init(0);
 
-	if (mysql_real_connect(db_conn, "localhost", USER, PASS, "sensors", 0, NULL, 0) == NULL)
+	if (mysql_real_connect(db_conn, mysql_host, USER, PASS, "sensors", 0, NULL, 0) == NULL)
 		db_fatal("mysql_real_connect");
 	
-	if (mysql_query(db_conn, "SELECT id,location FROM nodes WHERE device_type_id=0"))
+	if (mysql_query(db_conn, "SELECT id,location,device_type_id FROM nodes"))
 		db_fatal("mysql_query");
 
 	MYSQL_RES *rs = mysql_store_result(db_conn);
@@ -95,6 +99,7 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < MAX_SENSORS && (row = mysql_fetch_row(rs)); i++) {
 		sensors[i].node_id = atoi(row[0]);
 		strncpy(sensors[i].location, row[1], sizeof(sensors[i].location));
+		sensors[i].node_type = atoi(row[2]);
 	}
 	
 	mysql_close(db_conn);
@@ -112,11 +117,11 @@ int main(int argc, char *argv[])
 	if (0 > bind(ss, (struct sockaddr *)&lsnr, sizeof(struct sockaddr)))
 		fatal("bind: %s\n", strerror(errno));
 
-	if (0 > listen(ss, 1))
+	if (0 > listen(ss, MAX_CLIENTS))
 		fatal("listen: %s\n", strerror(errno));
 
-	if (cs < 0)
-		cs = connect_socket("localhost", 5555);
+	for (int ind = optind; ind < argc && ns < MAX_SERVERS; ind++, ns++)
+		servers[ns] = connect_socket(argv[ind], 5555);
 
 	if (daemon) 
 		daemon_mode();
@@ -130,9 +135,10 @@ int main(int argc, char *argv[])
 		FD_ZERO(&rd);
 		if (nclients < MAX_CLIENTS)
 			FD_SET(ss, &rd);
-		FD_SET(cs, &rd);
+		for (int i = 0; i < ns; i++)
+			FD_SET(servers[i], &rd);
 
-		if (select(cs + 1, &rd, 0, 0, 0) < 0)
+		if (select(servers[ns-1] + 1, &rd, 0, 0, 0) < 0)
 			fatal("select: %s\n", strerror(errno));
 
 		char obuf[256];
@@ -150,7 +156,7 @@ int main(int argc, char *argv[])
 					clients[i] = c;
 					break;
 				}
-			const char *header = "location,id,light,degC,hum%,Vbatt,status,msg_id,time\n";
+			const char *header = "location,id,type,light,degC,hum%,Vbatt,status,msg_id,time\n";
 			write(c, header, strlen(header));
 			for (int i = 0; i < MAX_SENSORS; i++) {
 				sensor *t = &sensors[i];
@@ -162,30 +168,30 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		if (FD_ISSET(cs, &rd)) {
-			char ibuf[256];
-			int n = read(cs, ibuf, sizeof(ibuf));
-			if (n > 0) {
-				ibuf[n] = 0;
-				if (verbose)
-					printf("%s", ibuf);
-				sensor s;
-				int f = s.from_csv(ibuf);
-				if (f == 9 && s.node_id < MAX_SENSORS) {
-					int si = update_sensor_data(&s);
-					n = sensors[si].to_csv(obuf, sizeof(obuf));
+		for (int i = 0; i < ns; i++)
+			if (FD_ISSET(servers[i], &rd)) {
+				char ibuf[256];
+				int n = sock_read_line(servers[i], ibuf, sizeof(ibuf));
+				if (n > 0) {
 					if (verbose)
-						printf("%s", obuf);
-					for (int i = 0; i < MAX_CLIENTS; i++)
-						if (clients[i] && 0 > write(clients[i], obuf, n)) {
-							close(clients[i]);
-							clients[i] = 0;
-							nclients--;
-						}
-				}
-			} else if (n == 0)
-				fatal("Server died\n");
-		}
+						printf("%s\n", ibuf);
+					sensor s;
+					int f = s.from_csv(ibuf);
+					if (f == 10 && s.node_id < MAX_SENSORS) {
+						int si = update_sensor_data(&s);
+						n = sensors[si].to_csv(obuf, sizeof(obuf));
+						if (verbose)
+							printf("%s", obuf);
+						for (int i = 0; i < MAX_CLIENTS; i++)
+							if (clients[i] && 0 > write(clients[i], obuf, n)) {
+								close(clients[i]);
+								clients[i] = 0;
+								nclients--;
+							}
+					}
+				} else if (n == 0)
+					fatal("Server died\n");
+			}
 	}
 	return 0;
 }

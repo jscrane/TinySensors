@@ -1,4 +1,5 @@
-- maybe run lcd client in a loop?
 - add mux client for mqtt (https://opensensors.io/)
-- aggregate wired sensor data at mux: connect to server on sheeva
 - add rrd client
+- configure sensors not to retransmit if hub down
+- rebuild rf24-rpi lib with external bcm library
+- lcd client should manage both sensor screens

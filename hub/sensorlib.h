@@ -7,10 +7,11 @@ public:
 	unsigned light;
 	float temperature, humidity, battery;
 	unsigned node_id, node_time, node_status, msg_id;
+	unsigned node_type;
 
 	int to_csv(char *buf, int len);
 	int from_csv(char *buf);
-	bool is_wireless() { return humidity >= 0.0; }
+	bool is_wireless() { return node_type == 0; }
 };
 
 void daemon_mode();
