@@ -16,7 +16,7 @@ my $rin = '';
 my $rout;
 vec($rin, fileno($listen), 1) = 1;
 
-my $timeout = 30;
+my $timeout = 120;
 my $nfound;
 my @conns;
 
@@ -30,7 +30,7 @@ while (1) {
 		$conn->autoflush(1);
 		push(@conns, $conn);
 	} else {
-		$timeout = 30; 
+		$timeout = 120; 
 		my $temp = '';
 		my $light = '';
 		my $now = time;
