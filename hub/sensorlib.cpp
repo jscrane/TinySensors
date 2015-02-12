@@ -71,7 +71,7 @@ int sensor::from_csv(char *buf) {
 			battery = *p? atof(p): -1;
 			break;
 		case 7:
-			node_status = *p? atoi(p): -1;
+			node_status = atoi(p);
 			break;
 		case 8:
 			msg_id = *p? atoi(p): 0;

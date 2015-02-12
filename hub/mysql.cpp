@@ -25,7 +25,7 @@ void close_sockets() {
 }
 
 void signal_handler(int signo) {
-	fatal("Caught", strsignal(signo));
+	fatal("Caught %s\n", strsignal(signo));
 }
 
 int main(int argc, char *argv[]) {
@@ -84,10 +84,23 @@ int main(int argc, char *argv[]) {
 				printf("%d: %d [%s]\n", mux, n, buf);
 			sensor s;
 			s.from_csv(buf);
-			if (s.battery != 0.0) {
-				sprintf(buf, "INSERT INTO sensor_data (node_id,node_ms,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
+			if (s.node_id != 0) {
+				switch (s.node_type) {
+				case 0:
+					sprintf(buf, "INSERT INTO sensor_data (node_id,node_ts,light,humidity,temperature,battery,status,msg_id) VALUES(%d,%d,%d,%.1f,%.1f,%.2f,%d,%d)", 
 					s.node_id, s.node_time, s.light, s.humidity, s.temperature, s.battery, s.node_status, s.msg_id);
-
+					break;
+				case 2:
+					sprintf(buf, "INSERT INTO sensor_data (node_id,node_ts,light,temperature,status) VALUES(%d,%d,%d,%.1f,%d)", 
+					s.node_id, s.node_time, s.light, s.temperature, s.node_status);
+					break;
+				case 3:
+				case 4:
+					sprintf(buf, "INSERT INTO sensor_data (node_id,node_ts,temperature,status) VALUES(%d,%d,%.1f,%d)", 
+					s.node_id, s.node_time, s.temperature, s.node_status);
+					break;
+				}
+					
 				if (verbose)
 					puts(buf);
 
