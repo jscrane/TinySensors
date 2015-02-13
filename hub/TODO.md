@@ -1,6 +1,5 @@
-- add mux client for mqtt (https://opensensors.io/)
 - add rrd client
+- sensor for external weather and chill
+- add mux client for mqtt (https://opensensors.io/)
 - configure tinysensors not to retransmit if hub down
 - rebuild rf24-rpi lib with external bcm library
-- lcd client should manage both sensor screens
-- sensor for external weather and chill
