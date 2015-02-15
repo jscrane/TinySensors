@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
 				if (s.is_wireless()) {
 					last.tv_sec = now.tv_sec;
 					bcm2835_gpio_write(pin, LOW);
+					bcm2835_delay(20);
 					bcm2835_gpio_write(pin, HIGH);
 				}
 			} else if (n == 0)

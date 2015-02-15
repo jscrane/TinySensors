@@ -49,8 +49,6 @@ int sensor::from_csv(char *buf) {
 		switch(i) {
 		case 0:	
 			strncpy(location, p, sizeof(location));
-			for (char *x = location; *x; x++)
-				*x = tolower(*x);
 			break;
 		case 1:
 			node_id = atoi(p);
