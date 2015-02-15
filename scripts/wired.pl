@@ -16,7 +16,7 @@ my $rin = '';
 my $rout;
 vec($rin, fileno($listen), 1) = 1;
 
-my $timeout = 120;
+my $timeout = 30;
 my $nfound;
 my @conns;
 
@@ -30,7 +30,7 @@ while (1) {
 		$conn->autoflush(1);
 		push(@conns, $conn);
 	} else {
-		$timeout = 120; 
+		$timeout = 180; 
 		my $temp = '';
 		my $light = '';
 		my $now = time;
@@ -43,7 +43,7 @@ while (1) {
 					$temp = $t + 0.0;
 					last;
 				}
-				sleep 2;
+				sleep 4;
 			}
 			if ($sensors{$device}{light}) {
 				for (my $i = 0; $i < 5; $i++) {
@@ -55,7 +55,7 @@ while (1) {
 						$light = int $v * 50;
 						last;
 					}
-					sleep 2;
+					sleep 4;
 				}
 			}
 			my $data = ",$id,,$light,$temp,,,,,$now\n";
