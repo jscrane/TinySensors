@@ -164,37 +164,8 @@ int main(int argc, char *argv[]) {
 				if (s.is_wireless()) {
 					update_lcd(&s, s.node_id, WIRELESS);
 					update_ts();
-				} else {
-					int id;
-					// puke
-					switch (s.node_id) {
-					case 20:
-						id = 1;
-						break;
-					case 21:
-						id = 2;
-						break;
-					case 30:
-						id = 3;
-						break;
-					case 31:
-						id = 4;
-						break;
-					case 33:
-						id = 5;
-						break;
-					case 34:
-						id = 6;
-						break;
-					case 40:
-						id = 7;
-						break;
-					default:
-						id = 0;
-						break;
-					}
-					update_lcd(&s, id, WIRED);
-				}
+				} else
+					update_lcd(&s, s.node_id - 19, WIRED);
 			} else if (n == 0)
 				fatal("Mux died\n");
 		}
