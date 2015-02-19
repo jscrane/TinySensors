@@ -1,0 +1,70 @@
+#!/bin/sh
+
+	case $1 in
+	0)
+		rrdtool create $2 -s 60 \
+			DS:temperature:GAUGE:300:-273:200 \
+			DS:light:GAUGE:300:0:255 \
+			DS:humidity:GAUGE:300:0:100 \
+			DS:battery:GAUGE:300:0:6 \
+			RRA:AVERAGE:0.5:5:1680 \
+			RRA:MIN:0.5:5:1680 \
+			RRA:MAX:0.5:5:1680 \
+			RRA:LAST:0.5:5:1680 \
+			RRA:AVERAGE:0.5:30:1440 \
+			RRA:MIN:0.5:30:1440 \
+			RRA:MAX:0.5:30:1440 \
+			RRA:LAST:0.5:30:1440 \
+			RRA:AVERAGE:0.5:120:4320 \
+			RRA:MIN:0.5:120:4320 \
+			RRA:MAX:0.5:120:4320 \
+			RRA:LAST:0.5:120:4320 \
+			RRA:AVERAGE:0.5:720:7300 \
+			RRA:MIN:0.5:720:7300 \
+			RRA:MAX:0.5:720:7300 \
+			RRA:LAST:0.5:720:7300
+		;;
+	1)
+		;;
+	2)
+		rrdtool create $2 -s 180 \
+			DS:temperature:GAUGE:600:-273:200 \
+			DS:light:GAUGE:600:0:255 \
+			RRA:AVERAGE:0.5:2:1680 \
+			RRA:MIN:0.5:2:1680 \
+			RRA:MAX:0.5:2:1680 \
+			RRA:LAST:0.5:2:1680 \
+			RRA:AVERAGE:0.5:10:1440 \
+			RRA:MIN:0.5:10:1440 \
+			RRA:MAX:0.5:10:1440 \
+			RRA:LAST:0.5:10:1440 \
+			RRA:AVERAGE:0.5:40:4320 \
+			RRA:MIN:0.5:40:4320 \
+			RRA:MAX:0.5:40:4320 \
+			RRA:LAST:0.5:40:4320 \
+			RRA:AVERAGE:0.5:240:7300 \
+			RRA:MIN:0.5:240:7300 \
+			RRA:MAX:0.5:240:7300 \
+			RRA:LAST:0.5:240:7300
+		;;
+	[3-4])
+		rrdtool create $2 -s 180 \
+			DS:temperature:GAUGE:600:-273:200 \
+			RRA:AVERAGE:0.5:2:1680 \
+			RRA:MIN:0.5:2:1680 \
+			RRA:MAX:0.5:2:1680 \
+			RRA:LAST:0.5:2:1680 \
+			RRA:AVERAGE:0.5:10:1440 \
+			RRA:MIN:0.5:10:1440 \
+			RRA:MAX:0.5:10:1440 \
+			RRA:LAST:0.5:10:1440 \
+			RRA:AVERAGE:0.5:40:4320 \
+			RRA:MIN:0.5:40:4320 \
+			RRA:MAX:0.5:40:4320 \
+			RRA:LAST:0.5:40:4320 \
+			RRA:AVERAGE:0.5:240:7300 \
+			RRA:MIN:0.5:240:7300 \
+			RRA:MAX:0.5:240:7300 \
+			RRA:LAST:0.5:240:7300
+		;;
+	esac

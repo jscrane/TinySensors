@@ -3,4 +3,5 @@ mux
 lcd
 mysql
 status
+rrd
 *.o
