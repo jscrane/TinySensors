@@ -20,7 +20,7 @@ int sensor::to_csv(char *buf, int len) {
 	case 0:
 		return snprintf(buf, len, 
 			"%s,%d,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n", 
-			location, node_id, node_type, light, temperature, 
+			short_name, node_id, node_type, light, temperature, 
 			humidity, battery, node_status, msg_id, node_time);
 	case 1:
 		// ???
@@ -28,13 +28,13 @@ int sensor::to_csv(char *buf, int len) {
 	case 2:
 		return snprintf(buf, len, 
 			"%s,%d,%d,%d,%3.1f,,,,,%u\n", 
-			location, node_id, node_type, light, temperature, 
+			short_name, node_id, node_type, light, temperature, 
 			node_time);
 	case 3:
 	case 4:
 		return snprintf(buf, len, 
 			"%s,%d,%d,,%3.1f,,,,%u\n", 
-			location, node_id, node_type, temperature, node_time);
+			short_name, node_id, node_type, temperature, node_time);
 	default:
 		return -1;
 	}
@@ -48,7 +48,7 @@ int sensor::from_csv(char *buf) {
 			*q++ = 0;
 		switch(i) {
 		case 0:	
-			strncpy(location, p, sizeof(location));
+			strncpy(short_name, p, sizeof(short_name));
 			break;
 		case 1:
 			node_id = atoi(p);

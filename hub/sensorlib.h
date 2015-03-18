@@ -3,7 +3,7 @@
 
 class sensor {
 public:
-	char location[16];
+	char short_name[5];
 	unsigned light;
 	float temperature, humidity, battery;
 	unsigned node_id, node_time, node_status, msg_id;

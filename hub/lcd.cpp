@@ -63,12 +63,8 @@ void parse_lcdproc_header(char *buf, int n) {
 }
 
 void update_lcd(sensor *s, int sid, const char *screen) {
-	char t[16], buf[64], *p, *q;
-	for (p = s->location, q = buf; *p; p++)
-		if (*p != ' ')
-			*q++ = tolower(*p);
-	*q = 0;
-	snprintf(t, sizeof(t), "%.4s %4.1f", buf, s->temperature);
+	char t[16], buf[64];
+	snprintf(t, sizeof(t), "%.4s %4.1f", s->short_name, s->temperature);
 	int x = 1, y = sid;
 	if (y > height) {
 		y -= height;

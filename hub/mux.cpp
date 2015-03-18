@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	if (mysql_real_connect(db_conn, mysql_host, USER, PASS, "sensors", 0, NULL, 0) == NULL)
 		db_fatal("mysql_real_connect");
 	
-	if (mysql_query(db_conn, "SELECT id,location,device_type_id FROM nodes"))
+	if (mysql_query(db_conn, "SELECT id,short,device_type_id FROM nodes"))
 		db_fatal("mysql_query");
 
 	MYSQL_RES *rs = mysql_store_result(db_conn);
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	MYSQL_ROW row;
 	for (int i = 0; i < MAX_SENSORS && (row = mysql_fetch_row(rs)); i++) {
 		sensors[i].node_id = atoi(row[0]);
-		strncpy(sensors[i].location, row[1], sizeof(sensors[i].location));
+		strncpy(sensors[i].short_name, row[1], sizeof(sensors[i].short_name));
 		sensors[i].node_type = atoi(row[2]);
 	}
 	
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 					clients[i] = c;
 					break;
 				}
-			const char *header = "location,id,type,light,degC,hum%,Vbatt,status,msg_id,time\n";
+			const char *header = "name,id,type,light,degC,hum%,Vbatt,status,msg_id,time\n";
 			write(c, header, strlen(header));
 			for (int i = 0; i < MAX_SENSORS; i++) {
 				sensor *t = &sensors[i];
