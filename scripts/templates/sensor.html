@@ -1,0 +1,24 @@
+$def with (feature, sensor)
+
+<html>
+<head>
+  <TITLE>Sensors</TITLE>
+  <META HTTP-EQUIV="Refresh" CONTENT="300">
+  <META HTTP-EQUIV="Cache-Control" content="no-cache">
+  <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+  <style>
+    body { font-family: Verdana,Tahoma,Arial,Helvetica; font-size:9pt}
+    .header { font-size: 16pt; font-weight: 900; }
+  </style>
+</head>
+
+<body bgcolor="#ffffff" topMargin='5'>
+<table>
+$for p in ["day", "month", "year"]:
+    <tr>
+        <td>
+            <img src='/static/$(feature)_$(sensor)-$(p).png' border='1'>
+        </td>
+    </tr>
+</table>
+</body>

@@ -1,3 +1,4 @@
 *.rrd
 *.pyc
 .*.swp
+static

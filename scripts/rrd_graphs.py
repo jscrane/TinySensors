@@ -4,7 +4,7 @@ import rrdtool
 import sensordb
 
 rrds = '/var/lib/rrd/'
-pngs = '/var/www/img/'
+pngs = '/var/www/static/'
 
 db = sensordb.connect("/home/pi/TinySensors/auth")
 sensors = sensordb.sensors(db)
