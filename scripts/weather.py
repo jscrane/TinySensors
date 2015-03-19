@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import pywapi
 import pprint
@@ -14,7 +14,7 @@ stations = cursor.fetchall()
 for id, code in stations:
     result = pywapi.get_weather_from_weather_com(code)
     w = result['current_conditions']
-    pp.pprint(w)
+    # pp.pprint(w)
 
     cursor.execute("""
 	INSERT INTO weather_data(last_updated,temperature,humidity,visibility,pressure,feels_like,direction,speed,gust,icon,station_id)
