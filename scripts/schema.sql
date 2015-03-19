@@ -41,6 +41,8 @@ CREATE TABLE `nodes` (
   `id` smallint(5) unsigned NOT NULL DEFAULT '0',
   `location` varchar(255) DEFAULT NULL,
   `device_type_id` smallint(5) unsigned NOT NULL,
+  `short` varchar(6) DEFAULT NULL,
+  `colour` char(7) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_device_type_id` (`device_type_id`),
   CONSTRAINT `fk_device_type_id` FOREIGN KEY (`device_type_id`) REFERENCES `device_types` (`id`)
@@ -92,5 +94,5 @@ CREATE TABLE `weather_data` (
   PRIMARY KEY (`id`),
   KEY `fk_station_id` (`station_id`),
   CONSTRAINT `fk_station_id` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=18537 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=20612 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
