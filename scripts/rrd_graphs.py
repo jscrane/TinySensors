@@ -6,10 +6,11 @@ import sensordb
 rrds = '/var/lib/rrd/'
 pngs = '/var/www/img/'
 
-db = sensordb.connect({'host': "localhost", 'user': "sensors", 'passwd': "s3ns0rs", 'db': "sensors"})
+db = sensordb.connect("/home/pi/TinySensors/auth")
 sensors = sensordb.sensors(db)
 types = sensordb.types(db)
 units = sensordb.units
+db.close()
 
 def graph_one(column, units, interval, sensor_id, description, colour):
 	sensor = rrds + 'sensor-' + sensor_id + '.rrd'

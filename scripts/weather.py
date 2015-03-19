@@ -1,20 +1,13 @@
 #!/usr/bin/python
 
-import MySQLdb
 import pywapi
 import pprint
-
-auth = {}
-with open("/home/pi/TinySensors/auth") as myfile:
-    for line in myfile:
-        name, var = line.partition("=")[::2]
-        auth[name] = var.strip()
+import sensordb
 
 pp = pprint.PrettyPrinter(indent=2)
+db = sensordb.connect("/home/pi/TinySensors/auth")
 
-db = MySQLdb.connect(host='localhost', user=auth['USER'], passwd=auth['PASSWORD'], db='sensors')
 cursor = db.cursor()
-
 cursor.execute("SELECT id,code FROM stations")
 stations = cursor.fetchall()
 
