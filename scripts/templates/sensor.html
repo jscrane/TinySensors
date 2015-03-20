@@ -1,4 +1,4 @@
-$def with (feature, sensor)
+$def with (id, sensors, periods)
 
 <html>
 <head>
@@ -14,11 +14,12 @@ $def with (feature, sensor)
 
 <body bgcolor="#ffffff" topMargin='5'>
 <table>
-$for p in ["day", "month", "year"]:
-    <tr>
-        <td>
-            <img src='/static/$(feature)_$(sensor)-$(p).png' border='1'>
-        </td>
-    </tr>
+$for sensor in sensors:
+    $for period in periods:
+        <tr>
+            <td>
+            <img src='/static/$(sensor)_$(id)-$(period).png' border='1'>
+            </td>
+        </tr>
 </table>
 </body>
