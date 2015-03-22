@@ -47,7 +47,7 @@ def graph_combined(column, interval):
 			colour = s['colour']
 			rrd = rrds+'sensor-'+id+'.rrd'
 			defs.append('DEF:'+short+'='+rrd+':'+column+':AVERAGE')
-			lines.append('LINE2:'+short+colour+':'+name)
+			lines.append('LINE1:'+short+colour+':'+name)
 	png = pngs + column + '_all-' + interval + '.png'
 	rrdtool.graph(png, '--imgformat', 'PNG',
 			'--start', '-1'+interval,
@@ -57,9 +57,6 @@ def graph_combined(column, interval):
 			defs, lines)
 
 for u in units:
-	graph_all(u, 'day')
-	graph_combined(u, 'day')
-	graph_all(u, 'month')
-	graph_combined(u, 'month')
-	graph_all(u, 'year')
-	graph_combined(u, 'year')
+	for p in ['day', 'week', 'month', 'year']:
+		graph_all(u, p)
+		graph_combined(u, p)
