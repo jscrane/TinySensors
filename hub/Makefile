@@ -6,12 +6,17 @@ prefix := /usr/local
 CXXFLAGS=-Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -fno-strict-aliasing  -g
 CPPFLAGS=-I$(prefix)/include -I/usr/include/mysql -I../tinysensor -DBIG_JOINS=1 -DUSER=\"${USER}\" -DPASS=\"${PASSWORD}\" -DMAX_SENSORS=64
 LDFLAGS=-L$(prefix)/lib -lrf24-bcm -lrf24-network -lmysqlclient -lpthread -lrrd -lz -lm -lrt -ldl
+DEPFLAGS = -MM -MP -MF
 
 PROGRAMS = sensorhub mux lcd mysql status rrd
 SOURCES = ${wildcard *.cpp}
 OBJECTS = ${SOURCES:.cpp=.o}
+DEPS = ${SOURCES:.cpp=.d}
 
-all: ${PROGRAMS}
+all: ${DEPS} ${PROGRAMS}
+
+%.d: %.cpp
+	$(CXX) $(CPPFLAGS) $(DEPFLAGS) $@ $<
 
 sensorhub: sensorhub.o sensorlib.o
 
@@ -28,5 +33,6 @@ rrd: rrd.o sensorlib.o
 sensorlib.o: sensorlib.h
 
 clean:
-	rm -rf $(PROGRAMS) $(OBJECTS)
+	rm -rf $(PROGRAMS) $(OBJECTS) $(DEPS)
 
+-include $(DEPS)
