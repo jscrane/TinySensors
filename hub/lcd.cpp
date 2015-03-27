@@ -90,10 +90,10 @@ int main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
 		switch (opt) {
 		case 'l':
-			lcd = connect_socket(optarg, 13666);
+			lcd = connect_block(optarg, 13666);
 			break;
 		case 'm':
-			mux = connect_socket(optarg, 5678);
+			mux = connect_block(optarg, 5678);
 			break;
 		case 'v':
 			verbose = true;
@@ -106,9 +106,9 @@ int main(int argc, char *argv[]) {
 			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
 		}
 	if (!lcd)
-		lcd = connect_socket("localhost", 13666);
+		lcd = connect_block("localhost", 13666);
 	if (!mux)
-		mux = connect_socket("localhost", 5678);
+		mux = connect_block("localhost", 5678);
 		
 	if (daemon)
 		daemon_mode();

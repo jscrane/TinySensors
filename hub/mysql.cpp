@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 			mysql_host = optarg;
 			break;
 		case 'm':
-			mux = connect_socket(optarg, 5678);
+			mux = connect_block(optarg, 5678);
 			break;
 		case 'v':
 			verbose = true;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 		fatal("mysql_real_connect: %s\n", mysql_error(db_conn));
 
 	if (mux < 0)
-		mux = connect_socket("localhost", 5678);
+		mux = connect_block("localhost", 5678);
 
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);

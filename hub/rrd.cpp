@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "m:vf")) != -1)
 		switch (opt) {
 		case 'm':
-			mux = connect_socket(optarg, 5678);
+			mux = connect_block(optarg, 5678);
 			break;
 		case 'v':
 			verbose = true;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 			fatal("Usage: %s: -m mux:port [-v] [-f]\n", argv[0]);
 		}
 	if (mux < 0)
-		mux = connect_socket("localhost", 5678);
+		mux = connect_block("localhost", 5678);
 		
 	if (daemon)
 		daemon_mode();

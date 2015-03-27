@@ -18,7 +18,9 @@ void daemon_mode();
 
 void fatal(const char *fmt, ...);
 
-int connect_socket(const char *s, int defport);
+int connect_nonblock(const char *s, int defport);
+
+int connect_block(const char *s, int defport);
 
 int sock_read_line(int s, char *buf, int len);
 

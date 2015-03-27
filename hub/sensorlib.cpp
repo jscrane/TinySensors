@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <fcntl.h>
 
 #include "sensorlib.h"
 
@@ -97,6 +98,12 @@ void daemon_mode() {
 	close(0);
 	close(1);
 	close(2);
+	if (0 > open("/dev/null", O_RDONLY))
+		exit(-1);
+	if (0 > open("/dev/null", O_WRONLY))
+		exit(-1);
+	if (0 > open("/dev/null", O_RDWR))
+		exit(-1);
 }
 
 void fatal(const char *fmt, ...) {
@@ -109,31 +116,57 @@ void fatal(const char *fmt, ...) {
 	exit(1);
 }
 
-int connect_socket(const char *s, int defport) {
+static void init_addr(struct sockaddr_in &a, const char *s, int defport) {
 	int port = defport;
-	char *sep = (char *)strchr(s, ':');
+	char host[32];
+	strncpy(host, s, sizeof(host));
+	char *sep = (char *)strchr(host, ':');
 	if (sep) {
 		*sep++ = 0;
 		port = atoi(sep);
 	}
 
-	struct hostent *he = gethostbyname(s);
+	struct hostent *he = gethostbyname(host);
 	if (!he)
-		fatal("gethostbyname: %s\n", s);
+		fatal("gethostbyname: %s\n", host);
 
-	struct sockaddr_in addr;
-	memset((void *)&addr, 0, sizeof(sockaddr_in));
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr = *(in_addr *)he->h_addr;
+	memset((void *)&a, 0, sizeof(sockaddr_in));
+	a.sin_family = AF_INET;
+	a.sin_port = htons(port);
+	a.sin_addr = *(in_addr *)he->h_addr;
+}
+
+int connect_block(const char *s, int defport) {
+	struct sockaddr_in a;
+	init_addr(a, s, defport);
 
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (0 > sock)
 		fatal("socket: %s\n", strerror(errno));
-	if (0 > connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr)))
+
+	if (0 > connect(sock, (struct sockaddr *)&a, sizeof(struct sockaddr)))
 		fatal("connect: %s: %s\n", s, strerror(errno));
 
 	return sock;
+}
+
+int connect_nonblock(const char *s, int defport) {
+	struct sockaddr_in a;
+	init_addr(a, s, defport);
+
+	int sock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	if (0 > sock)
+		fatal("socket: %s\n", strerror(errno));
+
+	int e = connect(sock, (struct sockaddr *)&a, sizeof(struct sockaddr));
+	if (0 == e || (0 > e && errno == EINPROGRESS))
+		return sock;
+
+	if (0 > e && errno != ECONNREFUSED)
+		fatal("connect: %s: %s\n", s, strerror(errno));
+
+	close(sock);
+	return -1;
 }
 
 int sock_read_line(int s, char *buf, int len) {
