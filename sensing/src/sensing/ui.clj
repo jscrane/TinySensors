@@ -44,14 +44,14 @@
         chart))))
 
 (defn sensor-action [e id]
-  (let [a (into #{} (keys locations))
-        w (locations-with-sensor id)
-        wo (set/difference a w)
+  (let [all (set (keys locations))
+        wi (locations-with-sensor id)
+        wo (set/difference all wi)
         r (s/to-root e)
         enable! (fn [bool coll]
                   (dorun (map #(s/config! (s/select r [(keyword (str "#" %))]) :enabled? bool) coll)))]
     (enable! false wo)
-    (enable! true w)
+    (enable! true wi)
     (make-plot (reset! curr-sensor id) (reset! curr-locations (set/difference @curr-locations wo)) @curr-period)))
 
 (defn period-action [p]

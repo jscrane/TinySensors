@@ -62,13 +62,13 @@
 (def locations
   (apply array-map
          (apply concat
-           (map (fn [{:keys [id location device_type_id]}]
-                  [id [location device_type_id]])
-                (k/select nodes (k/fields :id :location :device_type_id) (k/order :device_type_id))))))
+                (map (fn [{:keys [id location device_type_id]}]
+                       [id [location device_type_id]])
+                     (k/select nodes (k/fields :id :location :device_type_id) (k/order :device_type_id))))))
 
 (defn- device-types-with-sensor [sensor-id]
-  (into #{} (map first (filter (fn [[_ v]] (contains? v sensor-id)) device-types))))
+  (set (map first (filter (fn [[_ v]] (contains? v sensor-id)) device-types))))
 
 (defn locations-with-sensor [sensor-id]
   (let [t (device-types-with-sensor sensor-id)]
-    (into #{} (map first (filter (fn [[_ [_ type]]] (contains? t type)) locations)))))
+    (set (map first (filter (fn [[_ [_ type]]] (contains? t type)) locations)))))
