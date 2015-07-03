@@ -127,7 +127,6 @@ int main(int argc, char *argv[])
 	// connect non-blocking below
 	for (int ind = optind; ind < argc && ns < MAX_SERVERS; ind++, ns++)
 		servers[ns] = -1;
-		// servers[ns] = connect_block(argv[ind], 5555);
 
 	if (daemon) 
 		daemon_mode();
