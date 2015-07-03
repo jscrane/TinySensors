@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: korma:0.4.0">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/korma/korma/0.4.0/korma-0.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

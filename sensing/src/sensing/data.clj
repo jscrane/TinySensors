@@ -2,7 +2,6 @@
   (:require
     [clojure [string :as str]]
     [korma [db :as db] [core :as k]]
-    [clj-time.core :as t]
     [clj-time.coerce :as coerce]))
 
 (db/defdb sensordb (db/mysql {:db "sensors" :user "sensors" :password "s3ns0rs" :host "rho" :delimiters ""}))
@@ -56,7 +55,7 @@
   (apply array-map
          (flatten
            (map (fn [{:keys [id features]}]
-                  [id (into #{} (map keyword (str/split (.toLowerCase features) #", ")))])
+                  [id (into #{} (map keyword (str/split (.toLowerCase features) #" ")))])
                 (k/select sensortypes (k/fields :id :features))))))
 
 ; map from description to node_id

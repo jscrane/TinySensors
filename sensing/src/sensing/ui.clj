@@ -5,8 +5,7 @@
     [seesaw [core :as s] [keystroke :as k]]
     [clj-time.core :as t])
   (:import
-    (org.jfree.chart ChartPanel)
-    (org.joda.time Hours))
+    (org.jfree.chart ChartPanel))
   (:use
     [sensing.data :only [sensors locations locations-with-sensor]]
     [sensing.charts :only [make-initial-chart make-chart add-location]]
