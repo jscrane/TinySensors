@@ -63,8 +63,9 @@ CREATE TABLE `sensor_data` (
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `node_id` (`node_id`),
+  KEY `index_sensor_data_on_time` (`time`),
   CONSTRAINT `sensor_data_ibfk_1` FOREIGN KEY (`node_id`) REFERENCES `nodes` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3464821 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4745393 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -94,5 +95,5 @@ CREATE TABLE `weather_data` (
   PRIMARY KEY (`id`),
   KEY `fk_station_id` (`station_id`),
   CONSTRAINT `fk_station_id` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20612 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=27734 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
