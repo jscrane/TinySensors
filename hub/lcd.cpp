@@ -9,10 +9,12 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "sensorlib.h"
 
-int lcd, mux;
+int lcd = -1, mux = -1;
 bool verbose = false;
 #define WIRELESS	"sens"
 #define WIRED		"temp"
@@ -82,43 +84,16 @@ void update_ts() {
 	lcdproc(buf, sizeof(buf), "widget_set " WIRELESS " update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
 
-int main(int argc, char *argv[]) {
-	int opt;
-	bool daemon = true;
-
-	atexit(close_sockets);
-	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
-		switch (opt) {
-		case 'l':
-			lcd = connect_block(optarg, 13666);
-			break;
-		case 'm':
-			mux = connect_block(optarg, 5678);
-			break;
-		case 'v':
-			verbose = true;
-			daemon = false;
-			break;
-		case 'f':
-			daemon = false;
-			break;
-		default:
-			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
-		}
-	if (!lcd)
-		lcd = connect_block("localhost", 13666);
-	if (!mux)
-		mux = connect_block("localhost", 5678);
-		
-	if (daemon)
-		daemon_mode();
-
-	signal(SIGINT, signal_handler);
-	signal(SIGPIPE, SIG_IGN);
-
+void init_lcd() {
 	char buf[128];
 	int n = lcdproc(buf, sizeof(buf), "hello\n");
-	parse_lcdproc_header(buf, n);
+	height = width = 0;
+	for (;;) {
+		parse_lcdproc_header(buf, n);
+		if (width > 0)
+			break;
+		n = lcdproc(buf, sizeof(buf), "");
+	}
 
 	lcdproc(buf, sizeof(buf), "client_set name {Sensors}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " WIRELESS "\n");
@@ -132,14 +107,71 @@ int main(int argc, char *argv[]) {
 		lcdproc(buf, sizeof(buf), "widget_add " WIRELESS " sensor%d string\n", i);
 	lcdproc(buf, sizeof(buf), "widget_add " WIRELESS " update string\n");
 	lcdproc(buf, sizeof(buf), "backlight off\n");
+}
+
+int on_connect(int s) {
+	int e = 0;
+	socklen_t len = sizeof(e);
+	getsockopt(s, SOL_SOCKET, SO_ERROR, &e, &len);
+	if (e != 0) {
+		printf("Server connect failed: %s\n", strerror(e));
+		close(s);
+		return -1;
+	}
+	return s;
+}
+
+int main(int argc, char *argv[]) {
+	int opt;
+	bool daemon = true;
+	const char *lcd_host = "localhost", *mux_host = "localhost";
+
+	atexit(close_sockets);
+	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
+		switch (opt) {
+		case 'l':
+			lcd_host = optarg;
+			break;
+		case 'm':
+			mux_host = optarg;
+			break;
+		case 'v':
+			verbose = true;
+			daemon = false;
+			break;
+		case 'f':
+			daemon = false;
+			break;
+		default:
+			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
+		}
+		
+	if (daemon)
+		daemon_mode();
+
+	signal(SIGINT, signal_handler);
+	signal(SIGPIPE, SIG_IGN);
 
 	for (;;) {
-		fd_set rd;
+		char buf[128];
+		int n;
+		fd_set rd, wr;
 		FD_ZERO(&rd);
-		FD_SET(lcd, &rd);
-		FD_SET(mux, &rd);
+		FD_ZERO(&wr);
+		if (lcd < 0) {
+			lcd = connect_nonblock(lcd_host, 13666);
+			if (lcd >= 0)
+				FD_SET(lcd, &wr);
+		} else
+			FD_SET(lcd, &rd);
+		if (mux < 0) {
+			mux = connect_nonblock(mux_host, 5678);
+			if (mux >= 0)
+				FD_SET(mux, &wr);
+		} else
+			FD_SET(mux, &rd);
 
-		if (0 > select(mux+1, &rd, 0, 0, 0))
+		if (0 > select(1 + (mux > lcd? mux: lcd), &rd, &wr, 0, 0))
 			fatal("select: %s\n", strerror(errno));
 
 		if (FD_ISSET(lcd, &rd)) {
@@ -147,8 +179,16 @@ int main(int argc, char *argv[]) {
 			if (n > 0) {
 				if (verbose)
 					printf("%d: %d [%s]\n", lcd, n, buf);
-			} else if (n == 0)
-				fatal("LCD died\n");
+			} else if (n == 0) {
+				if (verbose)
+					printf("LCD died\n");
+				close(lcd);
+				lcd = -1;
+			}
+		} else if (FD_ISSET(lcd, &wr)) {
+			lcd = on_connect(lcd);
+			if (lcd >= 0)
+				init_lcd();
 		}
 		if (FD_ISSET(mux, &rd)) {
 			n = sock_read_line(mux, buf, sizeof(buf));
@@ -162,8 +202,13 @@ int main(int argc, char *argv[]) {
 					update_ts();
 				} else
 					update_lcd(&s, s.node_id - 19, WIRED);
-			} else if (n == 0)
-				fatal("Mux died\n");
-		}
+			} else if (n == 0) {
+				if (verbose)
+					printf("Mux died\n");
+				close(mux);
+				mux = -1;
+			}
+		} else if (FD_ISSET(mux, &rd))
+			mux = on_connect(mux);
 	}
 }

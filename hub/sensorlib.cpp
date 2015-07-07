@@ -173,7 +173,7 @@ int sock_read_line(int s, char *buf, int len) {
 	for (int i = 0; i < len; i++) {
 		char c;
 		int n = read(s, &c, 1);
-		if (n == 0)
+		if (n == 0 || (n == -1 && errno == EAGAIN))
 			return i;
 		if (c == '\n') {
 			buf[i] = 0;
