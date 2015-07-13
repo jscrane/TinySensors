@@ -60,6 +60,10 @@ int main(int argc, char *argv[])
 	if (ss < 0)
 		fatal("socket: %s\n", strerror(errno));
 
+	int reuse = 1;
+	if (0 > setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse)))
+		fatal("setsockopt: %s\n", strerror(errno));
+
 	struct sockaddr_in serv;
 	memset(&serv, 0, sizeof(serv));
 	serv.sin_family = AF_INET;

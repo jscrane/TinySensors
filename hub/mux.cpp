@@ -208,12 +208,9 @@ int main(int argc, char *argv[])
 					servers[i] = -1;
 				}
 			} else if (FD_ISSET(servers[i], &wr)) {
-				int e = 0;
-				socklen_t len = sizeof(e);
-				getsockopt(servers[i], SOL_SOCKET, SO_ERROR, &e, &len);
-				if (e != 0) {
-					printf("Server connect failed: %s %d\n", argv[optind + i], e);
-					close(servers[i]);
+				int e = on_connect(servers[i]);
+				if (e == -1) {
+					printf("Server connect failed: %s\n", argv[optind + i]);
 					servers[i] = -1;
 				}
 			}

@@ -18,10 +18,12 @@ void daemon_mode();
 
 void fatal(const char *fmt, ...);
 
-int connect_nonblock(const char *s, int defport);
+int connect_nonblock(const char *host, int defport);
 
-int connect_block(const char *s, int defport);
+int on_connect(int sock);
 
-int sock_read_line(int s, char *buf, int len);
+int connect_block(const char *host, int defport);
+
+int sock_read_line(int sock, char *buf, int len);
 
 #endif

@@ -183,3 +183,14 @@ int sock_read_line(int s, char *buf, int len) {
 	}
 	return len;
 }
+
+int on_connect(int s) {
+	int e = 0;
+	socklen_t len = sizeof(e);
+	getsockopt(s, SOL_SOCKET, SO_ERROR, &e, &len);
+	if (e != 0) {
+		close(s);
+		return -1;
+	}
+	return s;
+}
