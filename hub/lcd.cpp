@@ -14,10 +14,19 @@
 
 #include "sensorlib.h"
 
-int lcd = -1, mux = -1;
-bool verbose = false;
+static int lcd = -1, mux = -1;
+static bool verbose = false;
 #define WIRELESS	"sens"
 #define WIRED		"temp"
+#define TIMEOUT_SECS	600
+
+static int width, height;
+
+struct reading {
+	sensor s;
+	time_t last;
+};
+struct reading readings[MAX_SENSORS];
 
 void close_sockets() {
 	if (lcd >= 0)
@@ -44,8 +53,6 @@ int lcdproc(char *buf, int len, const char *fmt, ...) {
 	return n;
 }
 
-int width, height;
-
 void parse_lcdproc_header(char *buf, int n) {
 	int i = 0;
 	for (char *p = buf, *q = 0; p; p = q) {
@@ -64,22 +71,41 @@ void parse_lcdproc_header(char *buf, int n) {
 	}
 }
 
-void update_lcd(sensor *s, int sid, const char *screen) {
-	char t[16], buf[64];
-	snprintf(t, sizeof(t), "%.4s %4.1f", s->short_name, s->temperature);
+void update_lcd(int sid, const char *screen, const char *t) {
+	char buf[64];
 	int x = 1, y = sid;
 	if (y > height) {
 		y -= height;
 		x += width / 2;
 	}
-	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, s->node_id, x, y, t);
+	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, sid, x, y, t);
 }
 
-void update_ts() {
+void update_temp(sensor &s, int sid, const char *screen) {
+	char t[16];
+	snprintf(t, sizeof(t), "%.4s %4.1f", s.short_name, s.temperature);
+	update_lcd(sid, screen, t);
+}
+
+void blank_sensor(sensor &s, const char *screen) {
+	char t[16];
+	snprintf(t, sizeof(t), "%.4s     ", s.short_name);
+	update_lcd(s.node_id, screen, t);
+}
+
+void check_timeout(sensor &s, const char *screen, time_t &now) {
+	reading &r = readings[s.node_id];
+	r.s = s;
+	r.last = now;
+	for (int i = 0; i < MAX_SENSORS; i++) {
+		struct reading &r = readings[i];
+		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS)
+			blank_sensor(r.s, screen);
+	}
+}
+
+void update_time(time_t &now) {
 	char t[16], buf[64];
-	struct timeval tv;
-	gettimeofday(&tv, 0);
-	time_t now = tv.tv_sec;
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
 	lcdproc(buf, sizeof(buf), "widget_set " WIRELESS " update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
@@ -186,10 +212,14 @@ int main(int argc, char *argv[]) {
 				sensor s;
 				s.from_csv(buf);
 				if (s.is_wireless()) {
-					update_lcd(&s, s.node_id, WIRELESS);
-					update_ts();
+					update_temp(s, s.node_id, WIRELESS);
+					struct timeval tv;
+					gettimeofday(&tv, 0);
+					time_t now = tv.tv_sec;
+					update_time(now);
+					check_timeout(s, WIRELESS, now);
 				} else
-					update_lcd(&s, s.node_id - 19, WIRED);
+					update_temp(s, s.node_id - 19, WIRED);
 			} else if (n == 0) {
 				if (verbose)
 					printf("Mux died\n");
