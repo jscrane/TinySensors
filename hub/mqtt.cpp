@@ -40,8 +40,10 @@ void pub(const char *name, const char *sub, const char *fmt, ...) {
 	if (verbose)
 		printf("%s: %s\n", topic, val);
 	int ret = mosquitto_publish(mosq, 0, topic, strlen(val), val, 0, true);
-	if (ret)
-		fatal("Failed to publish message: %d\n", ret);
+	if (ret == MOSQ_ERR_ERRNO)
+		fatal("Publish: %s\n", strerror(errno));
+	else if (ret)
+		fatal("Publish: %d\n", ret);
 }
 
 int main(int argc, char *argv[])
@@ -68,6 +70,9 @@ int main(int argc, char *argv[])
 			break;
 		}
 
+	if (daemon)
+		daemon_mode();
+
 	mosquitto_lib_init();
 
 	mosq = mosquitto_new("sensors", false, NULL);
@@ -79,9 +84,6 @@ int main(int argc, char *argv[])
 	int ret = mosquitto_connect(mosq, host, port, 0);
 	if (ret)
 		fatal("Can't connect to %s:%d: %d\n", host, port, ret);
-
-	if (daemon)
-		daemon_mode();
 
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
