@@ -116,15 +116,20 @@ void fatal(const char *fmt, ...) {
 	exit(1);
 }
 
-static void init_addr(struct sockaddr_in &a, const char *s, int defport) {
+int host_port(const char *hp, int defport, char *host, int size) {
 	int port = defport;
-	char host[32];
-	strncpy(host, s, sizeof(host));
+	strncpy(host, hp, size);
 	char *sep = (char *)strchr(host, ':');
 	if (sep) {
 		*sep++ = 0;
 		port = atoi(sep);
 	}
+	return port;
+}
+
+static void init_addr(struct sockaddr_in &a, const char *s, int defport) {
+	char host[32];
+	int port = host_port(s, defport, host, sizeof(host));
 
 	struct hostent *he = gethostbyname(host);
 	if (!he)

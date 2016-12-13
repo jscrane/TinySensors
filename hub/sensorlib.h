@@ -18,6 +18,8 @@ void daemon_mode();
 
 void fatal(const char *fmt, ...);
 
+int host_port(const char *hostport, int defport, char *host, int size);
+
 int connect_nonblock(const char *host, int defport);
 
 int on_connect(int sock);
