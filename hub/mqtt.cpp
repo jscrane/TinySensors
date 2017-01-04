@@ -29,11 +29,11 @@ void signal_handler(int signo) {
         fatal("Caught: %s\n", strsignal(signo));
 }
 
-void pub(const char *name, const char *sub, const char *fmt, ...) {
+void pub(const char *root, const char *name, const char *sub, const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	char topic[80], val[16];
-	sprintf(topic, "stat/%s/%s", sub, name);
+	sprintf(topic, "%s/%s/%s", root, sub, name);
 	vsprintf(val, fmt, ap);
 	va_end(ap);
 
@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
 	int opt;
 	bool daemon = true;
 	const char *mux_host = "localhost", *mqtt_host = "localhost";
+	const char *user = 0, *pass = 0, *root = "stat";
 
-	atexit(close_sockets);
-	while ((opt = getopt(argc, argv, "q:m:vf")) != -1)
+	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:")) != -1)
 		switch (opt) {
 		case 'q':
 			mqtt_host = optarg;
@@ -68,10 +68,21 @@ int main(int argc, char *argv[])
 		case 'f':
 			daemon = false;
 			break;
+		case 'u':
+			user = optarg;
+			break;
+		case 'p':
+			pass = optarg;
+			break;
+		case 'r':
+			root = optarg;
+			break;
 		}
 
 	if (daemon)
 		daemon_mode();
+
+	atexit(close_sockets);
 
 	mosquitto_lib_init();
 
@@ -79,9 +90,13 @@ int main(int argc, char *argv[])
 	if (!mosq)
 		fatal("Can't initialize Mosquitto\n");
 
+	int ret = mosquitto_username_pw_set(mosq, user, pass);
+	if (ret)
+		fatal("Can't set user/pass %s:%s: %d\n", user, pass, ret);
+
 	char host[32];
 	int port = host_port(mqtt_host, 1883, host, sizeof(host));
-	int ret = mosquitto_connect(mosq, host, port, 0);
+	ret = mosquitto_connect(mosq, host, port, 0);
 	if (ret)
 		fatal("Can't connect to %s:%d: %d\n", host, port, ret);
 
@@ -104,13 +119,13 @@ int main(int argc, char *argv[])
 				printf("%d: %d [%s]\n", mux, n, buf);
 			sensor s;
 			s.from_csv(buf);
-			pub(s.short_name, "t", "%3.1f", s.temperature);
+			pub(root, s.short_name, "t", "%3.1f", s.temperature);
 			if (s.node_type == 0) {
-				pub(s.short_name, "h", "%3.1f", s.humidity);
-				pub(s.short_name, "b", "%1.2f", s.battery);
+				pub(root, s.short_name, "h", "%3.1f", s.humidity);
+				pub(root, s.short_name, "b", "%1.2f", s.battery);
 			}
 			if (s.node_type == 0 || s.node_type == 2)
-				pub(s.short_name, "l", "%d", s.light);
+				pub(root, s.short_name, "l", "%d", s.light);
 		}
 	}
 }
