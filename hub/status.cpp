@@ -33,12 +33,12 @@ void signal_handler(int signo) {
 int main(int argc, char *argv[]) {
 	int opt;
 	bool daemon = true;
+	const char *mux_host = "localhost";
 
-	atexit(close_sockets);
 	while ((opt = getopt(argc, argv, "m:vf")) != -1)
 		switch (opt) {
 		case 'm':
-			mux = connect_block(optarg, 5678);
+			mux_host = optarg;
 			break;
 		case 'v':
 			verbose = true;
@@ -50,14 +50,16 @@ int main(int argc, char *argv[]) {
 		default:
 			fatal("Usage: %s: -m mux:port [-v] [-f]\n", argv[0]);
 		}
-	if (mux < 0)
-		mux = connect_block("localhost", 5678);
-		
+
 	if (daemon)
 		daemon_mode();
 
+	atexit(close_sockets);
+
+	mux = connect_block(mux_host, 5678);
+
 	if (!bcm2835_init())
-		fatal("initialising bcm2835\n");
+		fatal("initialising bcm2835: %s\n", strerror(errno));
 
 	bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
 
