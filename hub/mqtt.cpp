@@ -52,8 +52,9 @@ int main(int argc, char *argv[])
 	bool daemon = true;
 	const char *mux_host = "localhost", *mqtt_host = "localhost";
 	const char *user = 0, *pass = 0, *root = "stat";
+	const char *client = "sensors";
 
-	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:")) != -1)
+	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:c:")) != -1)
 		switch (opt) {
 		case 'q':
 			mqtt_host = optarg;
@@ -77,6 +78,9 @@ int main(int argc, char *argv[])
 		case 'r':
 			root = optarg;
 			break;
+		case 'c':
+			client = optarg;
+			break;
 		}
 
 	if (daemon)
@@ -86,7 +90,7 @@ int main(int argc, char *argv[])
 
 	mosquitto_lib_init();
 
-	mosq = mosquitto_new("sensors", false, NULL);
+	mosq = mosquitto_new(client, false, NULL);
 	if (!mosq)
 		fatal("Can't initialize Mosquitto\n");
 
