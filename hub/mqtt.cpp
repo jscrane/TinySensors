@@ -29,14 +29,7 @@ void signal_handler(int signo) {
         fatal("Caught: %s\n", strsignal(signo));
 }
 
-void pub(const char *root, const char *name, const char *sub, const char *fmt, ...) {
-	va_list ap;
-	va_start(ap, fmt);
-	char topic[80], val[16];
-	sprintf(topic, "%s/%s/%s", root, sub, name);
-	vsprintf(val, fmt, ap);
-	va_end(ap);
-
+void do_pub(const char *topic, const char *val) {
 	if (verbose)
 		printf("%s: %s\n", topic, val);
 	int ret = mosquitto_publish(mosq, 0, topic, strlen(val), val, 0, true);
@@ -46,15 +39,57 @@ void pub(const char *root, const char *name, const char *sub, const char *fmt, .
 		fatal("Publish: %d\n", ret);
 }
 
+void pub(const char *root, const char *name, const char *sub, const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	char topic[80], val[16];
+	sprintf(topic, "%s/%s/%s", root, sub, name);
+	vsprintf(val, fmt, ap);
+	va_end(ap);
+
+	do_pub(topic, val);
+}
+
+void publish(const char *root, const sensor &s) {
+	pub(root, s.short_name, "t", "%3.1f", s.temperature);
+	if (s.node_type == 0) {
+		pub(root, s.short_name, "h", "%3.1f", s.humidity);
+		pub(root, s.short_name, "b", "%1.2f", s.battery);
+	}
+	if (s.node_type == 0 || s.node_type == 2)
+		pub(root, s.short_name, "l", "%d", s.light);
+}
+
+void jpublish(const char *root, const sensor &s) {
+	const char *fmt;
+	switch (s.node_type) {
+	case 0:
+		fmt = "{ 't':%3.1f, 'l':%d, 'h':%3.1f, 'b':%1.2f }";
+		break;
+	case 1:
+		fmt = "{ 't':%3.1f }";
+		break;
+	case 2:
+		fmt = "{ 't':%3.1f, 'l':%d }";
+		break;
+	default:
+		return;
+	}
+	char val[80], topic[80];
+	sprintf(val, fmt, s.temperature, s.light, s.humidity, s.battery);
+	sprintf(topic, "%s/%s", root, s.short_name);
+	do_pub(topic, val);
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
-	bool daemon = true;
+	bool daemon = true, json = false;
 	const char *mux_host = "localhost", *mqtt_host = "localhost";
 	const char *user = 0, *pass = 0, *root = "stat";
 	const char *client = "sensors";
 
-	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:c:")) != -1)
+	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:c:j")) != -1)
 		switch (opt) {
 		case 'q':
 			mqtt_host = optarg;
@@ -80,6 +115,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'c':
 			client = optarg;
+			break;
+		case 'j':
+			json = true;
 			break;
 		}
 
@@ -123,13 +161,10 @@ int main(int argc, char *argv[])
 				printf("%d: %d [%s]\n", mux, n, buf);
 			sensor s;
 			s.from_csv(buf);
-			pub(root, s.short_name, "t", "%3.1f", s.temperature);
-			if (s.node_type == 0) {
-				pub(root, s.short_name, "h", "%3.1f", s.humidity);
-				pub(root, s.short_name, "b", "%1.2f", s.battery);
-			}
-			if (s.node_type == 0 || s.node_type == 2)
-				pub(root, s.short_name, "l", "%d", s.light);
+			if (json)
+				jpublish(root, s);
+			else
+				publish(root, s);
 		}
 	}
 }
