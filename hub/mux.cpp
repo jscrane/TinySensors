@@ -1,5 +1,7 @@
-#include <my_global.h>
-#include <mysql.h>
+#include <stdio.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <unistd.h>
 #include <netinet/in.h>
@@ -15,14 +17,11 @@
 #define MAX_SERVERS 4
 int clients[MAX_CLIENTS];
 sensor sensors[MAX_SENSORS];
-MYSQL *db_conn;
 int ss = -1;
 int servers[MAX_SERVERS], ns = 0;
 
 void close_exit()
 {
-	if (db_conn)
-		mysql_close(db_conn);
 	if (ss >= 0)
 		close(ss);
 	for (int i = 0; i < ns; i++)
@@ -30,11 +29,6 @@ void close_exit()
 	for (int i = 0; i < MAX_CLIENTS; i++)
 		if (clients[i])
 			close(clients[i]);
-}
-
-void db_fatal(const char *op)
-{
-	fatal("%s: %s\n", op, mysql_error(db_conn));
 }
 
 void signal_handler(int signo)
@@ -63,7 +57,6 @@ int update_sensor_data(sensor *s) {
 int main(int argc, char *argv[])
 {
 	bool verbose = false, daemon = true;
-	const char *mysql_host = "localhost";
 	int opt;
 
 	atexit(close_exit);
@@ -73,38 +66,20 @@ int main(int argc, char *argv[])
 			verbose = true;
 			daemon = false;
 			break;
-		case 'm':
-			mysql_host = optarg;
-			break;
 		default:
-			fatal("Usage: %s [-m mysql_host] [-v] sensorhost:port ...\n", argv[0]);
+			fatal("Usage: %s [-v] sensorhost:port ... < nodes.txt\n", argv[0]);
 		}
 
-	if (verbose) 
-		printf("MySQL client version: %s\n", mysql_get_client_info());
-
-	db_conn = mysql_init(0);
-
-	if (mysql_real_connect(db_conn, mysql_host, USER, PASS, "sensors", 0, NULL, 0) == NULL)
-		db_fatal("mysql_real_connect");
-	
-	if (mysql_query(db_conn, "SELECT id,short,device_type_id FROM nodes"))
-		db_fatal("mysql_query");
-
-	MYSQL_RES *rs = mysql_store_result(db_conn);
-	if (!rs)
-		db_fatal("mysql_store_result");
-
-	MYSQL_ROW row;
-	for (int i = 0; i < MAX_SENSORS && (row = mysql_fetch_row(rs)); i++) {
-		sensors[i].node_id = atoi(row[0]);
-		strncpy(sensors[i].short_name, row[1], sizeof(sensors[i].short_name));
-		sensors[i].node_type = atoi(row[2]);
+	char buf[80];
+	for (int i = 0; i < MAX_SENSORS; i++) {
+		if (!fgets(buf, sizeof(buf), stdin))
+			break;
+		sensor *t = &sensors[i];
+		sscanf(buf, "%d %d %4s", &t->node_id, &t->node_type, t->short_name); 
+		if (verbose)
+			printf("%d %d %s\n", t->node_id, t->node_type, t->short_name);
 	}
 	
-	mysql_close(db_conn);
-	db_conn = 0;
-
 	ss = socket(AF_INET, SOCK_STREAM, 0);
 	if (ss < 0)
 		fatal("socket: %s\n", strerror(errno));
@@ -208,12 +183,9 @@ int main(int argc, char *argv[])
 					servers[i] = -1;
 				}
 			} else if (FD_ISSET(servers[i], &wr)) {
-				int e = 0;
-				socklen_t len = sizeof(e);
-				getsockopt(servers[i], SOL_SOCKET, SO_ERROR, &e, &len);
-				if (e != 0) {
-					printf("Server connect failed: %s %d\n", argv[optind + i], e);
-					close(servers[i]);
+				int e = on_connect(servers[i]);
+				if (e == -1) {
+					printf("Server connect failed: %s\n", argv[optind + i]);
 					servers[i] = -1;
 				}
 			}

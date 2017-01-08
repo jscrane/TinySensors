@@ -9,13 +9,24 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "sensorlib.h"
 
-int lcd, mux;
-bool verbose = false;
+static int lcd = -1, mux = -1;
+static bool verbose = false;
 #define WIRELESS	"sens"
 #define WIRED		"temp"
+#define TIMEOUT_SECS	600
+
+static int width, height;
+
+struct reading {
+	sensor s;
+	time_t last;
+};
+struct reading readings[MAX_SENSORS];
 
 void close_sockets() {
 	if (lcd >= 0)
@@ -42,8 +53,6 @@ int lcdproc(char *buf, int len, const char *fmt, ...) {
 	return n;
 }
 
-int width, height;
-
 void parse_lcdproc_header(char *buf, int n) {
 	int i = 0;
 	for (char *p = buf, *q = 0; p; p = q) {
@@ -62,63 +71,55 @@ void parse_lcdproc_header(char *buf, int n) {
 	}
 }
 
-void update_lcd(sensor *s, int sid, const char *screen) {
-	char t[16], buf[64];
-	snprintf(t, sizeof(t), "%.4s %4.1f", s->short_name, s->temperature);
+void update_lcd(int sid, const char *screen, const char *t) {
+	char buf[64];
 	int x = 1, y = sid;
 	if (y > height) {
 		y -= height;
 		x += width / 2;
 	}
-	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, s->node_id, x, y, t);
+	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, sid, x, y, t);
 }
 
-void update_ts() {
+void update_temp(sensor &s, int sid, const char *screen) {
+	char t[16];
+	snprintf(t, sizeof(t), "%.4s %4.1f", s.short_name, s.temperature);
+	update_lcd(sid, screen, t);
+}
+
+void blank_sensor(sensor &s, const char *screen) {
+	char t[16];
+	snprintf(t, sizeof(t), "%.4s     ", s.short_name);
+	update_lcd(s.node_id, screen, t);
+}
+
+void check_timeout(sensor &s, const char *screen, time_t &now) {
+	reading &r = readings[s.node_id];
+	r.s = s;
+	r.last = now;
+	for (int i = 0; i < MAX_SENSORS; i++) {
+		struct reading &r = readings[i];
+		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS)
+			blank_sensor(r.s, screen);
+	}
+}
+
+void update_time(time_t &now) {
 	char t[16], buf[64];
-	struct timeval tv;
-	gettimeofday(&tv, 0);
-	time_t now = tv.tv_sec;
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
 	lcdproc(buf, sizeof(buf), "widget_set " WIRELESS " update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
 
-int main(int argc, char *argv[]) {
-	int opt;
-	bool daemon = true;
-
-	atexit(close_sockets);
-	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
-		switch (opt) {
-		case 'l':
-			lcd = connect_block(optarg, 13666);
-			break;
-		case 'm':
-			mux = connect_block(optarg, 5678);
-			break;
-		case 'v':
-			verbose = true;
-			daemon = false;
-			break;
-		case 'f':
-			daemon = false;
-			break;
-		default:
-			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
-		}
-	if (!lcd)
-		lcd = connect_block("localhost", 13666);
-	if (!mux)
-		mux = connect_block("localhost", 5678);
-		
-	if (daemon)
-		daemon_mode();
-
-	signal(SIGINT, signal_handler);
-	signal(SIGPIPE, SIG_IGN);
-
+void init_lcd() {
 	char buf[128];
 	int n = lcdproc(buf, sizeof(buf), "hello\n");
-	parse_lcdproc_header(buf, n);
+	height = width = 0;
+	for (;;) {
+		parse_lcdproc_header(buf, n);
+		if (width > 0)
+			break;
+		n = lcdproc(buf, sizeof(buf), "");
+	}
 
 	lcdproc(buf, sizeof(buf), "client_set name {Sensors}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " WIRELESS "\n");
@@ -132,14 +133,59 @@ int main(int argc, char *argv[]) {
 		lcdproc(buf, sizeof(buf), "widget_add " WIRELESS " sensor%d string\n", i);
 	lcdproc(buf, sizeof(buf), "widget_add " WIRELESS " update string\n");
 	lcdproc(buf, sizeof(buf), "backlight off\n");
+}
+
+int main(int argc, char *argv[]) {
+	int opt;
+	bool daemon = true;
+	const char *lcd_host = "localhost", *mux_host = "localhost";
+
+	atexit(close_sockets);
+	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
+		switch (opt) {
+		case 'l':
+			lcd_host = optarg;
+			break;
+		case 'm':
+			mux_host = optarg;
+			break;
+		case 'v':
+			verbose = true;
+			daemon = false;
+			break;
+		case 'f':
+			daemon = false;
+			break;
+		default:
+			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
+		}
+		
+	if (daemon)
+		daemon_mode();
+
+	signal(SIGINT, signal_handler);
+	signal(SIGPIPE, SIG_IGN);
 
 	for (;;) {
-		fd_set rd;
+		char buf[128];
+		int n;
+		fd_set rd, wr;
 		FD_ZERO(&rd);
-		FD_SET(lcd, &rd);
-		FD_SET(mux, &rd);
+		FD_ZERO(&wr);
+		if (lcd < 0) {
+			lcd = connect_nonblock(lcd_host, 13666);
+			if (lcd >= 0)
+				FD_SET(lcd, &wr);
+		} else
+			FD_SET(lcd, &rd);
+		if (mux < 0) {
+			mux = connect_nonblock(mux_host, 5678);
+			if (mux >= 0)
+				FD_SET(mux, &wr);
+		} else
+			FD_SET(mux, &rd);
 
-		if (0 > select(mux+1, &rd, 0, 0, 0))
+		if (0 > select(1 + (mux > lcd? mux: lcd), &rd, &wr, 0, 0))
 			fatal("select: %s\n", strerror(errno));
 
 		if (FD_ISSET(lcd, &rd)) {
@@ -147,8 +193,16 @@ int main(int argc, char *argv[]) {
 			if (n > 0) {
 				if (verbose)
 					printf("%d: %d [%s]\n", lcd, n, buf);
-			} else if (n == 0)
-				fatal("LCD died\n");
+			} else if (n == 0) {
+				if (verbose)
+					printf("LCD died\n");
+				close(lcd);
+				lcd = -1;
+			}
+		} else if (FD_ISSET(lcd, &wr)) {
+			lcd = on_connect(lcd);
+			if (lcd >= 0)
+				init_lcd();
 		}
 		if (FD_ISSET(mux, &rd)) {
 			n = sock_read_line(mux, buf, sizeof(buf));
@@ -158,12 +212,21 @@ int main(int argc, char *argv[]) {
 				sensor s;
 				s.from_csv(buf);
 				if (s.is_wireless()) {
-					update_lcd(&s, s.node_id, WIRELESS);
-					update_ts();
+					update_temp(s, s.node_id, WIRELESS);
+					struct timeval tv;
+					gettimeofday(&tv, 0);
+					time_t now = tv.tv_sec;
+					update_time(now);
+					check_timeout(s, WIRELESS, now);
 				} else
-					update_lcd(&s, s.node_id - 19, WIRED);
-			} else if (n == 0)
-				fatal("Mux died\n");
-		}
+					update_temp(s, s.node_id - 19, WIRED);
+			} else if (n == 0) {
+				if (verbose)
+					printf("Mux died\n");
+				close(mux);
+				mux = -1;
+			}
+		} else if (FD_ISSET(mux, &rd))
+			mux = on_connect(mux);
 	}
 }

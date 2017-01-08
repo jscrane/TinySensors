@@ -116,15 +116,20 @@ void fatal(const char *fmt, ...) {
 	exit(1);
 }
 
-static void init_addr(struct sockaddr_in &a, const char *s, int defport) {
+int host_port(const char *hp, int defport, char *host, int size) {
 	int port = defport;
-	char host[32];
-	strncpy(host, s, sizeof(host));
+	strncpy(host, hp, size);
 	char *sep = (char *)strchr(host, ':');
 	if (sep) {
 		*sep++ = 0;
 		port = atoi(sep);
 	}
+	return port;
+}
+
+static void init_addr(struct sockaddr_in &a, const char *s, int defport) {
+	char host[32];
+	int port = host_port(s, defport, host, sizeof(host));
 
 	struct hostent *he = gethostbyname(host);
 	if (!he)
@@ -173,7 +178,7 @@ int sock_read_line(int s, char *buf, int len) {
 	for (int i = 0; i < len; i++) {
 		char c;
 		int n = read(s, &c, 1);
-		if (n == 0)
+		if (n == 0 || (n == -1 && errno == EAGAIN))
 			return i;
 		if (c == '\n') {
 			buf[i] = 0;
@@ -182,4 +187,16 @@ int sock_read_line(int s, char *buf, int len) {
 		buf[i] = c;
 	}
 	return len;
+}
+
+int on_connect(int s) {
+	int e = 0;
+	socklen_t len = sizeof(e);
+	if (0 > getsockopt(s, SOL_SOCKET, SO_ERROR, &e, &len) || e != 0) {
+		if (e != 0)
+			errno = e;
+		close(s);
+		return -1;
+	}
+	return s;
 }

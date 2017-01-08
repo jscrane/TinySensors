@@ -4,5 +4,6 @@ lcd
 mysql
 status
 rrd
+mqtt
 *.o
 *.d

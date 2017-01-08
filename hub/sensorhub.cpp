@@ -60,6 +60,10 @@ int main(int argc, char *argv[])
 	if (ss < 0)
 		fatal("socket: %s\n", strerror(errno));
 
+	int reuse = 1;
+	if (0 > setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse)))
+		fatal("setsockopt: %s\n", strerror(errno));
+
 	struct sockaddr_in serv;
 	memset(&serv, 0, sizeof(serv));
 	serv.sin_family = AF_INET;
@@ -109,6 +113,7 @@ int main(int argc, char *argv[])
 			s.node_status = payload.status;
 			s.msg_id = header.id;
 			s.node_time = payload.ms;
+			s.node_type = 0;
 
 			if (cs >= 0) {
 				char buf[1024];
