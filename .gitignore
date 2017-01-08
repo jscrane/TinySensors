@@ -1,0 +1,7 @@
+sensing/.idea
+sensing/.nrepl-port
+sensing/.lein-repl-history
+sensing/lib
+sensing/target
+sensing/sensors.iml
+
