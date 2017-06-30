@@ -74,10 +74,12 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < MAX_SENSORS; i++) {
 		if (!fgets(buf, sizeof(buf), stdin))
 			break;
+		if (*buf == '#')
+			continue;
 		sensor *t = &sensors[i];
-		sscanf(buf, "%d %d %4s", &t->node_id, &t->node_type, t->short_name); 
+		sscanf(buf, "%d %d %d %4s", &t->node_id, &t->node_type, &t->domoticz_id, t->short_name);
 		if (verbose)
-			printf("%d %d %s\n", t->node_id, t->node_type, t->short_name);
+			printf("%d %d %d %s\n", t->node_id, t->node_type, t->domoticz_id, t->short_name);
 	}
 	
 	ss = socket(AF_INET, SOCK_STREAM, 0);
@@ -143,7 +145,7 @@ int main(int argc, char *argv[])
 					clients[i] = c;
 					break;
 				}
-			const char *header = "name,id,type,light,degC,hum%,Vbatt,status,msg_id,time\n";
+			const char *header = "name,id,type,domoticz,light,degC,hum%,Vbatt,status,msg_id,time\n";
 			write(c, header, strlen(header));
 			for (int i = 0; i < MAX_SENSORS; i++) {
 				sensor *t = &sensors[i];

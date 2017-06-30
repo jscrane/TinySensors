@@ -19,23 +19,25 @@
 int sensor::to_csv(char *buf, int len) {
 	switch (node_type) {
 	case 0:
-		return snprintf(buf, len, 
-			"%s,%d,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n", 
-			short_name, node_id, node_type, light, temperature, 
-			humidity, battery, node_status, msg_id, node_time);
+		return snprintf(buf, len,
+			"%s,%d,%d,%d,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u\n",
+			short_name, node_id, domoticz_id, node_type, light,
+			temperature, humidity, battery, node_status,
+			msg_id, node_time);
 	case 1:
 		// ???
 		return -1;
 	case 2:
-		return snprintf(buf, len, 
-			"%s,%d,%d,%d,%3.1f,,,,,%u\n", 
-			short_name, node_id, node_type, light, temperature, 
-			node_time);
+		return snprintf(buf, len,
+			"%s,%d,%d,%d,%d,%3.1f,,,,,%u\n",
+			short_name, node_id, domoticz_id, node_type, light,
+			temperature, node_time);
 	case 3:
 	case 4:
-		return snprintf(buf, len, 
-			"%s,%d,%d,,%3.1f,,,,%u\n", 
-			short_name, node_id, node_type, temperature, node_time);
+		return snprintf(buf, len,
+			"%s,%d,%d,%d,,%3.1f,,,,%u\n",
+			short_name, node_id, domoticz_id, node_type,
+			temperature, node_time);
 	default:
 		return -1;
 	}
@@ -55,27 +57,30 @@ int sensor::from_csv(char *buf) {
 			node_id = atoi(p);
 			break;
 		case 2:
-			node_type = atoi(p);
+			domoticz_id = atoi(p);
 			break;
 		case 3:
-			light = *p? atoi(p): 0;
+			node_type = atoi(p);
 			break;
 		case 4:
-			temperature = atof(p);
+			light = *p? atoi(p): 0;
 			break;
 		case 5:
-			humidity = *p? atof(p): -1;
+			temperature = atof(p);
 			break;
 		case 6:
-			battery = *p? atof(p): -1;
+			humidity = *p? atof(p): -1;
 			break;
 		case 7:
-			node_status = atoi(p);
+			battery = *p? atof(p): -1;
 			break;
 		case 8:
-			msg_id = *p? atoi(p): 0;
+			node_status = atoi(p);
 			break;
 		case 9:
+			msg_id = *p? atoi(p): 0;
+			break;
+		case 10:
 			node_time = atoi(p);
 			break;
 		}

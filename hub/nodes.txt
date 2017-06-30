@@ -1,12 +1,13 @@
-1 0 fron Front Window
-2 0 ensu Ensuite
-3 0 kitc Kitchen
-4 0 bath Bathroom
-5 0 stud Study
-20 2 wind Bedroom Window
-21 2 hall Hall
-22 3 bedr Bedroom
-23 3 spar Spare Room
-24 3 livi Living Room
-25 3 gfch Boiler
-26 4 hotp Hot Press
+# id type domoticz-id short-name full-name
+1 0 19 fron Front Window
+2 0 18 ensu Ensuite
+3 0 17 kitc Kitchen
+4 0 20 bath Bathroom
+5 0 21 stud Study
+20 2 0 wind Bedroom Window
+21 2 0 hall Hall
+22 3 0 bedr Bedroom
+23 3 0 spar Spare Room
+24 3 0 livi Living Room
+25 3 0 gfch Boiler
+26 4 0 hotp Hot Press

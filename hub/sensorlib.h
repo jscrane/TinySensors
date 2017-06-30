@@ -7,7 +7,7 @@ public:
 	unsigned light;
 	float temperature, humidity, battery;
 	unsigned node_id, node_time, node_status, msg_id;
-	unsigned node_type;
+	unsigned node_type, domoticz_id;
 
 	int to_csv(char *buf, int len);
 	int from_csv(char *buf);

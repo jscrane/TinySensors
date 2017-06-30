@@ -50,7 +50,7 @@ void pub(const char *root, const char *name, const char *sub, const char *fmt, .
 	do_pub(topic, val);
 }
 
-void publish(const char *root, const sensor &s) {
+void as_text(const char *root, const sensor &s) {
 	pub(root, s.short_name, "t", "%3.1f", s.temperature);
 	if (s.node_type == 0) {
 		pub(root, s.short_name, "h", "%3.1f", s.humidity);
@@ -60,7 +60,7 @@ void publish(const char *root, const sensor &s) {
 		pub(root, s.short_name, "l", "%d", s.light);
 }
 
-void jpublish(const char *root, const sensor &s) {
+void as_json(const char *root, const sensor &s) {
 	const char *fmt;
 	switch (s.node_type) {
 	case 0:
@@ -81,10 +81,20 @@ void jpublish(const char *root, const sensor &s) {
 	do_pub(topic, val);
 }
 
+void as_domoticz(const char *root, const sensor &s) {
+	if (s.domoticz_id > 0) {
+		char val[80];
+		sprintf(val, "{ 'idx': %d, 'svalue':'%d;%d' }",
+			s.domoticz_id, (int)(s.temperature + 0.5),
+			(int)(s.humidity + 0.5));
+		do_pub(root, val);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
-	bool daemon = true, json = false;
+	bool daemon = true, json = false, domoticz = false;
 	const char *mux_host = "localhost", *mqtt_host = "localhost";
 	const char *user = 0, *pass = 0, *root = "stat";
 	const char *client = "sensors";
@@ -118,7 +128,11 @@ int main(int argc, char *argv[])
 			break;
 		case 'j':
 			json = true;
+			domoticz = false;
 			break;
+		case 'z':
+			domoticz = true;
+			json = false;
 		}
 
 	if (daemon)
@@ -161,10 +175,12 @@ int main(int argc, char *argv[])
 				printf("%d: %d [%s]\n", mux, n, buf);
 			sensor s;
 			s.from_csv(buf);
-			if (json)
-				jpublish(root, s);
+			if (domoticz)
+				as_domoticz(root, s);
+			else if (json)
+				as_json(root, s);
 			else
-				publish(root, s);
+				as_text(root, s);
 		}
 	}
 }
