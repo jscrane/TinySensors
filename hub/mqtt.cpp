@@ -84,7 +84,7 @@ void as_json(const char *root, const sensor &s) {
 void as_domoticz(const char *root, const sensor &s) {
 	if (s.domoticz_id > 0) {
 		char val[80];
-		sprintf(val, "{ 'idx': %d, 'svalue':'%d;%d' }",
+		sprintf(val, "{ \"idx\": %d, \"svalue\": \"%d;%d;1\" }",
 			s.domoticz_id, (int)(s.temperature + 0.5),
 			(int)(s.humidity + 0.5));
 		do_pub(root, val);

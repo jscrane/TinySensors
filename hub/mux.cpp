@@ -40,7 +40,6 @@ int update_sensor_data(sensor *s) {
 	for (int i = 0; i < MAX_SENSORS; i++) {
 		sensor *t = &sensors[i];
 		if (t->node_id == s->node_id) {
-			t->node_id = s->node_id;
 			t->light = s->light;
 			t->temperature = s->temperature;
 			t->humidity = s->humidity;
@@ -71,15 +70,16 @@ int main(int argc, char *argv[])
 		}
 
 	char buf[80];
-	for (int i = 0; i < MAX_SENSORS; i++) {
+	for (int i = 0; i < MAX_SENSORS; ) {
 		if (!fgets(buf, sizeof(buf), stdin))
 			break;
-		if (*buf == '#')
-			continue;
-		sensor *t = &sensors[i];
-		sscanf(buf, "%d %d %d %4s", &t->node_id, &t->node_type, &t->domoticz_id, t->short_name);
-		if (verbose)
-			printf("%d %d %d %s\n", t->node_id, t->node_type, t->domoticz_id, t->short_name);
+		if (*buf != '#') {
+			sensor *t = &sensors[i];
+			sscanf(buf, "%d %d %d %4s", &t->node_id, &t->node_type, &t->domoticz_id, t->short_name);
+			if (verbose)
+				printf("%d %d %d %s\n", t->node_id, t->node_type, t->domoticz_id, t->short_name);
+			i++;
+		}
 	}
 	
 	ss = socket(AF_INET, SOCK_STREAM, 0);
