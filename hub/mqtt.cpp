@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 	const char *user = 0, *pass = 0, *root = "stat";
 	const char *client = "sensors";
 
-	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:c:j")) != -1)
+	while ((opt = getopt(argc, argv, "q:m:vfu:p:r:c:j:z")) != -1)
 		switch (opt) {
 		case 'q':
 			mqtt_host = optarg;
