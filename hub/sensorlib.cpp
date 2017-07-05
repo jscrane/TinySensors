@@ -45,6 +45,7 @@ int sensor::to_csv(char *buf, int len) {
 
 int sensor::from_csv(char *buf) {
 	int i = 0;
+	domoticz_id = 0;
 	for (char *p = buf, *q = 0; p; p = q) {
 		q = strchr(p, ',');
 		if (q)
