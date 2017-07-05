@@ -19,6 +19,7 @@ int clients[MAX_CLIENTS];
 sensor sensors[MAX_SENSORS];
 int ss = -1;
 int servers[MAX_SERVERS], ns = 0;
+bool raw = false;
 
 void close_exit()
 {
@@ -41,8 +42,10 @@ int update_sensor_data(sensor *s) {
 		sensor *t = &sensors[i];
 		if (t->node_id == s->node_id) {
 			t->light = s->light;
-			t->temperature = s->temperature;
-			t->humidity = s->humidity;
+			if (raw || s->temperature < 75)
+				t->temperature = s->temperature;
+			if (raw || (s->humidity >= 1 && s->humidity <= 100))
+				t->humidity = s->humidity;
 			t->battery = s->battery;
 			t->node_status = s->node_status;
 			t->node_time = s->node_time;
@@ -59,11 +62,14 @@ int main(int argc, char *argv[])
 	int opt;
 
 	atexit(close_exit);
-	while ((opt = getopt(argc, argv, "vm:")) != -1)
+	while ((opt = getopt(argc, argv, "vr")) != -1)
 		switch(opt) {
 		case 'v':
 			verbose = true;
 			daemon = false;
+			break;
+		case 'r':
+			raw = true;
 			break;
 		default:
 			fatal("Usage: %s [-v] sensorhost:port ... < nodes.txt\n", argv[0]);
