@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 					clients[i] = c;
 					break;
 				}
-			const char *header = "name,id,type,domoticz,light,degC,hum%,Vbatt,status,msg_id,time\n";
+			const char *header = "name,id,type,light,degC,hum%,Vbatt,status,msg_id,time,domoticz\n";
 			write(c, header, strlen(header));
 			for (int i = 0; i < MAX_SENSORS; i++) {
 				sensor *t = &sensors[i];
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 						printf("i: %s\n", ibuf);
 					sensor s;
 					int f = s.from_csv(ibuf);
-					if (f == 10 && s.node_id < MAX_SENSORS) {
+					if (f >= 10 && s.node_id < MAX_SENSORS) {
 						int si = update_sensor_data(&s);
 						n = sensors[si].to_csv(obuf, sizeof(obuf));
 						if (verbose)
