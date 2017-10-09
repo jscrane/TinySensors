@@ -1,4 +1,3 @@
-#include <JeeLib.h>
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>
@@ -6,6 +5,7 @@
 #include <DHT.h>
 
 #include "tinysensor.h"
+#include "sleepy.h"
 
 RF24 radio(2, 3);
 RF24Network network(radio);
