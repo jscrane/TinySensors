@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.5.0">
+<eagle version="7.5.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="dots" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
@@ -2532,7 +2532,7 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <instance part="R3" gate="G$1" x="81.28" y="50.8"/>
 <instance part="GND5" gate="1" x="76.2" y="33.02"/>
 <instance part="R4" gate="G$1" x="99.06" y="48.26" rot="R270"/>
-<instance part="GND6" gate="1" x="99.06" y="38.1"/>
+<instance part="GND6" gate="1" x="99.06" y="35.56"/>
 <instance part="P+1" gate="VCC" x="33.02" y="114.3"/>
 <instance part="U1" gate="G$1" x="58.42" y="43.18" rot="MR0"/>
 <instance part="C3" gate="G$1" x="121.92" y="73.66" rot="R90"/>
@@ -2580,6 +2580,7 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <wire x1="73.66" y1="50.8" x2="76.2" y2="50.8" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="50.8" x2="73.66" y2="55.88" width="0.1524" layer="91"/>
 <junction x="73.66" y="50.8"/>
+<junction x="68.58" y="50.8"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -2624,10 +2625,6 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <junction x="68.58" y="35.56"/>
 </segment>
 <segment>
-<pinref part="R4" gate="G$1" pin="P$2"/>
-<pinref part="GND6" gate="1" pin="GND"/>
-</segment>
-<segment>
 <pinref part="GND4" gate="1" pin="GND"/>
 <pinref part="NRF24L01+" gate="G$1" pin="1"/>
 <wire x1="111.76" y1="78.74" x2="111.76" y2="73.66" width="0.1524" layer="91"/>
@@ -2636,6 +2633,11 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <wire x1="111.76" y1="73.66" x2="111.76" y2="66.04" width="0.1524" layer="91"/>
 <wire x1="116.84" y1="73.66" x2="111.76" y2="73.66" width="0.1524" layer="91"/>
 <junction x="111.76" y="73.66"/>
+</segment>
+<segment>
+<pinref part="GND6" gate="1" pin="GND"/>
+<pinref part="R4" gate="G$1" pin="P$2"/>
+<wire x1="99.06" y1="38.1" x2="99.06" y2="40.64" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -2721,14 +2723,6 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <wire x1="132.08" y1="63.5" x2="132.08" y2="86.36" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$10" class="0">
-<segment>
-<pinref part="R4" gate="G$1" pin="P$1"/>
-<wire x1="99.06" y1="55.88" x2="99.06" y2="71.12" width="0.1524" layer="91"/>
-<pinref part="ATTINY84" gate="G$1" pin="(PCINT1/AIN0/ADC1)PA1"/>
-<wire x1="99.06" y1="71.12" x2="93.98" y2="71.12" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="N$11" class="0">
 <segment>
 <pinref part="ATTINY84" gate="G$1" pin="(PCINT2/AIN1/ADC2)PA2"/>
@@ -2753,9 +2747,20 @@ Note: The AM2302 is a wired version of the DHT-22 which typically requires less 
 <wire x1="104.14" y1="63.5" x2="104.14" y2="96.52" width="0.1524" layer="91"/>
 </segment>
 </net>
+<net name="N$10" class="0">
+<segment>
+<pinref part="ATTINY84" gate="G$1" pin="(PCINT1/AIN0/ADC1)PA1"/>
+<wire x1="93.98" y1="71.12" x2="99.06" y2="71.12" width="0.1524" layer="91"/>
+<pinref part="R4" gate="G$1" pin="P$1"/>
+<wire x1="99.06" y1="71.12" x2="99.06" y2="55.88" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 </sheets>
+<errors>
+<approved hash="104,1,68.58,50.8,U1,VDD,VCC,,,"/>
+</errors>
 </schematic>
 </drawing>
 </eagle>
