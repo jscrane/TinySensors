@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
 			s.msg_id = header.id;
 			s.node_time = payload.ms;
 			s.node_type = 0;
+			s.domoticz_id = 0;
 
 			if (cs >= 0) {
 				char buf[1024];
