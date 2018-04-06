@@ -7,4 +7,4 @@ rrd
 mqtt
 *.o
 *.d
-tinysensors.txt
+opensensors.txt
