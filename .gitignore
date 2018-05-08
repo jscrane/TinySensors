@@ -4,3 +4,5 @@ sensing/.lein-repl-history
 sensing/lib
 sensing/target
 sensing/sensors.iml
+sensing/projectFilesBackup/
+eagle/
