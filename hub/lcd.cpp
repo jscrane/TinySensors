@@ -203,6 +203,8 @@ int main(int argc, char *argv[]) {
 			lcd = on_connect(lcd);
 			if (lcd >= 0)
 				init_lcd();
+			else
+				sleep(1);
 		}
 		if (FD_ISSET(mux, &rd)) {
 			n = sock_read_line(mux, buf, sizeof(buf));
