@@ -16,7 +16,8 @@
 
 static int lcd = -1, mux = -1;
 static bool verbose = false;
-#define WIRELESS	"sens"
+#define TINY_TEMP	"tiny_temp"
+#define TINY_BATT	"tiny_batt"
 #define WIRED		"temp"
 #define TIMEOUT_SECS	600
 
@@ -87,6 +88,12 @@ void update_temp(sensor &s, int sid, const char *screen) {
 	update_lcd(sid, screen, t);
 }
 
+void update_batt(sensor &s, int sid, const char *screen) {
+	char t[16];
+	snprintf(t, sizeof(t), "%.4s %4.2f", s.short_name, s.battery);
+	update_lcd(sid, screen, t);
+}
+
 void blank_sensor(sensor &s, const char *screen) {
 	char t[16];
 	snprintf(t, sizeof(t), "%.4s     ", s.short_name);
@@ -107,7 +114,7 @@ void check_timeout(sensor &s, const char *screen, time_t &now) {
 void update_time(time_t &now) {
 	char t[16], buf[64];
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
-	lcdproc(buf, sizeof(buf), "widget_set " WIRELESS " update %d %d {%s}\n", width-strlen(t)+1, height, t);
+	lcdproc(buf, sizeof(buf), "widget_set " TINY_TEMP " update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
 
 void init_lcd() {
@@ -122,16 +129,20 @@ void init_lcd() {
 	}
 
 	lcdproc(buf, sizeof(buf), "client_set name {Sensors}\n");
-	lcdproc(buf, sizeof(buf), "screen_add " WIRELESS "\n");
+	lcdproc(buf, sizeof(buf), "screen_add " TINY_TEMP "\n");
+	lcdproc(buf, sizeof(buf), "screen_set " TINY_TEMP " name {Wireless}\n");
+	lcdproc(buf, sizeof(buf), "screen_add " TINY_BATT "\n");
+	lcdproc(buf, sizeof(buf), "screen_set " TINY_BATT " name {Battery}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " WIRED "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {Temperatures}\n");
+	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {Wired}\n");
 
-	for (int i = 0; i < MAX_SENSORS; i++)
+	for (int i = 0; i < MAX_SENSORS; i++) {
 		lcdproc(buf, sizeof(buf), "widget_add " WIRED " sensor%d string\n", i);
+		lcdproc(buf, sizeof(buf), "widget_add " TINY_TEMP " sensor%d string\n", i);
+		lcdproc(buf, sizeof(buf), "widget_add " TINY_BATT " sensor%d string\n", i);
+	}
 		
-	for (int i = 0; i < MAX_SENSORS; i++)
-		lcdproc(buf, sizeof(buf), "widget_add " WIRELESS " sensor%d string\n", i);
-	lcdproc(buf, sizeof(buf), "widget_add " WIRELESS " update string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " TINY_TEMP " update string\n");
 	lcdproc(buf, sizeof(buf), "backlight off\n");
 }
 
@@ -214,12 +225,13 @@ int main(int argc, char *argv[]) {
 				sensor s;
 				s.from_csv(buf);
 				if (s.is_wireless()) {
-					update_temp(s, s.node_id, WIRELESS);
+					update_temp(s, s.node_id, TINY_TEMP);
+					update_batt(s, s.node_id, TINY_BATT);
 					struct timeval tv;
 					gettimeofday(&tv, 0);
 					time_t now = tv.tv_sec;
 					update_time(now);
-					check_timeout(s, WIRELESS, now);
+					check_timeout(s, TINY_TEMP, now);
 				} else
 					update_temp(s, s.node_id - 19, WIRED);
 			} else if (n == 0) {
