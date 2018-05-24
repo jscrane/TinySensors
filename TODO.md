@@ -12,7 +12,3 @@ Hardware
 mini)
 - design pcb for relay: modify sensor so can handle external power supply 
 and extra devices
-
-Hub
-===
-- lcd component should indicate age of last reading (or battery level)
