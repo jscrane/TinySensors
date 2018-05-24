@@ -177,25 +177,27 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
+	fd_set rd, wr, srd, swr;
+	FD_ZERO(&rd);
+	FD_ZERO(&srd);
+	FD_ZERO(&wr);
+	FD_ZERO(&swr);
 	for (;;) {
 		char buf[128];
 		int n;
-		fd_set rd, wr;
-		FD_ZERO(&rd);
-		FD_ZERO(&wr);
 		if (lcd < 0) {
 			lcd = connect_nonblock(lcd_host, 13666);
 			if (lcd >= 0)
-				FD_SET(lcd, &wr);
-		} else
-			FD_SET(lcd, &rd);
+				FD_SET(lcd, &swr);
+		}
 		if (mux < 0) {
 			mux = connect_nonblock(mux_host, 5678);
 			if (mux >= 0)
-				FD_SET(mux, &wr);
-		} else
-			FD_SET(mux, &rd);
+				FD_SET(mux, &swr);
+		}
 
+		rd = srd;
+		wr = swr;
 		if (0 > select(1 + (mux > lcd? mux: lcd), &rd, &wr, 0, 0))
 			fatal("select: %s\n", strerror(errno));
 
@@ -207,14 +209,17 @@ int main(int argc, char *argv[]) {
 			} else if (n == 0) {
 				if (verbose)
 					printf("LCD died\n");
+				FD_CLR(lcd, &srd);
 				close(lcd);
 				lcd = -1;
 			}
 		} else if (FD_ISSET(lcd, &wr)) {
+			FD_CLR(lcd, &swr);
 			lcd = on_connect(lcd);
-			if (lcd >= 0)
+			if (lcd >= 0) {
+				FD_SET(lcd, &srd);
 				init_lcd();
-			else
+			} else
 				sleep(1);
 		}
 		if (FD_ISSET(mux, &rd)) {
@@ -237,10 +242,15 @@ int main(int argc, char *argv[]) {
 			} else if (n == 0) {
 				if (verbose)
 					printf("Mux died\n");
+				FD_CLR(mux, &srd);
 				close(mux);
 				mux = -1;
 			}
-		} else if (FD_ISSET(mux, &rd))
+		} else if (FD_ISSET(mux, &wr)) {
+			FD_CLR(mux, &swr);
 			mux = on_connect(mux);
+			if (mux >= 0)
+				FD_SET(mux, &srd);
+		}
 	}
 }
