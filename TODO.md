@@ -12,3 +12,5 @@ Hardware
 mini)
 - design pcb for relay: modify sensor so can handle external power supply 
 and extra devices
+- sensor for external weather and chill
+- configure tinysensors not to retransmit if hub down
