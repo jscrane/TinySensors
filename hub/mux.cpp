@@ -118,21 +118,26 @@ int main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	int nclients = 0;
+	fd_set rd, wr, srd, swr;
+	FD_ZERO(&rd);
+	FD_ZERO(&srd);
+	FD_ZERO(&wr);
+	FD_ZERO(&swr);
 	for (;;) {
-		fd_set rd, wr;
-		FD_ZERO(&rd);
-		FD_ZERO(&wr);
 		if (nclients < MAX_CLIENTS)
-			FD_SET(ss, &rd);
+			FD_SET(ss, &srd);
+		else
+			FD_CLR(ss, &srd);
 		for (int i = 0; i < ns; i++) {
 			if (servers[i] == -1) {
 				servers[i] = connect_nonblock(argv[optind+i], 5555);
-				if (servers[i] != -1)
-					FD_SET(servers[i], &wr);
-			} else 
-				FD_SET(servers[i], &rd);
+				if (servers[i] >= 0)
+					FD_SET(servers[i], &swr);
+			}
 		}
 
+		rd = srd;
+		wr = swr;
 		if (select(servers[ns-1] + 1, &rd, &wr, 0, 0) < 0)
 			fatal("select: %s\n", strerror(errno));
 
@@ -187,15 +192,17 @@ int main(int argc, char *argv[])
 				} else if (n == 0) {
 					if (verbose)
 						printf("Server died: %s\n", argv[optind + i]);
+					FD_CLR(servers[i], &srd);
 					close(servers[i]);
 					servers[i] = -1;
 				}
 			} else if (FD_ISSET(servers[i], &wr)) {
-				int e = on_connect(servers[i]);
-				if (e == -1) {
+				FD_CLR(servers[i], &swr);
+				servers[i] = on_connect(servers[i]);
+				if (servers[i] >= 0)
+					FD_SET(servers[i], &srd);
+				else
 					printf("Server connect failed: %s\n", argv[optind + i]);
-					servers[i] = -1;
-				}
 			}
 	}
 	return 0;
