@@ -16,10 +16,10 @@
 
 static int lcd = -1, mux = -1;
 static bool verbose = false;
-#define TEMP	"tiny_temp"
-#define BATT	"tiny_batt"
-#define HUMI	"tiny_humi"
-#define WIRED	"temp"
+#define TEMP	"wireless"
+#define BATT	"battery"
+#define HUMI	"humidity"
+#define WIRED	"wired"
 #define TIMEOUT_SECS	600
 
 static int width, height;
@@ -101,27 +101,40 @@ void update_humi(sensor &s, int sid, const char *screen) {
 	update_lcd(sid, screen, t);
 }
 
-void blank_sensor(sensor &s, const char *screen) {
-	char t[16];
-	snprintf(t, sizeof(t), "%.4s     ", s.short_name);
-	update_lcd(s.node_id, screen, t);
-}
-
-void check_timeout(sensor &s, const char *screen, time_t &now) {
-	reading &r = readings[s.node_id];
-	r.s = s;
-	r.last = now;
+void check_timeouts(const char *screen, time_t &now) {
 	for (int i = 0; i < MAX_SENSORS; i++) {
 		struct reading &r = readings[i];
-		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS)
-			blank_sensor(r.s, screen);
+		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS) {
+			char t[16];
+			snprintf(t, sizeof(t), "%.4s     ", r.s.short_name);
+			update_lcd(r.s.node_id, screen, t);
+		}
 	}
 }
 
-void update_time(time_t &now) {
+void update_time(sensor &s, time_t &now) {
+	reading &r = readings[s.node_id];
+	r.s = s;
+	r.last = now;
+
 	char t[16], buf[64];
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
 	lcdproc(buf, sizeof(buf), "widget_set " TEMP " update %d %d {%s}\n", width-strlen(t)+1, height, t);
+}
+
+void update_sensor(sensor &s) {
+	if (s.is_wireless()) {
+		update_temp(s, s.node_id, TEMP);
+		update_batt(s, s.node_id, BATT);
+		update_humi(s, s.node_id, HUMI);
+		struct timeval tv;
+		gettimeofday(&tv, 0);
+		time_t now = tv.tv_sec;
+		update_time(s, now);
+		check_timeouts(TEMP, now);
+		check_timeouts(HUMI, now);
+	} else
+		update_temp(s, s.node_id - 19, WIRED);
 }
 
 void init_lcd() {
@@ -137,13 +150,13 @@ void init_lcd() {
 
 	lcdproc(buf, sizeof(buf), "client_set name {Sensors}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " TEMP "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " TEMP " name {Wireless}\n");
+	lcdproc(buf, sizeof(buf), "screen_set " TEMP " name {" TEMP "}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " HUMI "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " HUMI " name {Humidity}\n");
+	lcdproc(buf, sizeof(buf), "screen_set " HUMI " name {" HUMI "}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " BATT "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " BATT " name {Battery}\n");
+	lcdproc(buf, sizeof(buf), "screen_set " BATT " name {" BATT "}\n");
 	lcdproc(buf, sizeof(buf), "screen_add " WIRED "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {Wired}\n");
+	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {" WIRED "}\n");
 
 	for (int i = 0; i < MAX_SENSORS; i++) {
 		lcdproc(buf, sizeof(buf), "widget_add " WIRED " sensor%d string\n", i);
@@ -151,13 +164,13 @@ void init_lcd() {
 		lcdproc(buf, sizeof(buf), "widget_add " BATT " sensor%d string\n", i);
 		lcdproc(buf, sizeof(buf), "widget_add " HUMI " sensor%d string\n", i);
 	}
-		
+
 	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
 
-	lcdproc(buf, sizeof(buf), "widget_add " BATT " units string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " BATT " units %d %d {battery}\n", width-6, height);
-	lcdproc(buf, sizeof(buf), "widget_add " HUMI " units string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " HUMI " units %d %d {humidity}\n", width-7, height);
+	lcdproc(buf, sizeof(buf), "widget_add " BATT " name string\n");
+	lcdproc(buf, sizeof(buf), "widget_set " BATT " name %d %d {" BATT "}\n", width-strlen(BATT)+1, height);
+	lcdproc(buf, sizeof(buf), "widget_add " HUMI " name string\n");
+	lcdproc(buf, sizeof(buf), "widget_set " HUMI " name %d %d {" HUMI "}\n", width-strlen(HUMI)+1, height);
 
 	lcdproc(buf, sizeof(buf), "backlight off\n");
 }
@@ -186,7 +199,7 @@ int main(int argc, char *argv[]) {
 		default:
 			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
 		}
-		
+
 	if (daemon)
 		daemon_mode();
 
@@ -245,17 +258,7 @@ int main(int argc, char *argv[]) {
 			if (n > 0) {
 				sensor s;
 				s.from_csv(buf);
-				if (s.is_wireless()) {
-					update_temp(s, s.node_id, TEMP);
-					update_batt(s, s.node_id, BATT);
-					update_humi(s, s.node_id, HUMI);
-					struct timeval tv;
-					gettimeofday(&tv, 0);
-					time_t now = tv.tv_sec;
-					update_time(now);
-					check_timeout(s, TEMP, now);
-				} else
-					update_temp(s, s.node_id - 19, WIRED);
+				update_sensor(s);
 			} else if (n == 0) {
 				if (verbose)
 					printf("Mux died\n");
