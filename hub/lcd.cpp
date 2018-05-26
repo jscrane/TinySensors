@@ -155,9 +155,9 @@ void init_lcd() {
 	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
 
 	lcdproc(buf, sizeof(buf), "widget_add " BATT " units string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " BATT " units %d %d {Vbatt}\n", width-4, height);
+	lcdproc(buf, sizeof(buf), "widget_set " BATT " units %d %d {battery}\n", width-6, height);
 	lcdproc(buf, sizeof(buf), "widget_add " HUMI " units string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " HUMI " units %d %d {Hum %}\n", width-4, height);
+	lcdproc(buf, sizeof(buf), "widget_set " HUMI " units %d %d {humidity}\n", width-7, height);
 
 	lcdproc(buf, sizeof(buf), "backlight off\n");
 }
