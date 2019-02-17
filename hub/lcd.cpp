@@ -42,12 +42,19 @@ void signal_handler(int signo) {
 }
 
 int lcdproc(char *buf, int len, const char *fmt, ...) {
+	if (0 > lcd)
+		return -1;
 	va_list args;
 	va_start(args, fmt);
 	int n = vsnprintf(buf, len, fmt, args);
 	if (verbose)
 		printf("%d: %s", lcd, buf);
-	write(lcd, buf, n);
+	int m = write(lcd, buf, n);
+	if (0 > m) {
+		close(lcd);
+		lcd = -1;
+		return m;
+	}
 	n = sock_read_line(lcd, buf, len);
 	if (verbose)
 		printf("%d: %d [%s]\n", lcd, n, buf);
