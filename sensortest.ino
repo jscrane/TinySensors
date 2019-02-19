@@ -2,23 +2,28 @@
 #include <EEPROM.h>
 #include <SoftwareSerial.h>
 
+/*
+const uint8_t DHT_PIN = 8;
+const int RX_PIN = 1, TX_PIN = 0;
+*/
+const uint8_t DHT_PIN = 2;
+const uint8_t RX_PIN = 9, TX_PIN = 10;
+
 DHT dht;
-const int rx = 1, tx = 0;
-SoftwareSerial serial(rx, tx);
+SoftwareSerial serial(RX_PIN, TX_PIN);
 
 void setup(void)
 {
-  pinMode(rx, INPUT);
-  pinMode(tx, OUTPUT);
+  pinMode(RX_PIN, INPUT);
+  pinMode(TX_PIN, OUTPUT);
   
   serial.begin(9600);
   serial.println("Sensor Test. Enter node-id and hit return.");
   serial.println("Status\tHumidity\tTemperature\tLight\tBattery\tID");
 
-  pinMode(9, INPUT);
-  digitalWrite(9, HIGH);   // enable pullup on A1
+  pinMode(A1, INPUT_PULLUP);
   
-  dht.setup(8);
+  dht.setup(DHT_PIN);
 }
 
 void loop(void)
