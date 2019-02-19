@@ -3,3 +3,4 @@
 *.ino.bin
 *.ino.elf
 *.eep
+.*.swp
