@@ -1,9 +1,6 @@
 [submodule "tinysensor"]
 	path = tinysensor
 	url = git@gist.github.com:8434851.git
-[submodule "sensortest"]
-	path = sensortest
-	url = git@gist.github.com:8434935.git
 [submodule "tinyrelay"]
 	path = tinyrelay
 	url = git@gist.github.com:9113801.git
