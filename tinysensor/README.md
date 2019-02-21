@@ -1,11 +1,6 @@
-### Using uC-Makefile and avrdude
+### Build with uC-Makefile
 ```
-$ make -I ~/src/uC-Makefile write-fuses write-flash
-$ avrdude -v -p t84 -P /dev/ttyUSB0 -b 19200 -c avrisp -U eeprom:w:1.eep
-```
-### Avrdude only
-```
-$ avrdude -v -p t84 -P /dev/ttyUSB0 -b 19200 -c avrisp -U flash:w:fw.bin -U eeprom:w:1.eep -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xfe:m
+$ make -I ~/src/uC-Makefile NODE_ID=1 clean write-fuses write-flash
 ```
 
 This sketch now requires the damellis core for

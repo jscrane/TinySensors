@@ -1,7 +1,6 @@
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>
-#include <EEPROM.h>
 #include <DHT.h>
 
 #include "tinysensor.h"
@@ -17,7 +16,7 @@ DHT dht;
 
 const uint8_t channel = 90;
 const uint16_t master_node = 0;
-uint16_t this_node;
+const uint16_t this_node = NODE_ID;
 const uint8_t retry_count = 5;		// 250+5*15*250 = 19mS
 const uint8_t retry_delay = 15;		// 15*250uS
 
@@ -36,7 +35,6 @@ void setup(void)
 	radio.enableDynamicPayloads();
 	radio.setRetries(retry_delay, retry_count);
 
-	this_node = EEPROM.read(0);
 	network.begin(channel, this_node);
 }
 
