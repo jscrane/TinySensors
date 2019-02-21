@@ -1,13 +1,8 @@
 #include <SPI.h>
 #include <RF24.h>
 #include <DHT.h>
-#include <EEPROM.h>
 #include <SoftwareSerial.h>
 
-/*
-const uint8_t DHT_PIN = 8;
-const int RX_PIN = 1, TX_PIN = 0;
-*/
 const uint8_t DHT_PIN = 2;
 const uint8_t RX_PIN = 9, TX_PIN = 10;
 const uint8_t CE_PIN = 8, CS_PIN = 7;
@@ -15,6 +10,7 @@ const uint8_t CE_PIN = 8, CS_PIN = 7;
 RF24 radio(CE_PIN, CS_PIN);
 DHT dht;
 SoftwareSerial serial(RX_PIN, TX_PIN);
+uint8_t node_id;
 
 void setup(void)
 {
@@ -50,13 +46,13 @@ void loop(void)
 	serial.print(F("\t"));
 	serial.print(analogRead(A0));
 	serial.print(F("\t"));
-	serial.println(EEPROM.read(0));
+	serial.println(node_id);
 
 	uint8_t id = 0;
 	while (serial.available()) {
 		int ch = serial.read();
-		if (ch == '\n')
-			EEPROM.write(0, id);
+		if (ch == '\r')
+			node_id = id;
 		else if (ch >= '0' && ch < '8')
 			id = (id << 3) | (ch - '0');
 	}
