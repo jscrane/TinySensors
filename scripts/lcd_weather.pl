@@ -99,36 +99,42 @@ while (1) {
 
 	my $w = do $WEATHER;
 
-	$temp = "$w->{current_observation}->{temp_c}";
-	$chill = "$w->{current_observation}->{feelslike_c}";
-	$text = "$w->{current_observation}->{weather}";
-	$wind = "$w->{current_observation}->{wind_degrees}";
-	$speed = "$w->{current_observation}->{wind_kph}";
-	$sunrise_h = "$w->{sun_phase}->{sunrise}->{hour}";
-	$sunrise_m = "$w->{sun_phase}->{sunrise}->{minute}";
-	$sunset_h = "$w->{sun_phase}->{sunset}->{hour}";
-	$sunset_m = "$w->{sun_phase}->{sunset}->{minute}";
-	$temp_unit = "C";
-	$press_unit = "mb";
-	$speed_unit = "km/h";
-	$pressure = "$w->{current_observation}->{pressure_mb}";
-	$rising = "$w->{current_observation}->{pressure_trend}";
-	if ($rising == "1") { $rchange = "+"; }
-        elsif ($rising == "0") { $rchange = " "; }
-	else { $rchange = "-"; }
-	$humidity = "$w->{current_observation}->{relative_humidity}";
-	$pressure = ceil($pressure);
-	$speed = ceil($speed);
-	$precip = "$w->{current_observation}->{precip_1hr_metric}";
-	$epoch = "$w->{current_observation}->{observation_epoch}";
-	$now = strftime("%a %b %e %H:%M", localtime($epoch));
+	$text = $w->{weather}->{value};
 
-	$ip = int($precip);
-	$line1 = sprintf("%16s %dmm", $now, $ip < 0? 0: $ip);
+	$temp = $w->{temperature}->{value};
+	$chill = $w->{temperature}->{min};
+	$temp_unit = "C";
+
+	$wind = $w->{wind}->{direction}->{value};
+	$speed = ceil(3.6 * $w->{wind}->{speed}->{value});
+	$speed_unit = "km/h";
+
+	$sr = str2time($w->{city}->{sun}->{rise});
+	$sunrise = strftime("%H:%m", localtime($sr));
+	$ss = str2time($w->{city}->{sun}->{set});
+	$sunset = strftime("%H:%m", localtime($ss));
+
+	$pressure = $w->{pressure}->{value};
+	$press_unit = "mb";
+
+	# pressure trend n/a
+	$rchange = " ";
+
+	$humidity = $w->{humidity}->{value};
+	$humidity_unit = $w->{humidity}->{unit};
+
+	$epoch = str2time($w->{lastupdate}->{value});
+	$now = strftime("%a %b %e %H:%M", localtime($epoch));
+	$precip = "0";
+	if (exists $w->{precipitation}->{value}) { 
+		$precip = "$w->{precipitation}->{value}"; 
+	}
+
+	$line1 = sprintf("%16s %dmm", $now, $precip);
         $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
         $ltext = sprintf("%*s", length($ftmp) - 20, $text);
 	$line2 = sprintf("%.*s %s", 19 - length($ftmp), $ltext, $ftmp);
-	$line3 = sprintf("%2s:%2s %2s:%2s %4s%3.0f%.1s", $sunrise_h, $sunrise_m, $sunset_h, $sunset_m, $humidity, $chill, $temp_unit);
+	$line3 = sprintf("%2s %2s %3s%.1s%3.0f%.1s", $sunrise, $sunset, $humidity, $humidity_unit, $chill, $temp_unit);
 	$line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
 
 	lcdproc $remote, "widget_set weather time 1 1 {$line1}";
@@ -138,14 +144,12 @@ while (1) {
 
 	$timeleft = 60;
 	while ($timeleft > 0) {
-		($nfound, $timeleft) = select($rout=$rin, undef, undef, $timeleft);
+		($nfound, $timeleft) = select($rin, undef, undef, $timeleft);
 		if ($nfound > 0) {
-print "awake $timeleft\n";
 			my $input = <$remote>;
 			if (! defined($input) ) {
 				last;
 			}
-print "input is: $input";
 			if ($input eq "key Enter\n") {
 				lcdproc $remote, "backlight on";
 				alarm $LIGHT;

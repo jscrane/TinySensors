@@ -6,33 +6,27 @@ use Data::Dumper;
 use lib qw(/usr/local/rrdtool-1.2.12/lib/perl);
 use RRDs;
 
-$KEY = "7ecb9b676eba3283";
-$WS = "EIME";
-#$WS = "EIDW";
-#$WS = "pws:IDUBLIN135";
-#$WS = "pws:IDUBLIN123";
-#$WS = "pws:IDUBLIN49";
+$KEY = "5a33baa5f85d1e436a14a25815655f76";
+$WS = "Rathgar,IE";
 $rrd = '/var/lib/rrd';
 $img = '/var/www/rrdtool';
 $out = '/var/tmp/weather.pl';
 
 $xml = new XML::Simple;
-$content = get("http://api.wunderground.com/api/$KEY/astronomy/conditions/q/$WS.xml");
+$content = get("http://api.openweathermap.org//data/2.5/weather?q=$WS&units=metric&appid=$KEY&mode=xml");
 $data = $xml->XMLin($content);
 
 open my $fh, '>', $out;
 print $fh Dumper($data);
 close $fh;
 
-$temp = "$data->{current_observation}->{temp_c}";
-$chill = "$data->{current_observation}->{feelslike_c}";
-$direction = "$data->{current_observation}->{wind_degrees}";
-$speed = "$data->{current_observation}->{wind_kph}";
-$pressure = "$data->{current_observation}->{pressure_mb}";
-$humidity = "$data->{current_observation}->{relative_humidity}";
+$temp = "$data->{temperature}->{value}";
+$chill = "$data->{temperature}->{min}";
+$direction = "$data->{wind}->{direction}->{value}";
+$speed = 3.6 * "$data->{wind}->{speed}->{value}";	# m/s
+$pressure = "$data->{pressure}->{value}";
+$humidity = "$data->{humidity}->{value}";
 
-@h = split /[%]/, $humidity;
-$humidity = $h[0];
 print "$temp, $chill, $direction, $speed, $pressure, $humidity\n";
 
 if (! -e "$rrd/weather2.rrd" ) {
