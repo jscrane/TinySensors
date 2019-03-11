@@ -16,7 +16,7 @@ use Date::Parse;
 ############################################################
 
 # Host which runs LCDproc daemon (LCDd)
-my $SERVER = "localhost";
+my $SERVER = "pitv3";
 
 # Port on which LCDd listens to requests
 my $PORT = "13666";
@@ -123,7 +123,8 @@ while (1) {
 	$epoch = "$w->{current_observation}->{observation_epoch}";
 	$now = strftime("%a %b %e %H:%M", localtime($epoch));
 
-	$line1 = sprintf("%16s %dmm", $now, $precip);
+	$ip = int($precip);
+	$line1 = sprintf("%16s %dmm", $now, $ip < 0? 0: $ip);
         $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
         $ltext = sprintf("%*s", length($ftmp) - 20, $text);
 	$line2 = sprintf("%.*s %s", 19 - length($ftmp), $ltext, $ftmp);
