@@ -98,7 +98,10 @@ alarm $LIGHT;
 sleep 5;
 while (1) {
 
-	my $w = do $WEATHER;
+	my $w;
+	unless ($w = do $WEATHER) {
+		die "$!: $WEATHER" unless defined $w;
+	}
 
 	my $text = $w->{weather}->{value};
 	my $temp = $w->{temperature}->{value};
@@ -139,7 +142,7 @@ while (1) {
 	my $line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
 
 	lcdproc $remote, "widget_set weather time 1 1 {$line1}";
-	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 8 {$text}";
+	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 4 {$text}";
 	lcdproc $remote, "widget_set weather temp {$tpos} 2 {$ftmp}";
 	lcdproc $remote, "widget_set weather wind 1 3 {$line3}";
 	lcdproc $remote, "widget_set weather astro 1 4 {$line4}";
