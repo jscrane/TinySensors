@@ -3,11 +3,10 @@
 use sensors;
 
 use 5.005;
-#use strict;
+use strict;
 use Getopt::Std;
 use IO::Socket;
 use IO::Select;
-use Fcntl;
 use POSIX qw(strftime ceil);
 use Date::Parse;
 
@@ -43,11 +42,12 @@ sub wind_direction;
 
 ## main routine ##
 my %opt = ();
+getopts("s:p:w:", \%opt);
 
 # set variables
 $SERVER = defined($opt{s}) ? $opt{s} : $SERVER;
 $PORT = defined($opt{p}) ? $opt{p} : $PORT;
-
+$WEATHER = defined($opt{w})? $opt{f} : $WEATHER;
 
 # Connect to the server...
 my $remote = IO::Socket::INET->new(
@@ -80,7 +80,7 @@ lcdproc $remote, "client_set name {$progname}";
 lcdproc $remote, "screen_add weather";
 lcdproc $remote, "screen_set weather name {Weather}";
 
-for $wid ("time", "temp", "wind", "astro") {
+for my $wid ("time", "temp", "wind", "astro") {
 	lcdproc $remote, "widget_add weather $wid string";
 }
 lcdproc $remote, "widget_add weather description scroller";
@@ -92,7 +92,7 @@ $SIG{ALRM} = sub {
 	lcdproc $remote, "backlight off";
 };
 
-$rin = '';
+my $rin = '';
 vec($rin, fileno($remote), 1) = 1;
 alarm $LIGHT;
 sleep 5;
@@ -100,54 +100,53 @@ while (1) {
 
 	my $w = do $WEATHER;
 
-	$text = $w->{weather}->{value};
+	my $text = $w->{weather}->{value};
+	my $temp = $w->{temperature}->{value};
+	my $chill = $w->{temperature}->{min};
+	my $temp_unit = "C";
 
-	$temp = $w->{temperature}->{value};
-	$chill = $w->{temperature}->{min};
-	$temp_unit = "C";
+	my $wind = $w->{wind}->{direction}->{value};
+	my $speed = ceil(3.6 * $w->{wind}->{speed}->{value});
+	my $speed_unit = "km/h";
 
-	$wind = $w->{wind}->{direction}->{value};
-	$speed = ceil(3.6 * $w->{wind}->{speed}->{value});
-	$speed_unit = "km/h";
+	my $sr = str2time($w->{city}->{sun}->{rise});
+	my $sunrise = strftime("%H:%m", localtime($sr));
+	my $ss = str2time($w->{city}->{sun}->{set});
+	my $sunset = strftime("%H:%m", localtime($ss));
 
-	$sr = str2time($w->{city}->{sun}->{rise});
-	$sunrise = strftime("%H:%m", localtime($sr));
-	$ss = str2time($w->{city}->{sun}->{set});
-	$sunset = strftime("%H:%m", localtime($ss));
-
-	$pressure = $w->{pressure}->{value};
-	$press_unit = "mb";
+	my $pressure = $w->{pressure}->{value};
+	my $press_unit = "mb";
 
 	# pressure trend n/a
-	$rchange = " ";
+	my $rchange = " ";
 
-	$humidity = $w->{humidity}->{value};
-	$humidity_unit = $w->{humidity}->{unit};
+	my $humidity = $w->{humidity}->{value};
+	my $humidity_unit = $w->{humidity}->{unit};
 
-	$epoch = str2time($w->{lastupdate}->{value});
-	$now = strftime("%a %b %e %H:%M", localtime($epoch));
-	$precip = "0";
+	my $epoch = str2time($w->{lastupdate}->{value});
+	my $now = strftime("%a %b %e %H:%M", localtime($epoch));
+	my $precip = "0";
 	if (exists $w->{precipitation}->{value}) { 
 		$precip = "$w->{precipitation}->{value}"; 
 	}
 
-	$line1 = sprintf("%16s %dmm", $now, $precip);
-        $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
-	$tlen = length($ftmp);
-	$tpos = $width - $tlen + 1;
-	$dlen = $width - $tlen;
-	$line3 = sprintf("%2s %2s %3s%.1s%3.0f%.1s", $sunrise, $sunset, $humidity, $humidity_unit, $chill, $temp_unit);
-	$line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
+	my $line1 = sprintf("%16s %dmm", $now, $precip);
+        my $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
+	my $tlen = length($ftmp);
+	my $tpos = $width - $tlen + 1;
+	my $dlen = $width - $tlen;
+	my $line3 = sprintf("%2s %2s %3s%.1s%3.0f%.1s", $sunrise, $sunset, $humidity, $humidity_unit, $chill, $temp_unit);
+	my $line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
 
 	lcdproc $remote, "widget_set weather time 1 1 {$line1}";
-	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 1 {$text}";
+	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 8 {$text}";
 	lcdproc $remote, "widget_set weather temp {$tpos} 2 {$ftmp}";
 	lcdproc $remote, "widget_set weather wind 1 3 {$line3}";
 	lcdproc $remote, "widget_set weather astro 1 4 {$line4}";
 
-	$timeleft = 60;
+	my $timeleft = 60;
 	while ($timeleft > 0) {
-		($nfound, $timeleft) = select($rin, undef, undef, $timeleft);
+		(my $nfound, $timeleft) = select($rin, undef, undef, $timeleft);
 		if ($nfound > 0) {
 			my $input = <$remote>;
 			if (! defined($input) ) {
