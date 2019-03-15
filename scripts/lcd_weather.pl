@@ -83,6 +83,7 @@ lcdproc $remote, "screen_set weather name {Weather}";
 for $wid ("time", "temp", "wind", "astro") {
 	lcdproc $remote, "widget_add weather $wid string";
 }
+lcdproc $remote, "widget_add weather description scroller";
 
 # NOTE: You have to ask LCDd to send you keys you want to handle
 lcdproc $remote, "client_add_key Enter";
@@ -132,13 +133,15 @@ while (1) {
 
 	$line1 = sprintf("%16s %dmm", $now, $precip);
         $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
-        $ltext = sprintf("%*s", length($ftmp) - 20, $text);
-	$line2 = sprintf("%.*s %s", 19 - length($ftmp), $ltext, $ftmp);
+	$tlen = length($ftmp);
+	$tpos = $width - $tlen + 1;
+	$dlen = $width - $tlen;
 	$line3 = sprintf("%2s %2s %3s%.1s%3.0f%.1s", $sunrise, $sunset, $humidity, $humidity_unit, $chill, $temp_unit);
 	$line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
 
 	lcdproc $remote, "widget_set weather time 1 1 {$line1}";
-	lcdproc $remote, "widget_set weather temp 1 2 {$line2}";
+	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 1 {$text}";
+	lcdproc $remote, "widget_set weather temp {$tpos} 2 {$ftmp}";
 	lcdproc $remote, "widget_set weather wind 1 3 {$line3}";
 	lcdproc $remote, "widget_set weather astro 1 4 {$line4}";
 
