@@ -47,7 +47,7 @@ getopts("s:p:w:", \%opt);
 # set variables
 $SERVER = defined($opt{s}) ? $opt{s} : $SERVER;
 $PORT = defined($opt{p}) ? $opt{p} : $PORT;
-$WEATHER = defined($opt{w})? $opt{f} : $WEATHER;
+$WEATHER = defined($opt{w})? $opt{w} : $WEATHER;
 
 # Connect to the server...
 my $remote = IO::Socket::INET->new(
