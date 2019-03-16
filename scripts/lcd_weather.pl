@@ -80,7 +80,7 @@ lcdproc $remote, "client_set name {$progname}";
 lcdproc $remote, "screen_add weather";
 lcdproc $remote, "screen_set weather name {Weather}";
 
-for my $wid ("time", "temp", "wind", "astro") {
+for my $wid ("time", "temp", "wind", "astro", "rain") {
 	lcdproc $remote, "widget_add weather $wid string";
 }
 lcdproc $remote, "widget_add weather description scroller";
@@ -128,12 +128,14 @@ while (1) {
 
 	my $epoch = str2time($w->{lastupdate}->{value});
 	my $now = strftime("%a %b %e %H:%M", localtime($epoch));
-	my $precip = "0";
-	if (exists $w->{precipitation}->{value}) { 
-		$precip = "$w->{precipitation}->{value}"; 
+	lcdproc $remote, "widget_set weather time 1 1 {$now}";
+
+	if (exists $w->{precipitation}->{value}) {
+		my $precip = sprintf("%dmm", $w->{precipitation}->{value});
+		my $x = $width - length($precip) + 1;
+		lcdproc $remote, "widget_set weather rain {$x} 1 {$precip}";
 	}
 
-	my $line1 = sprintf("%16s %dmm", $now, $precip);
         my $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
 	my $tlen = length($ftmp);
 	my $tpos = $width - $tlen + 1;
@@ -141,7 +143,6 @@ while (1) {
 	my $line3 = sprintf("%2s %2s %3s%.1s%3.0f%.1s", $sunrise, $sunset, $humidity, $humidity_unit, $chill, $temp_unit);
 	my $line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
 
-	lcdproc $remote, "widget_set weather time 1 1 {$line1}";
 	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 4 {$text}";
 	lcdproc $remote, "widget_set weather temp {$tpos} 2 {$ftmp}";
 	lcdproc $remote, "widget_set weather wind 1 3 {$line3}";
@@ -196,7 +197,7 @@ my $status = shift;
   }
   else {
     print STDERR "For help, type: $progname -h\n";
-  }  
+  }
 
   exit($status);
 }
