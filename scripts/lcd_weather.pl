@@ -141,16 +141,21 @@ while (1) {
 
         my $ftmp = sprintf("%3d%.1s", $temp, $temp_unit);
 	my $tlen = length($ftmp);
-	my $tpos = $width - $tlen + 1;
+	my $tx = $width - $tlen + 1;
 	my $dlen = $width - $tlen;
-	lcdproc $remote, "widget_set weather temp {$tpos} 2 {$ftmp}";
-	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 3 {$text}";
+	my $ty = 2;
 
 	if ($temp != $chill) {
 		my $fmin = sprintf("%3d%.1s", $chill, $temp_unit);
 		$x = $width - length($fmin) + 1;
 		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
+	} else {
+		$ty = 3;
+		$dlen = $width;
 	}
+	lcdproc $remote, "widget_set weather temp {$tx} {$ty} {$ftmp}";
+	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 3 {$text}";
+
 	my $astro = sprintf("%2s %2s %3s%.1s", $sunrise, $sunset, $humidity, $humidity_unit);
 	lcdproc $remote, "widget_set weather astro 1 3 {$astro}";
 
