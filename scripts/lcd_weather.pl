@@ -80,7 +80,7 @@ lcdproc $remote, "client_set name {$progname}";
 lcdproc $remote, "screen_add weather";
 lcdproc $remote, "screen_set weather name {Weather}";
 
-for my $wid ("time", "temp", "wind", "astro", "rain") {
+for my $wid ("time", "temp", "tmin", "wind", "astro", "rain") {
 	lcdproc $remote, "widget_add weather $wid string";
 }
 lcdproc $remote, "widget_add weather description scroller";
@@ -104,11 +104,11 @@ while (1) {
 	}
 
 	my $text = $w->{weather}->{value};
-	my $temp = $w->{temperature}->{value};
-	my $chill = $w->{temperature}->{min};
+	my $temp = int(0.5 + $w->{temperature}->{value});
+	my $chill = int(0.5 + $w->{temperature}->{min});
 	my $temp_unit = "C";
 
-	my $wind = $w->{wind}->{direction}->{value};
+	my $wind_dir = $w->{wind}->{direction}->{value};
 	my $speed = ceil(3.6 * $w->{wind}->{speed}->{value});
 	my $speed_unit = "km/h";
 
@@ -136,17 +136,23 @@ while (1) {
 		lcdproc $remote, "widget_set weather rain {$x} 1 {$precip}";
 	}
 
-        my $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
+        my $ftmp = sprintf("%3d%.1s", $temp, $temp_unit);
 	my $tlen = length($ftmp);
 	my $tpos = $width - $tlen + 1;
 	my $dlen = $width - $tlen;
-	my $line3 = sprintf("%2s %2s %3s%.1s%3.0f%.1s", $sunrise, $sunset, $humidity, $humidity_unit, $chill, $temp_unit);
-	my $line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
-
-	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 4 {$text}";
 	lcdproc $remote, "widget_set weather temp {$tpos} 2 {$ftmp}";
-	lcdproc $remote, "widget_set weather wind 1 3 {$line3}";
-	lcdproc $remote, "widget_set weather astro 1 4 {$line4}";
+	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 3 {$text}";
+
+	if ($temp != $chill) {
+		my $fmin = sprintf("%3d%.1s", $chill, $temp_unit);
+		my $x = $width - length($fmin) + 1;
+		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
+	}
+	my $astro = sprintf("%2s %2s %3s%.1s", $sunrise, $sunset, $humidity, $humidity_unit);
+	lcdproc $remote, "widget_set weather astro 1 3 {$astro}";
+
+	my $wind = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind_dir), $speed, $speed_unit);
+	lcdproc $remote, "widget_set weather wind 1 4 {$wind}";
 
 	my $timeleft = 60;
 	while ($timeleft > 0) {
