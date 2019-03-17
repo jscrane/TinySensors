@@ -144,17 +144,22 @@ while (1) {
 	my $tx = $width - $tlen + 1;
 	my $dlen = $width - $tlen;
 	my $ty = 2;
+	my $dx = 1;
 
 	if ($temp != $chill) {
 		my $fmin = sprintf("%3d%.1s", $chill, $temp_unit);
 		$x = $width - length($fmin) + 1;
 		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
 	} else {
-		$ty = 3;
+		my $tl = length($text);
+		if ($tl < $width) {
+			$dx = 1 + ($width - $tl)/ 2;
+		}
 		$dlen = $width;
+		$ty = 3;
 	}
 	lcdproc $remote, "widget_set weather temp {$tx} {$ty} {$ftmp}";
-	lcdproc $remote, "widget_set weather description 1 2 {$dlen} 2 h 3 {$text}";
+	lcdproc $remote, "widget_set weather description {$dx} 2 {$dlen} 2 h 2 {$text}";
 
 	my $astro = sprintf("%2s %2s %3s%.1s", $sunrise, $sunset, $humidity, $humidity_unit);
 	lcdproc $remote, "widget_set weather astro 1 3 {$astro}";
