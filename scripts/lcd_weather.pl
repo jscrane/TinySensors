@@ -113,9 +113,9 @@ while (1) {
 	my $speed_unit = "km/h";
 
 	my $sr = str2time($w->{city}->{sun}->{rise});
-	my $sunrise = strftime("%H:%m", localtime($sr));
+	my $sunrise = strftime("%H:%M", localtime($sr));
 	my $ss = str2time($w->{city}->{sun}->{set});
-	my $sunset = strftime("%H:%m", localtime($ss));
+	my $sunset = strftime("%H:%M", localtime($ss));
 
 	my $pressure = $w->{pressure}->{value};
 	my $press_unit = "mb";
