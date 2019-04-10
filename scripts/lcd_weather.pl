@@ -129,14 +129,16 @@ while (1) {
 	my $epoch = str2time($w->{lastupdate}->{value});
 	my $now = strftime("%a %b %e %H:%M", localtime($epoch));
 	my $x = 1;
+	my $precip = "";
+	my $px = $width;
 
 	if (exists $w->{precipitation}->{value}) {
-		my $precip = sprintf("%dmm", $w->{precipitation}->{value});
-		my $x = $width - length($precip) + 1;
-		lcdproc $remote, "widget_set weather rain {$x} 1 {$precip}";
+		$precip = sprintf("%dmm", $w->{precipitation}->{value});
+		$px = $width - length($precip) + 1;
 	} else {
-		 $x = 1 + ($width - length($now)) / 2;
+		$x = 1 + ($width - length($now)) / 2;
 	}
+	lcdproc $remote, "widget_set weather rain {$px} 1 {$precip}";
 	lcdproc $remote, "widget_set weather time {$x} 1 {$now}";
 
         my $ftmp = sprintf("%3d%.1s", $temp, $temp_unit);
@@ -148,7 +150,7 @@ while (1) {
 
 	if ($temp != $chill) {
 		my $fmin = sprintf("%3d%.1s", $chill, $temp_unit);
-		$x = $width - length($fmin) + 1;
+		my $x = $width - length($fmin) + 1;
 		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
 	} else {
 		my $tl = length($text);
