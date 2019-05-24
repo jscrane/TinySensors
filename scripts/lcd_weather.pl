@@ -3,11 +3,10 @@
 use sensors;
 
 use 5.005;
-#use strict;
+use strict;
 use Getopt::Std;
 use IO::Socket;
 use IO::Select;
-use Fcntl;
 use POSIX qw(strftime ceil);
 use Date::Parse;
 
@@ -16,7 +15,7 @@ use Date::Parse;
 ############################################################
 
 # Host which runs LCDproc daemon (LCDd)
-my $SERVER = "localhost";
+my $SERVER = "pitv3";
 
 # Port on which LCDd listens to requests
 my $PORT = "13666";
@@ -43,11 +42,12 @@ sub wind_direction;
 
 ## main routine ##
 my %opt = ();
+getopts("s:p:w:", \%opt);
 
 # set variables
 $SERVER = defined($opt{s}) ? $opt{s} : $SERVER;
 $PORT = defined($opt{p}) ? $opt{p} : $PORT;
-
+$WEATHER = defined($opt{w})? $opt{w} : $WEATHER;
 
 # Connect to the server...
 my $remote = IO::Socket::INET->new(
@@ -80,9 +80,10 @@ lcdproc $remote, "client_set name {$progname}";
 lcdproc $remote, "screen_add weather";
 lcdproc $remote, "screen_set weather name {Weather}";
 
-for $wid ("time", "temp", "wind", "astro") {
+for my $wid ("time", "temp", "tmin", "wind", "astro", "rain") {
 	lcdproc $remote, "widget_add weather $wid string";
 }
+lcdproc $remote, "widget_add weather description scroller";
 
 # NOTE: You have to ask LCDd to send you keys you want to handle
 lcdproc $remote, "client_add_key Enter";
@@ -91,60 +92,91 @@ $SIG{ALRM} = sub {
 	lcdproc $remote, "backlight off";
 };
 
-$rin = '';
+my $rin = '';
 vec($rin, fileno($remote), 1) = 1;
 alarm $LIGHT;
 sleep 5;
 while (1) {
 
-	my $w = do $WEATHER;
+	my $w;
+	unless ($w = do $WEATHER) {
+		die "$!: $WEATHER" unless defined $w;
+	}
 
-	$temp = "$w->{current_observation}->{temp_c}";
-	$chill = "$w->{current_observation}->{feelslike_c}";
-	$text = "$w->{current_observation}->{weather}";
-	$wind = "$w->{current_observation}->{wind_degrees}";
-	$speed = "$w->{current_observation}->{wind_kph}";
-	$sunrise_h = "$w->{sun_phase}->{sunrise}->{hour}";
-	$sunrise_m = "$w->{sun_phase}->{sunrise}->{minute}";
-	$sunset_h = "$w->{sun_phase}->{sunset}->{hour}";
-	$sunset_m = "$w->{sun_phase}->{sunset}->{minute}";
-	$temp_unit = "C";
-	$press_unit = "mb";
-	$speed_unit = "km/h";
-	$pressure = "$w->{current_observation}->{pressure_mb}";
-	$rising = "$w->{current_observation}->{pressure_trend}";
-	if ($rising == "1") { $rchange = "+"; }
-        elsif ($rising == "0") { $rchange = " "; }
-	else { $rchange = "-"; }
-	$humidity = "$w->{current_observation}->{relative_humidity}";
-	$pressure = ceil($pressure);
-	$speed = ceil($speed);
-	$precip = "$w->{current_observation}->{precip_1hr_metric}";
-	$epoch = "$w->{current_observation}->{observation_epoch}";
-	$now = strftime("%a %b %e %H:%M", localtime($epoch));
+	my $text = $w->{weather}->{value};
+	my $temp = int(0.5 + $w->{temperature}->{value});
+	my $chill = int(0.5 + $w->{temperature}->{min});
+	my $temp_unit = "C";
 
-	$line1 = sprintf("%16s %dmm", $now, $precip);
-        $ftmp = sprintf("%.0f%.1s", $temp, $temp_unit);
-        $ltext = sprintf("%*s", length($ftmp) - 20, $text);
-	$line2 = sprintf("%.*s %s", 19 - length($ftmp), $ltext, $ftmp);
-	$line3 = sprintf("%2s:%2s %2s:%2s %4s%3.0f%.1s", $sunrise_h, $sunrise_m, $sunset_h, $sunset_m, $humidity, $chill, $temp_unit);
-	$line4 = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind), $speed, $speed_unit);
+	my $wind_dir = $w->{wind}->{direction}->{value};
+	my $speed = ceil(3.6 * $w->{wind}->{speed}->{value});
+	my $speed_unit = "km/h";
 
-	lcdproc $remote, "widget_set weather time 1 1 {$line1}";
-	lcdproc $remote, "widget_set weather temp 1 2 {$line2}";
-	lcdproc $remote, "widget_set weather wind 1 3 {$line3}";
-	lcdproc $remote, "widget_set weather astro 1 4 {$line4}";
+	my $sr = str2time($w->{city}->{sun}->{rise});
+	my $sunrise = strftime("%H:%M", localtime($sr));
+	my $ss = str2time($w->{city}->{sun}->{set});
+	my $sunset = strftime("%H:%M", localtime($ss));
 
-	$timeleft = 60;
+	my $pressure = $w->{pressure}->{value};
+	my $press_unit = "mb";
+
+	# pressure trend n/a
+	my $rchange = " ";
+
+	my $humidity = $w->{humidity}->{value};
+	my $humidity_unit = $w->{humidity}->{unit};
+
+	my $epoch = str2time($w->{lastupdate}->{value});
+	my $now = strftime("%a %b %e %H:%M", localtime($epoch));
+	my $x = 1;
+	my $precip = "";
+	my $px = $width;
+
+	if (exists $w->{precipitation}->{value}) {
+		$precip = sprintf("%dmm", $w->{precipitation}->{value});
+		$px = $width - length($precip) + 1;
+	} else {
+		$x = 1 + ($width - length($now)) / 2;
+	}
+	lcdproc $remote, "widget_set weather rain {$px} 1 {$precip}";
+	lcdproc $remote, "widget_set weather time {$x} 1 {$now}";
+
+        my $ftmp = sprintf("%3d%.1s", $temp, $temp_unit);
+	my $tlen = length($ftmp);
+	my $tx = $width - $tlen + 1;
+	my $dlen = $width - $tlen;
+	my $ty = 2;
+	my $dx = 1;
+
+	if ($temp != $chill) {
+		my $fmin = sprintf("%3d%.1s", $chill, $temp_unit);
+		my $x = $width - length($fmin) + 1;
+		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
+	} else {
+		my $tl = length($text);
+		if ($tl < $width) {
+			$dx = 1 + ($width - $tl)/ 2;
+		}
+		$dlen = $width;
+		$ty = 3;
+	}
+	lcdproc $remote, "widget_set weather temp {$tx} {$ty} {$ftmp}";
+	lcdproc $remote, "widget_set weather description {$dx} 2 {$dlen} 2 h 2 {$text}";
+
+	my $astro = sprintf("%2s %2s %3s%.1s", $sunrise, $sunset, $humidity, $humidity_unit);
+	lcdproc $remote, "widget_set weather astro 1 3 {$astro}";
+
+	my $wind = sprintf("%4s%.2s%.1s %3s  %3s%.4s", $pressure, $press_unit, $rchange, wind_direction($wind_dir), $speed, $speed_unit);
+	lcdproc $remote, "widget_set weather wind 1 4 {$wind}";
+
+	my $timeleft = 60;
 	while ($timeleft > 0) {
-		($nfound, $timeleft) = select($rout=$rin, undef, undef, $timeleft);
+		(my $nfound, $timeleft) = select($rin, undef, undef, $timeleft);
 		if ($nfound > 0) {
-print "awake $timeleft\n";
 			my $input = <$remote>;
 			if (! defined($input) ) {
 				last;
 			}
-print "input is: $input";
 			if ($input eq "key Enter\n") {
 				lcdproc $remote, "backlight on";
 				alarm $LIGHT;
@@ -186,7 +218,7 @@ my $status = shift;
   }
   else {
     print STDERR "For help, type: $progname -h\n";
-  }  
+  }
 
   exit($status);
 }

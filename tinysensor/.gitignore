@@ -1,0 +1,6 @@
+.lib
+*.cpp.o
+tinysensor.ino.bin
+tinysensor.ino.elf
+tinysensor.eep
+.*.swp
