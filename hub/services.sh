@@ -3,7 +3,7 @@
 SEN=/home/pi/TinySensors/hub
 [ -x $SEN/sensorhub ] && $SEN/sensorhub
 [ -x $SEN/mux ] && $SEN/mux localhost:5555 sheeva:5555 < $SEN/nodes.txt
-[ -x $SEN/lcd ] && $SEN/lcd -l pitv3
+[ -x $SEN/lcd ] && $SEN/lcd -l localhost
 [ -x $SEN/status ] && $SEN/status
 [ -x $SEN/mqtt ] && $SEN/mqtt -q iot:1883 -m localhost:5678
 [ -x $SEN/mqtt ] && $SEN/mqtt -q mqtt.opensensors.io -m localhost:5678 \
