@@ -8,3 +8,6 @@ This sketch now requires the
 
 sleepy.cpp originally written by Jean-Claude Wippler as part of
 [JeeLib](https://jeelabs.org/pub/docs/jeelib/).
+
+Fuse settings are: L: 0xe2, H: 0xdf, E: 0xfe, corresponding to
+8MHz internal clock, BOD disabled.
