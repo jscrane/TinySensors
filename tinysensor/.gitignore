@@ -1,6 +1,5 @@
-.lib
+.build
 *.cpp.o
-tinysensor.ino.bin
-tinysensor.ino.elf
-tinysensor.eep
+*.cpp.d
 .*.swp
+*.txt.mk
