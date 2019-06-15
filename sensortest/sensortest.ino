@@ -24,7 +24,7 @@ void setup(void)
 	SPI.begin();
 	radio.begin();
 
-	serial.begin(9600);
+	serial.begin(TERMINAL_SPEED);
 	serial.print(F("retries: "));
 	serial.println(radio.getRetries(), 16);
 

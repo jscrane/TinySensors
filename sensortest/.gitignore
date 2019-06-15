@@ -1,6 +1,5 @@
-.lib
+.build
 *.cpp.o
-*.ino.bin
-*.ino.elf
-*.eep
+*.cpp.d
 .*.swp
+*.txt.mk
