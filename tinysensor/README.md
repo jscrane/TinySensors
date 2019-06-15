@@ -1,8 +1,10 @@
 ### Build with uC-Makefile
 ```
-$ make -I ~/src/uC-Makefile NODE_ID=1 clean write-fuses write-flash
+$ make -I ~/src/uC-Makefile NODE_ID=1 clean all write-fuses write-flash
 ```
 
-This sketch now requires the my clone of the damellis core for
-[attiny](https://github.com/jscrane/attiny) which contains my
-[SPI](https://github.com/jscrane/SPI) library for attiny.
+This sketch now requires the
+[ATTinyCore](https://github.com/SpenceKonde/ATTinyCore) by Spence Konde.
+
+sleepy.cpp originally written by Jean-Claude Wippler as part of
+[JeeLib](https://jeelabs.org/pub/docs/jeelib/).

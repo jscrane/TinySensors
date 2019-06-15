@@ -73,6 +73,6 @@ void Sleepy::loseSomeTime(word msecs) {
 		msleft -= halfms;
 	}
 	// adjust the milli ticks, since we will have missed several
-	extern volatile unsigned long timer0_millis;
-	timer0_millis += msecs - msleft;
+	extern volatile unsigned long millis_timer_millis;
+	millis_timer_millis += msecs - msleft;
 }
