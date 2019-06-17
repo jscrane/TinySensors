@@ -18,3 +18,7 @@ tinysensor.bootloader.extended_fuses=0xFE
 tinysensor.bootloader.high_fuses=0b11010111
 tinysensor.bootloader.lock_bits=0xFF
 tinysensor.bootloader.unlock_bits=0xFF
+tinysensor.ltocppflags=
+tinysensor.ltocflags=
+tinysensor.ltoarcmd=
+tinysensor.ltoelfflags=
