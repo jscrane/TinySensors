@@ -28,8 +28,7 @@ void setup(void)
 	serial.print(F("retries: "));
 	serial.println(radio.getRetries(), 16);
 
-	serial.println(F("Sensor Test. Enter node-id and hit return."));
-	serial.println(F("Status\tHumidity\tTemperature\tLight\tBattery\tID"));
+	serial.println(F("Status\tHumidity\tTemperature\tLight\tBattery"));
 }
 
 void loop(void)
@@ -44,17 +43,7 @@ void loop(void)
 	serial.print(F("\t\t"));
 	serial.print((int)light);
 	serial.print(F("\t"));
-	serial.print(analogRead(A0));
-	serial.print(F("\t"));
-	serial.println(node_id);
+	serial.println(analogRead(A0));
 
-	uint8_t id = 0;
-	while (serial.available()) {
-		int ch = serial.read();
-		if (ch == '\r')
-			node_id = id;
-		else if (ch >= '0' && ch < '8')
-			id = (id << 3) | (ch - '0');
-	}
 	delay(dht.getMinimumSamplingPeriod());
 }
