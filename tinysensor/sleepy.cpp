@@ -39,7 +39,7 @@ void Sleepy::powerDown (void) {
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	ATOMIC_BLOCK(ATOMIC_FORCEON) {
 		sleep_enable();
-		// sleep_bod_disable(); // can't use this - not in my avr-libc version!
+		sleep_bod_disable();
 #ifdef BODSE
 		MCUCR = MCUCR | bit(BODSE) | bit(BODS); // timed sequence
 		MCUCR = (MCUCR & ~ bit(BODSE)) | bit(BODS);
