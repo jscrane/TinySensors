@@ -1,6 +1,4 @@
-BOARD := attinyx4
-BOARD_CHIP := 84
-BOARD_CLOCK := 8internal
+BOARD := tinysensor
 CPPFLAGS = -DNODE_ID=$(NODE_ID)
 
 include tiny.mk
