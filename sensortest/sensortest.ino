@@ -2,6 +2,8 @@
 #include <RF24.h>
 #include <DHT.h>
 #include <SoftwareSerial.h>
+#include <avr/wdt.h>
+#include "wdt.h"
 
 const uint8_t DHT_PIN = 2;
 const uint8_t RX_PIN = 9, TX_PIN = 10;
@@ -45,5 +47,6 @@ void loop(void)
 	serial.print(F("\t"));
 	serial.println(analogRead(A0));
 
-	delay(dht.getMinimumSamplingPeriod());
+	wdt_sleep(WDTO_1S, 5);
+	//delay(dht.getMinimumSamplingPeriod());
 }
