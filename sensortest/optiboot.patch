@@ -10,6 +10,23 @@ index 3f923a8..0c43a14 100644
  GCCROOT = $(TOOLROOT)/avr/bin/
  
  ifeq ($(OS), windows)
+diff --git a/optiboot/bootloaders/optiboot/Makefile.extras b/optiboot/bootloaders/optiboot/Makefile.extras
+index 0bb403c..6880b86 100644
+--- a/optiboot/bootloaders/optiboot/Makefile.extras
++++ b/optiboot/bootloaders/optiboot/Makefile.extras
+@@ -104,8 +104,10 @@ attiny84: TARGET = attiny84
+ attiny84: MCU_TARGET = attiny84
+ attiny84: LED_CMD ?= -DLED_START_FLASHES=0
+ attiny84: AVR_FREQ ?= 8000000L
+-attiny84: CFLAGS += $(COMMON_OPTIONS) -DSOFT_UART -DVIRTUAL_BOOT_PARTITION -Dsave_vect_num=4
+-attiny84: LDSECTIONS = -Wl,--section-start=.text=0x1d00 -Wl,--section-start=.version=0x1ffe -Wl,--gc-sections -Wl,--undefined=optiboot_version
++#attiny84: CFLAGS += $(COMMON_OPTIONS) -DSOFT_UART -DVIRTUAL_BOOT_PARTITION -Dsave_vect_num=4
++attiny84: CFLAGS += $(COMMON_OPTIONS) -DSOFT_UART -DVIRTUAL_BOOT_PARTITION
++#attiny84: LDSECTIONS = -Wl,--section-start=.text=0x1d00 -Wl,--section-start=.version=0x1ffe -Wl,--gc-sections -Wl,--undefined=optiboot_version
++attiny84: LDSECTIONS = -Wl,--section-start=.text=0x1d80 -Wl,--section-start=.version=0x1ffe
+ attiny84: $(PROGRAM)_attiny84.hex
+ attiny84: $(PROGRAM)_attiny84.lst
+ 
 diff --git a/optiboot/bootloaders/optiboot/pin_defs.h b/optiboot/bootloaders/optiboot/pin_defs.h
 index 9c163c4..2ffe865 100644
 --- a/optiboot/bootloaders/optiboot/pin_defs.h
