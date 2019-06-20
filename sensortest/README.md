@@ -10,5 +10,5 @@ source tree:
 
 ```
 $ patch < optiboot.patch
-$ make attiny84 BAUD_RATE=19200
+$ ENV=arduino make attiny84 BAUD_RATE=19200
 ```
