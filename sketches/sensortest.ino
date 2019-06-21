@@ -2,7 +2,6 @@
 #include <RF24.h>
 #include <DHT.h>
 #include <SoftwareSerial.h>
-#include <avr/wdt.h>
 #include "wdt.h"
 
 const uint8_t DHT_PIN = 2;
@@ -30,23 +29,30 @@ void setup(void)
 	serial.print(F("retries: "));
 	serial.println(radio.getRetries(), 16);
 
-	serial.println(F("Status\tHumidity\tTemperature\tLight\tBattery"));
+	serial.println(F("millis\tStatus\tHum\tTemp\tLight\tBattery\tTime"));
 }
 
 void loop(void)
 {
-	uint8_t light = 255 - analogRead(A1) / 4;
+	unsigned lsens = analogRead(A1);
 
+	serial.print(millis());
+	serial.print('\t');
 	serial.print(dht.getStatus());
-	serial.print(F("\t"));
+	serial.print('\t');
 	serial.print(dht.getHumidity());
-	serial.print(F("\t\t"));
+	serial.print('\t');
 	serial.print(dht.getTemperature());
-	serial.print(F("\t\t"));
-	serial.print((int)light);
-	serial.print(F("\t"));
-	serial.println(analogRead(A0));
+	serial.print('\t');
 
-	wdt_sleep(WDTO_1S, 5);
-	//delay(dht.getMinimumSamplingPeriod());
+	uint8_t light = 255 - lsens / 4;
+	serial.print((int)light);
+	serial.print('\t');
+	serial.print(analogRead(A0));
+	serial.print('\t');
+
+	unsigned secs = lsens / 8 + 1;
+	serial.println(secs);
+
+	wdt_sleep(secs);
 }
