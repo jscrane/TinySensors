@@ -28,6 +28,8 @@ void setup(void)
 	serial.begin(TERMINAL_SPEED);
 	serial.print(F("retries: "));
 	serial.println(radio.getRetries(), 16);
+	serial.print(F("data rate: "));
+	serial.println(radio.getDataRate());
 
 	serial.println(F("millis\tStatus\tHum\tTemp\tLight\tBattery\tTime"));
 }

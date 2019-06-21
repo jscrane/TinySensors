@@ -82,11 +82,11 @@ int main(int argc, char *argv[])
 	radio.begin();
 	radio.enableDynamicPayloads();
 	radio.setAutoAck(true);
+	radio.setDataRate(data_rate);
 	radio.powerUp();
 
-	const uint16_t this_node = 0;
 	RF24Network network(radio);
-	network.begin(90, this_node);
+	network.begin(channel, master_node);
 
 	time_t last_reading;
 	if (watchdog)

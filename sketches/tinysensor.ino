@@ -14,8 +14,6 @@ RF24 radio(CE_PIN, CS_PIN);
 RF24Network network(radio);
 DHT dht;
 
-const uint8_t channel = 90;
-const uint16_t master_node = 0;
 const uint16_t this_node = NODE_ID;
 const uint8_t retry_count = 5;		// 250+5*15*250 = 19mS
 const uint8_t retry_delay = 1;		// 1*250uS
@@ -31,6 +29,7 @@ void setup(void)
 
 	radio.enableDynamicPayloads();
 	radio.setRetries(retry_delay, retry_count);
+	radio.setDataRate(data_rate);
 
 	network.begin(channel, this_node);
 }
