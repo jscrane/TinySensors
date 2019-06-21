@@ -4,7 +4,7 @@
 #include <DHT.h>
 
 #include "tinysensor.h"
-#include "sleepy.h"
+#include "wdt.h"
 
 const uint8_t CE_PIN = 8;
 const uint8_t CS_PIN = 7;
@@ -14,14 +14,9 @@ RF24 radio(CE_PIN, CS_PIN);
 RF24Network network(radio);
 DHT dht;
 
-const uint8_t channel = 90;
-const uint16_t master_node = 0;
 const uint16_t this_node = NODE_ID;
 const uint8_t retry_count = 5;		// 250+5*15*250 = 19mS
 const uint8_t retry_delay = 1;		// 1*250uS
-
-const uint32_t interval = 60000;
-const uint32_t min_interval = 15000;
 
 void setup(void)
 {
@@ -34,33 +29,27 @@ void setup(void)
 
 	radio.enableDynamicPayloads();
 	radio.setRetries(retry_delay, retry_count);
+	radio.setDataRate(data_rate);
 
 	network.begin(channel, this_node);
 }
-
-ISR(WDT_vect) { Sleepy::watchdogEvent(); }
 
 void loop(void)
 {
 	radio.powerUp();
 	network.update();
 
-	uint8_t light = 255 - analogRead(A1) / 4;
+	unsigned lsens = analogRead(A1);
+	uint8_t light = 255 - lsens / 4;
 	uint16_t battery = analogRead(A0);
 
+	// millis() only counts time when the sketch is not sleeping
 	sensor_payload_t payload = { millis(), light, dht.getStatus(), dht.getHumidity(), dht.getTemperature(), battery };
 	RF24NetworkHeader header(master_node, sensor_type_id);
-	bool ok = network.write(header, &payload, sizeof(payload));
+	network.write(header, &payload, sizeof(payload));
 
 	radio.powerDown();
 
-	uint32_t l = light;
-	uint32_t s = 1000 * (255 - l) / 3;
-	if (s < min_interval)
-		s = min_interval;
-	do {
-		uint32_t i = min(s, interval);
-		Sleepy::loseSomeTime(i);
-		s -= i;
-	} while (s > 0);
+	unsigned secs = lsens / 8 + 1;
+	wdt_sleep(secs);
 }

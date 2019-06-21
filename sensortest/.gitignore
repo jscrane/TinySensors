@@ -1,6 +1,0 @@
-.lib
-*.cpp.o
-*.ino.bin
-*.ino.elf
-*.eep
-.*.swp
