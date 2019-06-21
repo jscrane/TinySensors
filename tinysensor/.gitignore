@@ -1,5 +1,0 @@
-.build
-*.cpp.o
-*.cpp.d
-.*.swp
-*.txt.mk
