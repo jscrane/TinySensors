@@ -1,10 +1,10 @@
 #ifndef TINYSENSOR_H
 #define TINYSENSOR_H
 
-const uint8_t channel = 90;
 const uint16_t master_node = 0;
 const unsigned char sensor_type_id = 0;
-const rf24_datarate_e data_rate = RF24_1MBPS;
+const uint8_t channel = 108;
+const rf24_datarate_e data_rate = RF24_250KBPS;
 
 struct sensor_payload_t
 {
