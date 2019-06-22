@@ -30,6 +30,8 @@ void setup(void)
 	radio.enableDynamicPayloads();
 	radio.setRetries(retry_delay, retry_count);
 	radio.setDataRate(data_rate);
+	radio.setPALevel(power);
+	radio.setCRCLength(crc_len);
 
 	network.begin(channel, this_node);
 }
