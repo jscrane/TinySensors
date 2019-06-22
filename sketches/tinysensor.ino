@@ -46,6 +46,7 @@ void loop(void)
 	uint16_t battery = analogRead(A0);
 
 	// millis() only counts time when the sketch is not sleeping
+	dht.resetTimer();
 	sensor_payload_t payload = { millis(), light, dht.getStatus(), dht.getHumidity(), dht.getTemperature(), battery };
 	RF24NetworkHeader header(master_node, sensor_type_id);
 	network.write(header, &payload, sizeof(payload));

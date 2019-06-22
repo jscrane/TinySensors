@@ -46,6 +46,7 @@ void loop(void)
 	serial.print('\t');
 	serial.print(dht.getTemperature());
 	serial.print('\t');
+	dht.resetTimer();
 
 	uint8_t light = 255 - lsens / 4;
 	serial.print((int)light);
