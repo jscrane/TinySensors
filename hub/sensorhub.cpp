@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 	radio.enableDynamicPayloads();
 	radio.setAutoAck(true);
 	radio.setDataRate(data_rate);
+	radio.setCRCLength(crc_len);
 	radio.powerUp();
 
 	RF24Network network(radio);
