@@ -88,6 +88,9 @@ int main(int argc, char *argv[])
 	RF24Network network(radio);
 	network.begin(channel, master_node);
 
+	if (verbose)
+		radio.printDetails();
+
 	time_t last_reading;
 	if (watchdog)
 		time(&last_reading);
