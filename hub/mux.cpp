@@ -128,17 +128,21 @@ int main(int argc, char *argv[])
 			FD_SET(ss, &srd);
 		else
 			FD_CLR(ss, &srd);
+
+		int nfds = -1;
 		for (int i = 0; i < ns; i++) {
 			if (servers[i] == -1) {
 				servers[i] = connect_nonblock(argv[optind+i], 5555);
 				if (servers[i] >= 0)
 					FD_SET(servers[i], &swr);
 			}
+			if (nfds < servers[i])
+				nfds = servers[i];
 		}
 
 		rd = srd;
 		wr = swr;
-		if (select(servers[ns-1] + 1, &rd, &wr, 0, 0) < 0)
+		if (select(nfds + 1, &rd, &wr, 0, 0) < 0)
 			fatal("select: %s\n", strerror(errno));
 
 		char obuf[256];
