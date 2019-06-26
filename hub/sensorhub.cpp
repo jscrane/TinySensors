@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 			sensor s;
 			s.temperature = ((float)temp) / 10;
 			s.humidity = ((float)payload.humidity) / 10;
-			s.battery = ((float)payload.battery) * 3.3 / 1023.0;
+			s.battery = ((float)payload.battery) * 3.3 / 255.0;
 			s.light = payload.light;
 			s.node_id = header.from_node;
 			s.node_status = payload.status;
