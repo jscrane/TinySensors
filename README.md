@@ -11,12 +11,11 @@ See [blog articles](http://programmablehardware.blogspot.ie/search/label/tinysen
 Software
 ========
 * Arduino
-  - IDE version [1.5.4](http://arduino.cc/en/Main/Software)
-  - [ATtiny core](https://github.com/jscrane/attiny)
+  - IDE version [1.8.9](http://arduino.cc/en/Main/Software) or [uC-Makefile](https://github.com/jscrane/uC-Makefile)
+  - [ATtiny core](https://github.com/SpenceKonde/ATTinyCore)
   - Forked [RF24](https://github.com/jscrane/RF24) and 
 [RF24Network](https://github.com/jscrane/RF24Network) libraries
   - [DHT22](https://github.com/jscrane/DHT22) library, slimmed-down for ATtiny
-  - [JeeLib](https://github.com/jcw/jeelib)
 
 * Raspberry-PI
   - [RF24-rpi](https://github.com/jscrane/RF24-rpi)
