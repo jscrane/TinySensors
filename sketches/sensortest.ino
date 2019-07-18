@@ -34,27 +34,37 @@ void setup(void)
 	serial.println(F("millis\tStatus\tHum\tTemp\tLight\tBattery\tTime"));
 }
 
+// average time to read sensors 5.5ms:
+// t n
+// 4 4
+// 5 1
+// 6 7
+// 7 2
 void loop(void)
 {
-	unsigned lsens = analogRead(A1);
+	uint32_t start = millis();
 
-	serial.print(millis());
+	unsigned lsens = analogRead(A1);
+	unsigned batt = analogRead(A0);
+	uint8_t light = 255 - lsens / 4;
+	unsigned secs = lsens / 8 + 1;
+
+	dht.resetTimer();
+	int16_t h = dht.getHumidity();
+	int16_t t = dht.getTemperature();
+
+	serial.print(millis() - start);
 	serial.print('\t');
 	serial.print(dht.getStatus());
 	serial.print('\t');
-	serial.print(dht.getHumidity());
+	serial.print(h);
 	serial.print('\t');
-	serial.print(dht.getTemperature());
+	serial.print(t);
 	serial.print('\t');
-	dht.resetTimer();
-
-	uint8_t light = 255 - lsens / 4;
 	serial.print((int)light);
 	serial.print('\t');
-	serial.print(analogRead(A0));
+	serial.print(batt);
 	serial.print('\t');
-
-	unsigned secs = lsens / 8 + 1;
 	serial.println(secs);
 
 	wdt_sleep(secs);
