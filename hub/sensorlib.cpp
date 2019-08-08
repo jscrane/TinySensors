@@ -133,18 +133,24 @@ int host_port(const char *hp, int defport, char *host, int size) {
 	return port;
 }
 
-static void init_addr(struct sockaddr_in &a, const char *s, int defport) {
+static int init_addr(struct sockaddr_in &a, const char *s, int defport, bool block = true) {
 	char host[32];
 	int port = host_port(s, defport, host, sizeof(host));
 
 	struct hostent *he = gethostbyname(host);
-	if (!he)
-		fatal("gethostbyname: %s\n", host);
+	if (he) {
+		memset((void *)&a, 0, sizeof(sockaddr_in));
+		a.sin_family = AF_INET;
+		a.sin_port = htons(port);
+		a.sin_addr = *(in_addr *)he->h_addr;
+		return 0;
+	}
 
-	memset((void *)&a, 0, sizeof(sockaddr_in));
-	a.sin_family = AF_INET;
-	a.sin_port = htons(port);
-	a.sin_addr = *(in_addr *)he->h_addr;
+	if (!block && h_errno == TRY_AGAIN)
+		return -1;
+
+	fatal("gethostbyname: %s: %s\n", host, hstrerror(h_errno));
+	return -1;
 }
 
 int connect_block(const char *s, int defport) {
@@ -163,7 +169,8 @@ int connect_block(const char *s, int defport) {
 
 int connect_nonblock(const char *s, int defport) {
 	struct sockaddr_in a;
-	init_addr(a, s, defport);
+	if (0 > init_addr(a, s, defport, false))
+		return -1;
 
 	int sock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (0 > sock)
