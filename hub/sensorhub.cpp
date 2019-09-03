@@ -96,12 +96,14 @@ int main(int argc, char *argv[])
 	if (watchdog)
 		time(&last_reading);
 	for (;;) {
+		alarm(5);
 		network.update();
 
 		while (network.available()) {
 			RF24NetworkHeader header;
 			sensor_payload_t payload;
 			network.read(header, &payload, sizeof(payload));
+			alarm(0);
 
 			// fixup for negative temperature
 			short temp = payload.temperature;
