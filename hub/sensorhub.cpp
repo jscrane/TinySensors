@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
 		daemon_mode();
 
 	signal(SIGINT, signal_handler);
+	signal(SIGALRM, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	ss = socket(AF_INET, SOCK_STREAM, 0);
@@ -96,14 +97,15 @@ int main(int argc, char *argv[])
 	if (watchdog)
 		time(&last_reading);
 	for (;;) {
+		// workaround for library bug
 		alarm(5);
 		network.update();
+		alarm(0);
 
 		while (network.available()) {
 			RF24NetworkHeader header;
 			sensor_payload_t payload;
 			network.read(header, &payload, sizeof(payload));
-			alarm(0);
 
 			// fixup for negative temperature
 			short temp = payload.temperature;
