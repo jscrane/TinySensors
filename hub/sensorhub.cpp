@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 
 #include <tinysensor.h>
@@ -52,6 +53,17 @@ int main(int argc, char *argv[])
 
 	if (daemon)
 		daemon_mode();
+
+	for (;;) {
+		pid_t pid = fork();
+		if (pid == 0)
+			break;
+		if (pid < 0)
+			fatal("fork: %s\n", strerror(errno));
+		int wstatus;
+		if (0 > waitpid(pid, &wstatus, 0))
+			fatal("wait: %s\n", strerror(errno));
+	}
 
 	signal(SIGINT, signal_handler);
 	signal(SIGALRM, signal_handler);
