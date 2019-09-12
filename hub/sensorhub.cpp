@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 
 #include <tinysensor.h>
@@ -53,7 +54,19 @@ int main(int argc, char *argv[])
 	if (daemon)
 		daemon_mode();
 
+	for (;;) {
+		pid_t pid = fork();
+		if (pid == 0)
+			break;
+		if (pid < 0)
+			fatal("fork: %s\n", strerror(errno));
+		int wstatus;
+		if (0 > waitpid(pid, &wstatus, 0))
+			fatal("wait: %s\n", strerror(errno));
+	}
+
 	signal(SIGINT, signal_handler);
+	signal(SIGALRM, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	ss = socket(AF_INET, SOCK_STREAM, 0);
@@ -96,7 +109,10 @@ int main(int argc, char *argv[])
 	if (watchdog)
 		time(&last_reading);
 	for (;;) {
+		// workaround for library bug
+		alarm(5);
 		network.update();
+		alarm(0);
 
 		while (network.available()) {
 			RF24NetworkHeader header;
