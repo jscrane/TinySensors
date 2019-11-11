@@ -127,7 +127,7 @@ while (1) {
 	my $humidity_unit = $w->{humidity}->{unit};
 
 	my $epoch = str2time($w->{lastupdate}->{value});
-	my $now = strftime("%a %b %e %H:%M", localtime($epoch));
+	my $now = strftime("%a %b %-e %H:%M", localtime($epoch));
 	my $x = 1;
 	my $precip = "";
 	my $px = $width;
