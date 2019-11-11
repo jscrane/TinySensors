@@ -15,7 +15,7 @@ use Date::Parse;
 ############################################################
 
 # Host which runs LCDproc daemon (LCDd)
-my $SERVER = "pitv3";
+my $SERVER = "iot";
 
 # Port on which LCDd listens to requests
 my $PORT = "13666";
