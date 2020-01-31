@@ -15,7 +15,7 @@ use Date::Parse;
 ############################################################
 
 # Host which runs LCDproc daemon (LCDd)
-my $SERVER = "pitv3";
+my $SERVER = "iot";
 
 # Port on which LCDd listens to requests
 my $PORT = "13666";
@@ -127,7 +127,7 @@ while (1) {
 	my $humidity_unit = $w->{humidity}->{unit};
 
 	my $epoch = str2time($w->{lastupdate}->{value});
-	my $now = strftime("%a %b %e %H:%M", localtime($epoch));
+	my $now = strftime("%a %b %-e %H:%M", localtime($epoch));
 	my $x = 1;
 	my $precip = "";
 	my $px = $width;
@@ -141,27 +141,27 @@ while (1) {
 	lcdproc $remote, "widget_set weather rain {$px} 1 {$precip}";
 	lcdproc $remote, "widget_set weather time {$x} 1 {$now}";
 
-        my $ftmp = sprintf("%3d%.1s", $temp, $temp_unit);
+        my $ftmp = sprintf("%d%.1s", $temp, $temp_unit);
 	my $tlen = length($ftmp);
-	my $tx = $width - $tlen + 1;
-	my $dlen = $width - $tlen;
+	my $dl = 1;
+	my $dr = $width - $tlen;
+	my $tx = $dr + 1;
 	my $ty = 2;
-	my $dx = 1;
 
 	if ($temp != $chill) {
-		my $fmin = sprintf("%3d%.1s", $chill, $temp_unit);
+		my $fmin = sprintf("%d%.1s", $chill, $temp_unit);
 		my $x = $width - length($fmin) + 1;
 		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
 	} else {
-		my $tl = length($text);
-		if ($tl < $width) {
-			$dx = 1 + ($width - $tl)/ 2;
+		my $len = length($text);
+		if ($len < $width) {
+			$dl = 1 + ($width - $len)/ 2;
 		}
-		$dlen = $width;
+		$dr = $width;
 		$ty = 3;
 	}
 	lcdproc $remote, "widget_set weather temp {$tx} {$ty} {$ftmp}";
-	lcdproc $remote, "widget_set weather description {$dx} 2 {$dlen} 2 h 2 {$text}";
+	lcdproc $remote, "widget_set weather description {$dl} 2 {$dr} 2 h 2 {$text}";
 
 	my $astro = sprintf("%2s %2s %3s%.1s", $sunrise, $sunset, $humidity, $humidity_unit);
 	lcdproc $remote, "widget_set weather astro 1 3 {$astro}";
