@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Configuration</title>
+<script src="/js/transparency.min.js"></script>
+<script>
+function load_config() {
+  fetch('/config').then(function(response) {
+    if (response.status !== 200) {
+      console.log('Error: '+response.status);
+      return;
+    }
+    response.json().then(function(data) {
+      Transparency.render(document.getElementById('config'), data);
+    });
+  }).catch(function(err) {
+    console.log('Fetch error :-S', err);
+  });
+}
+function save_config() {
+  form = document.getElementById('config');
+  data = [].reduce.call(form.elements, (data, element) => {
+    if (element.id && element.value) {
+      if (element.type == 'checkbox') {
+        data[element.id] = (element.checked? 1: 0);
+      } else {
+        data[element.id] = element.value;
+      }
+    }
+    return data;
+  }, {});
+  xhr = new XMLHttpRequest();
+  xhr.open("POST", '/config', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send(JSON.stringify(data, null, "  "));
+}
+</script>
+</head>
+<body onload="load_config()">
+
+<form id="config">
+<fieldset>
+<legend>Configuration</legend>
+<table>
+  <tr>
+    <td>SSID:</td>
+    <td><input type="text" id="ssid"></td>
+    <td><img src="info.png" title="Your Wifi network name"/></td>
+  </tr>
+  <tr>
+    <td>Password:</td>
+    <td><input type="text" id="password"></td>
+    <td><img src="info.png" title="Your Wifi network password"/></td>
+  </tr>
+  <tr>
+    <td>Hostname:</td>
+    <td><input type="text" id="hostname"></td>
+    <td><img src="info.png" title="My hostname on your network"/></td>
+  </tr>
+  <tr>
+    <td>Listen Port:</td>
+    <td><input type="text" id="listen_port"></td>
+    <td><img src="info.png" title="TCP port to listen on"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <button type="submit" onclick="save_config()">Update</button>
+    </td>
+  </tr>
+  <!-- FIXME: more form inputs here -->
+</table>
+</fieldset>
+</form>
+
+<form action="/update" enctype="multipart/form-data" method="post">
+<fieldset>
+<legend>Firmware Upgrade</legend>
+<table>
+  <tr>
+    <td>Image File:</td>
+    <td><input name="image" type="file" accept=".ino.bin"/></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <input type="submit" value="Upgrade"/>
+    </td>
+  </tr>
+</table>
+</fieldset>
+</form>
+</body>
+</html>

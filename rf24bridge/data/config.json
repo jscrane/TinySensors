@@ -1,0 +1,6 @@
+{
+ "ssid": "",
+ "password": "",
+ "hostname": "rf24bridge",
+ "listen_port": 5555
+}
