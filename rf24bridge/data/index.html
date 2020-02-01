@@ -21,10 +21,13 @@ function load_config() {
 function save_config() {
   form = document.getElementById('config');
   data = [].reduce.call(form.elements, (data, element) => {
-    if (element.id && element.value) {
+    if (element.id) {
+      //console.log('element: '+element.id+' '+element.type);
       if (element.type == 'checkbox') {
         data[element.id] = (element.checked? 1: 0);
-      } else {
+      } else if (element.type == 'select-one') {
+        data[element.id] = element.options[element.selectedIndex].value;
+      } else if (element.value) {
         data[element.id] = element.value;
       }
     }
@@ -44,6 +47,9 @@ function save_config() {
 <legend>Configuration</legend>
 <table>
   <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Internet</td>
+  </tr>
+  <tr>
     <td>SSID:</td>
     <td><input type="text" id="ssid"></td>
     <td><img src="info.png" title="Your Wifi network name"/></td>
@@ -60,15 +66,56 @@ function save_config() {
   </tr>
   <tr>
     <td>Listen Port:</td>
-    <td><input type="text" id="listen_port"></td>
-    <td><img src="info.png" title="TCP port to listen on"/></td>
+    <td><input type="number" min="1024" max="65535" id="listen_port"></td>
+    <td><img src="info.png" title="TCP listening port (1024-65535)"/></td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">nRF24L01+</td>
+  </tr>
+  <tr>
+    <td>Data Rate:</td>
+    <td>
+      <select id="data_rate">
+        <option value="0">1MBPS</option>
+        <option value="1">2MBPS</option>
+        <option value="2">250KBPS</option>
+      </input>
+    </td>
+    <td><img src="info.png" title="data rate"/></td>
+  </tr>
+  <tr>
+    <td>CRC Length:</td>
+    <td>
+      <select id="crc_len">
+        <option value="0">None</option>
+        <option value="1">8 bits</option>
+        <option value="2">16 bits</option>
+      </input>
+    </td>
+    <td><img src="info.png" title="CRC"/></td>
+  </tr>
+  <tr>
+    <td>Transmit Power:</td>
+    <td>
+      <select id="power">
+        <option value="0">PA_MIN</option>
+        <option value="1">PA_LOW</option>
+        <option value="2">PA_HIGH</option>
+        <option value="3">PA_MAX</option>
+      </input>
+    </td>
+    <td><img src="info.png" title="Power"/></td>
+  </tr>
+  <tr>
+    <td>Channel:</td>
+    <td><input type="number" min="0" max="127" id="channel"></td>
+    <td><img src="info.png" title="RF channel (0-127)"/></td>
   </tr>
   <tr>
     <td colspan="2" align="center">
       <button type="submit" onclick="save_config()">Update</button>
     </td>
   </tr>
-  <!-- FIXME: more form inputs here -->
 </table>
 </fieldset>
 </form>

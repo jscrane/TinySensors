@@ -2,5 +2,9 @@
  "ssid": "",
  "password": "",
  "hostname": "rf24bridge",
- "listen_port": 5555
+ "listen_port": 5555,
+ "data_rate": 2,
+ "crc_len": 1,
+ "power": 3,
+ "channel": 108
 }

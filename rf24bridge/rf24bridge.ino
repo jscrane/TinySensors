@@ -14,7 +14,7 @@
 
 MDNSResponder mdns;
 WiFiClient wifiClient;
-WiFiServer wifiServer(LISTEN_PORT);
+WiFiServer *wifiServer;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 DNSServer dnsServer;
@@ -24,7 +24,7 @@ public:
 	char ssid[33];
 	char password[33];
 	char hostname[17];
-	uint16_t port;
+	uint16_t listen_port;
 	rf24_datarate_e data_rate;
 	rf24_crclength_e crc_len;
 	rf24_pa_dbm_e power;
@@ -37,10 +37,10 @@ void config::configure(JsonDocument &doc) {
 	strlcpy(ssid, doc[F("ssid")] | "", sizeof(ssid));
 	strlcpy(password, doc[F("password")] | "", sizeof(password));
 	strlcpy(hostname, doc[F("hostname")] | "", sizeof(hostname));
-	port = doc[F("listen_port")] | 5555;
-	data_rate = ::data_rate;
-	crc_len = ::crc_len;
-	power = ::power;
+	listen_port = doc[F("listen_port")] | LISTEN_PORT;
+	data_rate = (rf24_datarate_e)(int)doc[F("data_rate")];
+	crc_len = (rf24_crclength_e)(int)doc[F("crc_len")];
+	power = (rf24_pa_dbm_e)(int)doc[F("power")];
 	channel = doc[F("channel")] | ::channel;
 }
 
@@ -50,6 +50,9 @@ RF24 radio(D3, D8);
 RF24Network network(radio);
 
 void setup() {
+	pinMode(LED_BUILTIN, OUTPUT);
+	digitalWrite(LED_BUILTIN, HIGH);
+
 	Serial.begin(TERMINAL_SPEED);
 	Serial.println(F("Booting!"));
 
@@ -109,7 +112,8 @@ void setup() {
 		Serial.print(F("Connected to "));
 		Serial.println(cfg.ssid);
 		Serial.println(WiFi.localIP());
-		wifiServer.begin();
+		wifiServer = new WiFiServer(cfg.listen_port);
+		wifiServer->begin();
 	} else {
 		WiFi.softAP(cfg.hostname);
 		Serial.print(F("Connect to SSID: "));
@@ -139,6 +143,7 @@ void loop() {
 
 	network.update();
 	while (network.available()) {
+		digitalWrite(LED_BUILTIN, LOW);
 		RF24NetworkHeader header;
 		sensor_payload_t payload;
 		network.read(header, &payload, sizeof(payload));
@@ -161,6 +166,7 @@ void loop() {
 
 		if (wifiClient)
 			wifiClient.println(buf);
+		digitalWrite(LED_BUILTIN, HIGH);
 	}
 
 	if (!connected) {
@@ -169,5 +175,5 @@ void loop() {
 	}
 
 	if (!wifiClient)
-		wifiClient = wifiServer.available();
+		wifiClient = wifiServer->available();
 }

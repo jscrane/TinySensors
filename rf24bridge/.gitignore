@@ -2,3 +2,5 @@
 .build
 *.d
 *.o
+*.mk
+spiffs.img
