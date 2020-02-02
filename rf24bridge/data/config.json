@@ -6,5 +6,6 @@
  "data_rate": 2,
  "crc_len": 1,
  "power": 3,
- "channel": 108
+ "channel": 108,
+ "node_id": 0
 }

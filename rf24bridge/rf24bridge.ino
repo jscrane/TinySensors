@@ -29,6 +29,7 @@ public:
 	rf24_crclength_e crc_len;
 	rf24_pa_dbm_e power;
 	uint8_t channel;
+	uint8_t node_id;
 
 	void configure(JsonDocument &doc);
 } cfg;
@@ -42,6 +43,7 @@ void config::configure(JsonDocument &doc) {
 	crc_len = (rf24_crclength_e)(int)doc[F("crc_len")];
 	power = (rf24_pa_dbm_e)(int)doc[F("power")];
 	channel = doc[F("channel")] | ::channel;
+	node_id = doc[F("node_id")];
 }
 
 bool connected;
@@ -131,7 +133,7 @@ void setup() {
 	radio.setPALevel(cfg.power);
 	radio.powerUp();
 
-	network.begin(cfg.channel, 0);
+	network.begin(cfg.channel, cfg.node_id);
 
 	radio.printDetails();
 }
