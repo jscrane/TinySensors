@@ -4,6 +4,7 @@ tinysensor.build.board=AVR_ATTINYX4
 tinysensor.build.mcu=attiny84
 tinysensor.build.core=tiny
 tinysensor.build.f_cpu=8000000L
+tinysensor.build.clocksource=0
 tinysensor.upload.tool=avrdude
 tinysensor.upload.protocol=arduino
 tinysensor.upload.speed=19200
