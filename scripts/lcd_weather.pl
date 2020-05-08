@@ -141,7 +141,7 @@ while (1) {
 	lcdproc $remote, "widget_set weather rain {$px} 1 {$precip}";
 	lcdproc $remote, "widget_set weather time {$x} 1 {$now}";
 
-        my $ftmp = sprintf("%d%.1s", $temp, $temp_unit);
+        my $ftmp = sprintf(" %d%.1s", $temp, $temp_unit);
 	my $tlen = length($ftmp);
 	my $dl = 1;
 	my $dr = $width - $tlen;
