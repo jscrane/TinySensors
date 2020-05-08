@@ -3,11 +3,11 @@ include ../auth
 prefix := /usr/local
 
 # The recommended compiler flags for the Raspberry Pi
-CXXFLAGS=-Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -fno-strict-aliasing  -g
-CPPFLAGS=-I$(prefix)/include -I../sketches -DMAX_SENSORS=64
-LDFLAGS=-L$(prefix)/lib -lrf24-bcm -lrf24-network -lpthread -lmosquitto -lz -lm -lrt -ldl
+CXXFLAGS =-Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -fno-strict-aliasing  -g
+CPPFLAGS = -I$(prefix)/include -I../sketches -DMAX_SENSORS=64
+LDFLAGS = -L$(prefix)/lib -lrf24 -lpthread -lmosquitto -lz -lm -lrt -ldl
 DEPFLAGS = -MM -MP -MF
-LD=g++
+LD = g++
 
 PROGRAMS = sensorhub mux lcd status mqtt
 SOURCES = ${wildcard *.cpp}
@@ -22,6 +22,7 @@ all: ${DEPS} ${PROGRAMS}
 	$(CXX) $(CPPFLAGS) $(DEPFLAGS) $@ $<
 
 sensorhub: sensorhub.o sensorlib.o
+	$(LD) $(LDFLAGS) -o $@ $^
 
 mux: mux.o sensorlib.o
 	$(LD) -o $@ $^
