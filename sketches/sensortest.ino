@@ -13,6 +13,8 @@ DHT dht;
 SoftwareSerial serial(RX_PIN, TX_PIN);
 uint8_t node_id;
 
+const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
+
 void setup(void)
 {
 	pinMode(RX_PIN, INPUT);
@@ -24,6 +26,12 @@ void setup(void)
 
 	SPI.begin();
 	radio.begin();
+
+	radio.setRetries(15, 15);
+	radio.setAutoAck(true);
+	radio.setPayloadSize(8);
+	radio.openWritingPipe(pipes[0]);
+//	radio.openReadingPipe(1, pipes[1]);
 
 	serial.begin(TERMINAL_SPEED);
 	serial.print(F("retries: "));
@@ -67,5 +75,29 @@ void loop(void)
 	serial.print('\t');
 	serial.println(secs);
 
-	wdt_sleep(secs);
+	radio.powerUp();
+	radio.write(&start, sizeof(unsigned long));
+
+/*
+	radio.startListening();
+	unsigned long started_waiting_at = millis();
+
+	bool timeout = false;
+	while (!radio.available() && !timeout)
+		timeout = (millis() - started_waiting_at > 500);
+
+	if (timeout)
+		serial.println("Failed, response timed out.");
+	else {
+		unsigned long got_time;
+		radio.read( &got_time, sizeof(unsigned long) );
+
+		serial.print("Got response ");
+		serial.println(got_time);
+	}
+*/
+	radio.startListening();
+	radio.stopListening();
+
+	wdt_sleep(10);
 }
