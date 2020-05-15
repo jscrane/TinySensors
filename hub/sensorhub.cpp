@@ -87,10 +87,7 @@ int main(int argc, char *argv[])
 	if (0 > listen(ss, 1))
 		fatal("listen: %s\n", strerror(errno));
 
-	// because I wired up the CSN and CE pins backwards on the
-	// "Slice of Pi" proto-board...
-	//RF24 radio(RPI_V2_GPIO_P1_15, RPI_V2_GPIO_P1_26, BCM2835_SPI_SPEED_8MHZ);	
-	RF24 radio(RPI_V2_GPIO_P1_26, RPI_V2_GPIO_P1_15, BCM2835_SPI_SPEED_8MHZ);
+	RF24 radio(RPI_V2_GPIO_P1_26, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_8MHZ);
 	radio.begin();
 	radio.setAutoAck(true);
 	radio.setDataRate(data_rate);
@@ -102,18 +99,21 @@ int main(int argc, char *argv[])
 
 	radio.openReadingPipe(1, bridge_addr);
 	radio.startListening();
-	if (verbose)
+
+	if (verbose) {
+		printf("Channel: %d\n", radio.getChannel());
+		printf("Data-Rate: %d\n", radio.getDataRate());
+		printf("Payload: %d\n", radio.getPayloadSize());
+		printf("Power: %d\n", radio.getPALevel());
+		printf("CRC: %d\n", radio.getCRCLength());
 		radio.printDetails();
+	}
 
 	time_t last_reading;
 	if (watchdog)
 		time(&last_reading);
-	for (;;) {
-		// workaround for library bug
-		alarm(5);
-		// FIXME
-		alarm(0);
 
+	for (;;) {
 		while (radio.available()) {
 			sensor_payload_t payload;
 			radio.read(&payload, sizeof(payload));
@@ -135,11 +135,11 @@ int main(int argc, char *argv[])
 			s.node_type = 0;
 			s.domoticz_id = 0;
 
+			char buf[1024];
+			int n = s.to_csv(buf, sizeof(buf));
+			if (verbose)
+				printf("%s", buf);
 			if (cs >= 0) {
-				char buf[1024];
-				int n = s.to_csv(buf, sizeof(buf));
-				if (verbose)
-					printf("%s", buf);
 				if (0 > write(cs, buf, n)) {
 					perror("write");
 					close(cs);

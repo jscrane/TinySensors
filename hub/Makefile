@@ -31,6 +31,7 @@ lcd: lcd.o sensorlib.o
 	$(LD) -o $@ $^
 
 status: status.o sensorlib.o
+	$(LD) -o $@ $^ -lbcm2835
 
 mqtt: mqtt.o sensorlib.o
 	$(LD) -o $@ $^ -lmosquitto
