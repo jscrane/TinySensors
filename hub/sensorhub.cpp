@@ -139,12 +139,10 @@ int main(int argc, char *argv[])
 			int n = s.to_csv(buf, sizeof(buf));
 			if (verbose)
 				printf("%s", buf);
-			if (cs >= 0) {
-				if (0 > write(cs, buf, n)) {
-					perror("write");
-					close(cs);
-					cs = -1;
-				}
+			if (cs >= 0 && write(cs, buf, n) < 0) {
+				perror("write");
+				close(cs);
+				cs = -1;
 			}
 			if (watchdog)
 				time(&last_reading);
