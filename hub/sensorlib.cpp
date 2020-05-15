@@ -52,7 +52,7 @@ int sensor::from_csv(char *buf) {
 			*q++ = 0;
 		switch(i) {
 		case 0:	
-			strncpy(short_name, p, sizeof(short_name));
+			strncpy(short_name, p, sizeof(short_name)-1);
 			break;
 		case 1:
 			node_id = atoi(p);
@@ -135,7 +135,7 @@ int host_port(const char *hp, int defport, char *host, int size) {
 
 static int init_addr(struct sockaddr_in &a, const char *s, int defport, bool block = true) {
 	char host[32];
-	int port = host_port(s, defport, host, sizeof(host));
+	int port = host_port(s, defport, host, sizeof(host)-1);
 
 	struct hostent *he = gethostbyname(host);
 	if (he) {

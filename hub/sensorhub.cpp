@@ -133,14 +133,14 @@ int main(int argc, char *argv[])
 			s.node_type = 0;
 			s.domoticz_id = 0;
 
-			if (cs >= 0) {
-				char buf[1024];
-				int n = s.to_csv(buf, sizeof(buf));
-				if (0 > write(cs, buf, n)) {
-					perror("write");
-					close(cs);
-					cs = -1;
-				}
+			char buf[1024];
+			int n = s.to_csv(buf, sizeof(buf));
+			if (verbose)
+				printf("%s", buf);
+			if (cs >= 0 && write(cs, buf, n) < 0) {
+				perror("write");
+				close(cs);
+				cs = -1;
 			}
 			if (watchdog)
 				time(&last_reading);
