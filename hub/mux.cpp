@@ -192,7 +192,9 @@ int main(int argc, char *argv[])
 								clients[i] = 0;
 								nclients--;
 							}
-					}
+					} else if (verbose)
+						printf("invalid data: %d or %d\n", f, s.node_id);
+
 				} else if (n == 0) {
 					if (verbose)
 						printf("Server died: %s\n", argv[optind + i]);
