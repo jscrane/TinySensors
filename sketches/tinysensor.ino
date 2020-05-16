@@ -40,7 +40,6 @@ void setup(void)
 	radio.setPALevel(power);
 	radio.setChannel(channel);
 	radio.setPayloadSize(sizeof(sensor_payload_t));
-	radio.setAutoAck(true);
 	radio.openWritingPipe(bridge_addr);
 }
 
@@ -63,7 +62,7 @@ void loop(void)
 	int16_t t = dht.getTemperature();
 	uint8_t status = dht.getStatus();
 
-	sensor_payload_t payload = { millis(), msgid++, h, t, light, batt, status, NODE_ID };
+	sensor_payload_t payload = { millis(), msgid++, h, t, NODE_ID, light, batt, status };
 	radio.write(&payload, sizeof(payload));
 	radio.powerDown();
 

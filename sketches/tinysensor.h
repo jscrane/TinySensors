@@ -1,7 +1,6 @@
 #ifndef TINYSENSOR_H
 #define TINYSENSOR_H
 
-const uint8_t sensor_type_id = 0;
 const uint8_t channel = 108;
 const rf24_datarate_e data_rate = RF24_250KBPS;
 const rf24_pa_dbm_e power = RF24_PA_MAX;
