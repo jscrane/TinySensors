@@ -10,7 +10,8 @@ const uint8_t DHT_PIN = 2;
 const uint8_t CE_PIN = 8, CS_PIN = 7;
 const uint8_t RX_PIN = 9, TX_PIN = 10;
 
-#ifdef DEBUG
+#if defined(DEBUG)
+#pragma message "debugging"
 SoftwareSerial serial(RX_PIN, TX_PIN);
 #endif
 
@@ -19,6 +20,7 @@ DHT dht;
 
 const uint8_t retry_count = 5;		// 250+5*15*250 = 19mS
 const uint8_t retry_delay = 1;		// 1*250uS
+const rf24_pa_dbm_e power = RF24_PA_LOW;
 
 void setup(void)
 {
@@ -26,7 +28,7 @@ void setup(void)
 
 	dht.setup(DHT_PIN);
 
-#ifdef DEBUG
+#if defined(DEBUG)
 	serial.begin(TERMINAL_SPEED);
 	serial.println(F("millis\tStatus\tHum\tTemp\tLight\tBattery\tTime"));
 #endif
@@ -48,9 +50,6 @@ void loop(void)
 	static uint32_t msgid;
 	uint32_t start = millis();
 
-	radio.powerUp();
-	radio.stopListening();
-
 	unsigned lsens = analogRead(A1);
 	uint8_t light = 255 - lsens / 4;
 	unsigned secs = lsens / 8 + 1;
@@ -61,12 +60,14 @@ void loop(void)
 	int16_t h = dht.getHumidity();
 	int16_t t = dht.getTemperature();
 	uint8_t status = dht.getStatus();
-
 	sensor_payload_t payload = { millis(), msgid++, h, t, NODE_ID, light, batt, status };
+
+	radio.powerUp();
+	radio.stopListening();
 	radio.write(&payload, sizeof(payload));
 	radio.powerDown();
 
-#ifdef DEBUG
+#if defined(DEBUG)
 	serial.print(millis() - start);
 	serial.print('\t');
 	serial.print(status);

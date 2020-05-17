@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	radio.setAutoAck(true);
 	radio.setDataRate(data_rate);
 	radio.setCRCLength(crc_len);
-	radio.setPALevel(power);
+	radio.setPALevel(RF24_PA_MAX);
 	radio.setChannel(channel);
 	radio.setPayloadSize(sizeof(sensor_payload_t));
 	radio.powerUp();
