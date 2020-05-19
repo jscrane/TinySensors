@@ -7,7 +7,6 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <SPI.h>
 #include <RF24.h>
-#include <RF24Network.h>
 #include <tinysensor.h>
 
 #include "Configuration.h"
@@ -49,14 +48,13 @@ void config::configure(JsonDocument &doc) {
 bool connected;
 const char *config_file = "/config.json";
 RF24 radio(D3, D8);
-RF24Network network(radio);
 
 void setup() {
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
 
 	Serial.begin(TERMINAL_SPEED);
-	Serial.println(F("Booting!"));
+	Serial.println(ESP.getResetInfo().c_str());
 
 	bool result = SPIFFS.begin();
 	if (!result) {
@@ -126,15 +124,22 @@ void setup() {
 
 	SPI.begin();
 	radio.begin();
-	radio.enableDynamicPayloads();
 	radio.setAutoAck(true);
 	radio.setDataRate(cfg.data_rate);
 	radio.setCRCLength(cfg.crc_len);
 	radio.setPALevel(cfg.power);
+	radio.setChannel(cfg.channel);
+	radio.setPayloadSize(sizeof(sensor_payload_t));
 	radio.powerUp();
 
-	network.begin(cfg.channel, cfg.node_id);
+	Serial.printf("Channel: %d\r\n", radio.getChannel());
+	Serial.printf("Data-Rate: %d\r\n", radio.getDataRate());
+	Serial.printf("Payload: %d\r\n", radio.getPayloadSize());
+	Serial.printf("Power: %d\r\n", radio.getPALevel());
+	Serial.printf("CRC: %d\r\n", radio.getCRCLength());
 
+	radio.openReadingPipe(1, bridge_addr);
+	radio.startListening();
 	radio.printDetails();
 }
 
@@ -143,12 +148,10 @@ void loop() {
 	mdns.update();
 	server.handleClient();
 
-	network.update();
-	while (network.available()) {
+	while (radio.available()) {
 		digitalWrite(LED_BUILTIN, LOW);
-		RF24NetworkHeader header;
 		sensor_payload_t payload;
-		network.read(header, &payload, sizeof(payload));
+		radio.read(&payload, sizeof(payload));
 
 		// fixup for negative temperature
 		short temp = payload.temperature;
@@ -162,10 +165,11 @@ void loop() {
 		char buf[128];
 		int n = snprintf(buf, sizeof(buf),
                         ",%d,0,%d,%3.1f,%3.1f,%4.2f,%u,%u,%u,",
-                        header.from_node, payload.light,
+                        payload.node_id, payload.light,
                         temperature, humidity, battery, payload.status,
-                        header.id, payload.ms);
+                        payload.id, payload.ms);
 
+		Serial.println(buf);
 		if (wifiClient)
 			wifiClient.println(buf);
 		digitalWrite(LED_BUILTIN, HIGH);

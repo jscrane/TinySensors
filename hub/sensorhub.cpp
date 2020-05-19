@@ -1,4 +1,3 @@
-#include <RF24Network.h>
 #include <RF24.h>
 #include <getopt.h>
 #include <unistd.h>
@@ -90,31 +89,33 @@ int main(int argc, char *argv[])
 
 	RF24 radio(RPI_V2_GPIO_P1_26, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_8MHZ);
 	radio.begin();
-	radio.enableDynamicPayloads();
 	radio.setAutoAck(true);
 	radio.setDataRate(data_rate);
 	radio.setCRCLength(crc_len);
+	radio.setPALevel(RF24_PA_MAX);
+	radio.setChannel(channel);
+	radio.setPayloadSize(sizeof(sensor_payload_t));
 	radio.powerUp();
 
-	RF24Network network(radio);
-	network.begin(channel, master_node);
+	radio.openReadingPipe(1, bridge_addr);
+	radio.startListening();
 
-	if (verbose)
+	if (verbose) {
+		printf("Data-Rate: %d\n", radio.getDataRate());
+		printf("Payload: %d\n", radio.getPayloadSize());
+		printf("Power: %d\n", radio.getPALevel());
+		printf("CRC: %d\n", radio.getCRCLength());
 		radio.printDetails();
+	}
 
 	time_t last_reading;
 	if (watchdog)
 		time(&last_reading);
-	for (;;) {
-		// workaround for library bug
-		alarm(5);
-		network.update();
-		alarm(0);
 
-		while (network.available()) {
-			RF24NetworkHeader header;
+	for (;;) {
+		while (radio.available()) {
 			sensor_payload_t payload;
-			network.read(header, &payload, sizeof(payload));
+			radio.read(&payload, sizeof(payload));
 
 			// fixup for negative temperature
 			short temp = payload.temperature;
@@ -126,9 +127,9 @@ int main(int argc, char *argv[])
 			s.humidity = ((float)payload.humidity) / 10;
 			s.battery = ((float)payload.battery) * 3.3 / 255.0;
 			s.light = payload.light;
-			s.node_id = header.from_node;
+			s.node_id = payload.node_id;
 			s.node_status = payload.status;
-			s.msg_id = header.id;
+			s.msg_id = payload.id;
 			s.node_time = payload.ms;
 			s.node_type = 0;
 			s.domoticz_id = 0;

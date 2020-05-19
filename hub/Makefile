@@ -23,6 +23,7 @@ all: ${DEPS} ${PROGRAMS}
 
 sensorhub: LDLIBS = -lrf24-bcm -lrf24-network
 sensorhub: sensorhub.o sensorlib.o
+	$(LD) $(LDFLAGS) -o $@ $^
 
 mux: mux.o sensorlib.o
 
@@ -30,6 +31,7 @@ lcd: lcd.o sensorlib.o
 
 status: LDLIBS = -lrf24-bcm
 status: status.o sensorlib.o
+	$(LD) -o $@ $^ -lbcm2835
 
 mqtt: LDLIBS = -lmosquitto
 mqtt: mqtt.o sensorlib.o

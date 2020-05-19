@@ -1,18 +1,18 @@
 #ifndef TINYSENSOR_H
 #define TINYSENSOR_H
 
-const uint16_t master_node = 0;
-const uint8_t sensor_type_id = 0;
-const uint8_t channel = 108;
+// shared with sensorhub
+const uint8_t channel = 110;
 const rf24_datarate_e data_rate = RF24_250KBPS;
-const rf24_pa_dbm_e power = RF24_PA_MAX;
 const rf24_crclength_e crc_len = RF24_CRC_8;
+
+const uint64_t bridge_addr = 0xF0F0F0F0E1LL;
 
 struct sensor_payload_t
 {
-	uint32_t ms;
+	uint32_t ms, id;
 	int16_t humidity, temperature;
-	uint8_t light, battery, status;
+	uint8_t node_id, light, battery, status;
 };
 
 #endif
