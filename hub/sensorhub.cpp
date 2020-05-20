@@ -1,4 +1,4 @@
-#include <RF24.h>
+#include <RF24/RF24.h>
 #include <getopt.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
 	radio.startListening();
 
 	if (verbose) {
+		printf("Channel: %d\n", radio.getChannel());
 		printf("Data-Rate: %d\n", radio.getDataRate());
 		printf("Payload: %d\n", radio.getPayloadSize());
 		printf("Power: %d\n", radio.getPALevel());
