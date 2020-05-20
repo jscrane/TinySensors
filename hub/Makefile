@@ -4,7 +4,7 @@ prefix := /usr/local
 
 # The recommended compiler flags for the Raspberry Pi
 CXXFLAGS = -Wall -Ofast -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -fno-strict-aliasing -g
-CPPFLAGS = -I$(prefix)/include -I../sketches -DMAX_SENSORS=64
+CPPFLAGS = -I$(prefix)/include -I../tinysensor -DMAX_SENSORS=64
 CC = g++
 LDFLAGS = -L$(prefix)/lib
 DEPFLAGS = -MM -MP -MF
