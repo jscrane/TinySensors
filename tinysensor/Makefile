@@ -1,5 +1,5 @@
 BOARD := tinysensor
-SKETCH ?= tinysensor.ino
+SKETCH := tinysensor.ino
 TERMINAL_SPEED := 9600
 CPPFLAGS = -DNODE_ID=$(NODE_ID)
 ifeq ($(DEBUG),1)
