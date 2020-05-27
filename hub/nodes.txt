@@ -4,7 +4,7 @@
 3 0 17 kitc Kitchen
 4 0 20 bath Bathroom
 5 0 21 stud Study
-6 0 44 test Test Sensor
+6 0 44 bdrm Bedroom
 20 2 0 wind Bedroom Window
 21 2 0 hall Hall
 22 3 0 bedr Bedroom
