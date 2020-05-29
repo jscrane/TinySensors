@@ -14,7 +14,7 @@ SOURCES = ${wildcard *.cpp}
 OBJECTS = ${SOURCES:.cpp=.o}
 DEPS = ${SOURCES:.cpp=.d}
 
-.PHONY: all clean
+.PHONY: all clean install
 
 all: ${DEPS} ${PROGRAMS}
 
@@ -38,5 +38,10 @@ sensorlib.o: sensorlib.h
 
 clean:
 	rm -rf $(PROGRAMS) $(OBJECTS) $(DEPS)
+
+install:
+	install -s $(PROGRAMS) $(prefix)/bin
+	install services.sh $(prefix)/bin
+	install nodes.txt $(prefix)/etc
 
 -include $(DEPS)
