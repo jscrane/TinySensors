@@ -1,0 +1,13 @@
+[Unit]
+Description=LCDd device
+After=rfcomm.service
+Requires=rfcomm.service
+ 
+[Service]
+Type=idle
+ExecStartPre=/bin/sleep 3
+Restart=always
+ExecStart=/usr/sbin/LCDd -s 1 -f -c /etc/LCDd.conf
+ 
+[Install]
+WantedBy=multi-user.target
