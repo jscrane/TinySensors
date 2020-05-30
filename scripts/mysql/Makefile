@@ -1,4 +1,4 @@
-include ../auth
+include ../../auth
 
 dump: schema data
 
