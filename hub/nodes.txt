@@ -5,6 +5,7 @@
 4 0 20 bath Bathroom
 5 0 21 stud Study
 6 0 44 bdrm Bedroom
+7 0 45 hprs Hot Press
 20 2 0 wind Bedroom Window
 21 2 0 hall Hall
 22 3 0 bedr Bedroom
