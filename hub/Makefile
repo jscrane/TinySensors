@@ -1,5 +1,3 @@
-include ../auth
-
 prefix := /usr/local
 
 # The recommended compiler flags for the Raspberry Pi

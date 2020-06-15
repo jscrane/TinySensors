@@ -65,7 +65,6 @@ int main(int argc, char *argv[])
 	}
 
 	signal(SIGINT, signal_handler);
-	signal(SIGALRM, signal_handler);
 	signal(SIGPIPE, SIG_IGN);
 
 	ss = socket(AF_INET, SOCK_STREAM, 0);
