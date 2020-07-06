@@ -126,7 +126,7 @@ void update_time(sensor &s, time_t &now) {
 
 	char t[16], buf[64];
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
-	lcdproc(buf, sizeof(buf), "widget_set " TEMP " update %d %d {%s}\n", width-strlen(t)+1, height, t);
+	lcdproc(buf, sizeof(buf), "widget_set " TEMP " update %d %d {%s}\n", width/2 + 1, height, t);
 }
 
 void update_sensor(sensor &s) {
@@ -173,11 +173,12 @@ void init_lcd() {
 	}
 
 	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
-
+	lcdproc(buf, sizeof(buf), "widget_add " TEMP " name string\n");
+	lcdproc(buf, sizeof(buf), "widget_set " TEMP " name %d %d {C}\n", width, height);
 	lcdproc(buf, sizeof(buf), "widget_add " BATT " name string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " BATT " name %d %d {" BATT "}\n", width-strlen(BATT)+1, height);
+	lcdproc(buf, sizeof(buf), "widget_set " BATT " name %d %d {V}\n", width, height);
 	lcdproc(buf, sizeof(buf), "widget_add " HUMI " name string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " HUMI " name %d %d {" HUMI "}\n", width-strlen(HUMI)+1, height);
+	lcdproc(buf, sizeof(buf), "widget_set " HUMI " name %d %d {%}\n", width, height);
 
 	lcdproc(buf, sizeof(buf), "backlight off\n");
 }
