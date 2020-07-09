@@ -80,7 +80,7 @@ void parse_lcdproc_header(char *buf, int n) {
 	}
 }
 
-void update_lcd(int sid, const char *screen, const char *t) {
+void update_lcd(int sid, const char *screen, const char *t, char unit) {
 	char buf[64];
 	int x = 1, y = sid;
 	if (y > height) {
@@ -88,24 +88,25 @@ void update_lcd(int sid, const char *screen, const char *t) {
 		x += width / 2;
 	}
 	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, sid, x, y, t);
+	lcdproc(buf, sizeof(buf), "widget_set %s unit %d %d {%c}\n", screen, width, y, unit);
 }
 
 void update_temp(sensor &s, int sid, const char *screen) {
 	char t[16];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s.short_name, s.temperature);
-	update_lcd(sid, screen, t);
+	update_lcd(sid, screen, t, 'C');
 }
 
 void update_batt(sensor &s, int sid, const char *screen) {
 	char t[16];
 	snprintf(t, sizeof(t), "%.4s %4.2f", s.short_name, s.battery);
-	update_lcd(sid, screen, t);
+	update_lcd(sid, screen, t, 'v');
 }
 
 void update_humi(sensor &s, int sid, const char *screen) {
 	char t[16];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s.short_name, s.humidity);
-	update_lcd(sid, screen, t);
+	update_lcd(sid, screen, t, '%');
 }
 
 void check_timeouts(const char *screen, time_t &now) {
@@ -114,7 +115,7 @@ void check_timeouts(const char *screen, time_t &now) {
 		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS) {
 			char t[16];
 			snprintf(t, sizeof(t), "%.4s     ", r.s.short_name);
-			update_lcd(r.s.node_id, screen, t);
+			update_lcd(r.s.node_id, screen, t, ' ');
 		}
 	}
 }
@@ -173,12 +174,9 @@ void init_lcd() {
 	}
 
 	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
-	lcdproc(buf, sizeof(buf), "widget_add " TEMP " name string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " TEMP " name %d %d {C}\n", width, height);
-	lcdproc(buf, sizeof(buf), "widget_add " BATT " name string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " BATT " name %d %d {V}\n", width, height);
-	lcdproc(buf, sizeof(buf), "widget_add " HUMI " name string\n");
-	lcdproc(buf, sizeof(buf), "widget_set " HUMI " name %d %d {%}\n", width, height);
+	lcdproc(buf, sizeof(buf), "widget_add " TEMP " unit string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " BATT " unit string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " HUMI " unit string\n");
 
 	lcdproc(buf, sizeof(buf), "backlight off\n");
 }
