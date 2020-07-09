@@ -82,13 +82,13 @@ void parse_lcdproc_header(char *buf, int n) {
 
 void update_lcd(int sid, const char *screen, const char *t, char unit) {
 	char buf[64];
-	int x = 1, y = sid;
+	int x = 1, y = sid, w2 = width/2;
 	if (y > height) {
 		y -= height;
-		x += width / 2;
+		x += w2;
 	}
 	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, sid, x, y, t);
-	lcdproc(buf, sizeof(buf), "widget_set %s unit %d %d {%c}\n", screen, width, y, unit);
+	lcdproc(buf, sizeof(buf), "widget_set %s unit %d %d {%c}\n", screen, x+w2-1, y, unit);
 }
 
 void update_temp(sensor &s, int sid, const char *screen) {
