@@ -52,7 +52,7 @@ void loop(void)
 
 	unsigned lsens = analogRead(A1);
 	uint8_t light = 255 - lsens / 4;
-	unsigned secs = lsens / 8 + 1;
+	unsigned secs = lsens / 4 + 1;
 	uint8_t batt = analogRead(A0) / 4;
 
 	// millis() only counts time when the sketch is not sleeping

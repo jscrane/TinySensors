@@ -82,19 +82,21 @@ void parse_lcdproc_header(char *buf, int n) {
 
 void update_lcd(int sid, const char *screen, const char *t, char unit) {
 	char buf[64];
-	int x = 1, y = sid, w2 = width/2;
+	int x = 1, y = sid, w2 = width/2, u = w2;
 	if (y > height) {
 		y -= height;
 		x += w2;
+		u = width;
 	}
 	lcdproc(buf, sizeof(buf), "widget_set %s sensor%d %d %d {%s}\n", screen, sid, x, y, t);
-	lcdproc(buf, sizeof(buf), "widget_set %s unit %d %d {%c}\n", screen, x+w2-1, y, unit);
+	if (unit)
+		lcdproc(buf, sizeof(buf), "widget_set %s unit %d %d {%c}\n", screen, u, y, unit);
 }
 
 void update_temp(sensor &s, int sid, const char *screen) {
 	char t[16];
 	snprintf(t, sizeof(t), "%.4s %4.1f", s.short_name, s.temperature);
-	update_lcd(sid, screen, t, 'C');
+	update_lcd(sid, screen, t, 0xb0);
 }
 
 void update_batt(sensor &s, int sid, const char *screen) {
@@ -115,7 +117,7 @@ void check_timeouts(const char *screen, time_t &now) {
 		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS) {
 			char t[16];
 			snprintf(t, sizeof(t), "%.4s     ", r.s.short_name);
-			update_lcd(r.s.node_id, screen, t, ' ');
+			update_lcd(r.s.node_id, screen, t, 0);
 		}
 	}
 }
@@ -127,7 +129,7 @@ void update_time(sensor &s, time_t &now) {
 
 	char t[16], buf[64];
 	strftime(t, sizeof(t), "%H:%M", localtime(&now));
-	lcdproc(buf, sizeof(buf), "widget_set " TEMP " update %d %d {%s}\n", width/2 + 1, height, t);
+	lcdproc(buf, sizeof(buf), "widget_set " TEMP " update %d %d {%s}\n", width-strlen(t)+1, height, t);
 }
 
 void update_sensor(sensor &s) {
