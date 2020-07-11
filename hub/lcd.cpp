@@ -28,7 +28,7 @@ struct reading {
 	sensor s;
 	time_t last;
 };
-struct reading readings[MAX_SENSORS];
+struct reading readings[MAX_SENSORS];	// readings[0] is unused
 
 void close_sockets() {
 	if (lcd >= 0)
@@ -112,7 +112,7 @@ void update_humi(sensor &s, int sid, const char *screen) {
 }
 
 void check_timeouts(const char *screen, time_t &now) {
-	for (int i = 0; i < MAX_SENSORS; i++) {
+	for (int i = 1; i < MAX_SENSORS; i++) {
 		struct reading &r = readings[i];
 		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS) {
 			char t[16];
@@ -168,7 +168,7 @@ void init_lcd() {
 	lcdproc(buf, sizeof(buf), "screen_add " WIRED "\n");
 	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {" WIRED "}\n");
 
-	for (int i = 0; i < MAX_SENSORS; i++) {
+	for (int i = 1; i < MAX_SENSORS; i++) {
 		lcdproc(buf, sizeof(buf), "widget_add " WIRED " sensor%d string\n", i);
 		lcdproc(buf, sizeof(buf), "widget_add " TEMP " sensor%d string\n", i);
 		lcdproc(buf, sizeof(buf), "widget_add " BATT " sensor%d string\n", i);
@@ -177,6 +177,7 @@ void init_lcd() {
 
 	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
 	lcdproc(buf, sizeof(buf), "widget_add " TEMP " unit string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " WIRED " unit string\n");
 	lcdproc(buf, sizeof(buf), "widget_add " BATT " unit string\n");
 	lcdproc(buf, sizeof(buf), "widget_add " HUMI " unit string\n");
 
