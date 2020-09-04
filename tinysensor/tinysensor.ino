@@ -1,4 +1,3 @@
-//#include <SPI.h>
 #include <RF24.h>
 #include <DHT.h>
 #include <SoftwareSerial.h>
@@ -6,9 +5,10 @@
 #include "tinysensor.h"
 #include "wdt.h"
 
-const uint8_t DHT_PIN = 2;
-const uint8_t CE_PIN = 8, CS_PIN = 7;
-const uint8_t RX_PIN = 9, TX_PIN = 10;
+const uint8_t DHT_PIN = PIN_PA2;
+const uint8_t CE_PIN = PIN_PB2, CS_PIN = PIN_PA7;
+const uint8_t RX_PIN = PIN_PB1, TX_PIN = PIN_PB0;
+const uint8_t LIGHT_PIN = A1, BATTERY_PIN = A0;
 
 #if defined(DEBUG)
 #pragma message "debugging"
@@ -24,13 +24,16 @@ const rf24_pa_dbm_e power = RF24_PA_LOW;
 
 void setup(void)
 {
-	pinMode(A1, INPUT_PULLUP);
+	pinMode(LIGHT_PIN, INPUT_PULLUP);
 
 	dht.setup(DHT_PIN);
 
 #if defined(DEBUG)
 	serial.begin(TERMINAL_SPEED);
 	serial.println(F("millis\tStatus\tHum\tTemp\tLight\tBattery\tTime"));
+#else
+	pinMode(RX_PIN, INPUT_PULLUP);
+	pinMode(TX_PIN, INPUT_PULLUP);
 #endif
 
 	SPI.begin();
@@ -50,10 +53,10 @@ void loop(void)
 	static uint32_t msgid;
 	uint32_t start = millis();
 
-	unsigned lsens = analogRead(A1);
+	unsigned lsens = analogRead(LIGHT_PIN);
 	uint8_t light = 255 - lsens / 4;
 	unsigned secs = lsens / 4 + 1;
-	uint8_t batt = analogRead(A0) / 4;
+	uint8_t batt = analogRead(BATTERY_PIN) / 4;
 
 	// millis() only counts time when the sketch is not sleeping
 	dht.resetTimer();
