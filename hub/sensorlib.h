@@ -12,6 +12,7 @@ public:
 	int to_csv(char *buf, int len);
 	int from_csv(char *buf);
 	bool is_wireless() { return node_type == 0; }
+	bool is_valid() { return node_id > 0; }
 };
 
 void daemon_mode();

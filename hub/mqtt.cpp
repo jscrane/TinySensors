@@ -175,6 +175,8 @@ int main(int argc, char *argv[])
 				printf("%d: %d [%s]\n", mux, n, buf);
 			sensor s;
 			s.from_csv(buf);
+			if (!s.is_valid())
+				continue;
 			if (domoticz)
 				as_domoticz(root, s);
 			else if (json)

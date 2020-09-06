@@ -52,7 +52,7 @@ int sensor::from_csv(char *buf) {
 			*q++ = 0;
 		switch(i) {
 		case 0:	
-			strncpy(short_name, p, sizeof(short_name)-1);
+			strncpy(short_name, p, sizeof(short_name));
 			break;
 		case 1:
 			node_id = atoi(p);
