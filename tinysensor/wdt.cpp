@@ -19,9 +19,12 @@ ISR(WDT_vect) {
 }
 
 void wdt_sleep(unsigned secs) {
-	power_adc_disable();
+	power_usi_disable();
+
 	uint8_t adcsra = ADCSRA;
 	ADCSRA &= ~_BV(ADEN);
+	power_adc_disable();
+
 	while (secs) {
 		uint8_t e = 0;
 		if (secs >= 8) {
@@ -39,12 +42,15 @@ void wdt_sleep(unsigned secs) {
 		}
 		enable(e);
 		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+		cli();
 		sleep_enable();
 		sleep_bod_disable();
 		sei();
 		sleep_cpu();
 		sleep_disable();
 	}
-	power_adc_enable();
+
 	ADCSRA = adcsra;
+	power_adc_enable();
+	power_usi_enable();
 }

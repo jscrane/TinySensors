@@ -1,3 +1,4 @@
+#include <avr/power.h>
 #include <RF24.h>
 #include <DHT.h>
 #include <SoftwareSerial.h>
@@ -24,7 +25,7 @@ const rf24_pa_dbm_e power = RF24_PA_LOW;
 
 void setup(void)
 {
-	pinMode(LIGHT_PIN, INPUT_PULLUP);
+	power_timer1_disable();
 
 	dht.setup(DHT_PIN);
 
@@ -53,7 +54,10 @@ void loop(void)
 	static uint32_t msgid;
 	uint32_t start = millis();
 
+	pinMode(LIGHT_PIN, INPUT_PULLUP);
 	unsigned lsens = analogRead(LIGHT_PIN);
+	pinMode(LIGHT_PIN, INPUT);
+
 	uint8_t light = 255 - lsens / 4;
 	unsigned secs = lsens / 4 + 1;
 	uint8_t batt = analogRead(BATTERY_PIN) / 4;
