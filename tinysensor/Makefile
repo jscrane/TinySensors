@@ -1,4 +1,5 @@
 BOARD := tinysensor
+BOARD_CLOCK := 8internal
 SKETCH := tinysensor.ino
 TERMINAL_SPEED := 9600
 CPPFLAGS = -DNODE_ID=$(NODE_ID)
