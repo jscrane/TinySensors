@@ -64,13 +64,13 @@ void as_json(const char *root, const sensor &s) {
 	const char *fmt;
 	switch (s.node_type) {
 	case 0:
-		fmt = "{ 't':%3.1f, 'l':%d, 'h':%3.1f, 'b':%1.2f }";
+		fmt = "{ \"t\":%3.1f, \"l\":%d, \"h\":%3.1f, \"b\":%1.2f }";
 		break;
 	case 1:
-		fmt = "{ 't':%3.1f }";
+		fmt = "{ \"t\":%3.1f }";
 		break;
 	case 2:
-		fmt = "{ 't':%3.1f, 'l':%d }";
+		fmt = "{ \"t\":%3.1f, \"l\":%d }";
 		break;
 	default:
 		return;
