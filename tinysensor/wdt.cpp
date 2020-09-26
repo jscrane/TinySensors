@@ -50,7 +50,8 @@ void wdt_sleep(unsigned secs) {
 		sleep_disable();
 	}
 
-	ADCSRA = adcsra;
 	power_adc_enable();
+	ADCSRA = adcsra;
+
 	power_usi_enable();
 }
