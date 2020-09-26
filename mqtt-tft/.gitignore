@@ -1,0 +1,9 @@
+.build/
+*.o
+*.d
+.*.swp
+*.bin
+*.elf
+spiffs.img
+*.txt.mk
+data/config.json
