@@ -73,10 +73,6 @@ typedef struct sensor {
 
 sensor_t sensors[10];
 const int num_sensors = sizeof(sensors) / sizeof(sensor_t);
-const uint16_t colors[] = { 
-	TFT_BLACK, TFT_RED, TFT_ORANGE, TFT_YELLOW, TFT_GREEN,
-	TFT_BLUE, TFT_MAGENTA, TFT_CYAN, TFT_VIOLET, TFT_WHITE,
-};
 static int grid = 0;
 
 static void update_display() {
@@ -85,7 +81,7 @@ static void update_display() {
 		sensor_t &s = sensors[i];
 		if (s.id) {
 			int y = spriteH - spriteH * (float(s.light) / 256.0);
-			graph.drawFastVLine(spriteX, y, 1, colors[i]);
+			graph.drawFastVLine(spriteX, y, 1, i);
 		}
 	}
 
@@ -95,10 +91,10 @@ static void update_display() {
 	grid++;
 	if (grid >= 10) {
 		grid = 0;
-		graph.drawFastVLine(spriteX, 0, spriteH, TFT_NAVY);
+		graph.drawFastVLine(spriteX, 0, spriteH, 14);
 	} else
 		for (int p = 0; p <= spriteH; p += 10) 
-			graph.drawPixel(spriteX, p, TFT_NAVY);
+			graph.drawPixel(spriteX, p, 14);
 }
 
 static void captive_portal() {
@@ -223,7 +219,7 @@ void setup() {
 	spriteX = tft.width() - 1;
 	spriteH = tft.height() - spriteY - 1;
 
-	graph.setColorDepth(8);
+	graph.setColorDepth(4);
 	graph.createSprite(tft.width(), tft.height() - spriteY);
 
 	rssi.setColor(TFT_WHITE, bgcolor);
