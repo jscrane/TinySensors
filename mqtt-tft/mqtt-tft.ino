@@ -80,7 +80,7 @@ static void update_display() {
 	for (int i = 1; i < num_sensors; i++) {
 		sensor_t &s = sensors[i];
 		if (s.id) {
-			int y = spriteH - spriteH * (float(s.light) / 256.0);
+			int y = spriteH * (1.0 - float(s.light) / (cfg.light.max - cfg.light.min));
 			graph.drawFastVLine(spriteX, y, 1, i);
 		}
 	}
@@ -264,7 +264,7 @@ void setup() {
 
 	attachInterrupt(digitalPinToInterrupt(SWITCH), switch_handler, RISING);
 
-	timers.setInterval(cfg.refresh_interval, update_display);
+	timers.setInterval(cfg.light.refresh_interval, update_display);
 	connectTimer = timers.setInterval(UPDATE_CONNECT, connecting);
 }
 

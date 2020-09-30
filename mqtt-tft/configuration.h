@@ -12,6 +12,14 @@ protected:
 #define NETWORK_LEN     33
 #define TOPIC_LEN       65
 
+class graph_config {
+public:
+	float max, min;
+	unsigned refresh_interval;
+
+	void configure(JsonObject &o);
+};
+
 class config: public Configuration {
 public:
 	char ssid[NETWORK_LEN];
@@ -19,8 +27,9 @@ public:
 	char hostname[NETWORK_LEN];
 	char mqtt_server[NETWORK_LEN];
 	char stat_topic[TOPIC_LEN];
-	unsigned refresh_interval;
 	bool debug;
+
+	struct graph_config light, battery, temperature, humidity;
 
 	void configure(JsonDocument &doc);
 };

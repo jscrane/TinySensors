@@ -4,6 +4,6 @@
 .*.swp
 *.bin
 *.elf
-spiffs.img
+*.img
 *.txt.mk
 data/config.json
