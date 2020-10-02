@@ -23,6 +23,8 @@
 
 TFT_eSPI tft;
 Graph light(tft);
+Graph battery(tft);
+Graphs graphs({ &light, &battery });
 
 #define SDA	D2
 #define SCL	D1
@@ -49,10 +51,9 @@ static RSSI rssi(tft, 5);
 const int rssi_error = 31;
 const size_t N = UPDATE_VI / SAMPLE_VI;
 
-static Smoother<N> shunt_mV, bus_V, current_mA, power_mW;
 static Label status(tft), bus(tft), shunt(tft), current(tft), debug(tft);
 static SimpleTimer timers;
-static int connectTimer, spriteY, spriteH, spriteX;
+static int connectTimer;
 
 static Stator<bool> swtch;
 
@@ -131,6 +132,7 @@ static void mqtt_callback(const char *topic, byte *payload, unsigned int length)
 		//strncpy(s.name, n+1, sizeof(s.name));
 
 	light.addReading(id, float(doc[F("l")]));
+	battery.addReading(id, float(doc[F("b")]));
 }
 
 void setup() {
@@ -181,8 +183,10 @@ void setup() {
 	debug.setColor(fgcolor, bgcolor);
 	y += debug.setFont(1);
 
-	light.setYO(y);
 	light.setBounds(cfg.light.min, cfg.light.max);
+	battery.setBounds(cfg.battery.min, cfg.battery.max);
+	graphs.each([y](Graph *g) { g->setYO(y); });
+	graphs.curr()->show();
 
 	rssi.setColor(TFT_WHITE, bgcolor);
 	rssi.setBounds(tft.width() - 21, 0, 20, 20);
@@ -227,6 +231,7 @@ void setup() {
 	attachInterrupt(digitalPinToInterrupt(SWITCH), switch_handler, RISING);
 
 	timers.setInterval(cfg.light.refresh_interval, []() { light.update(); });
+	timers.setInterval(cfg.battery.refresh_interval, []() { battery.update(); });
 	connectTimer = timers.setInterval(UPDATE_CONNECT, connecting);
 }
 
@@ -241,7 +246,8 @@ void loop() {
 		mqtt_client.loop();
 
 	if (swtch && swtch.changedAfter(SWITCH_INTERVAL)) {
-		// FIXME: switch pressed: cycle between graphs
+		graphs.curr()->hide();
+		graphs.next()->show();
 	}
 	swtch = false;
 }

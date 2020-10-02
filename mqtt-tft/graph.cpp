@@ -13,12 +13,14 @@ void Graph::setYO(unsigned yo) {
 
 void Graph::update() {
 	unsigned sh = height - yorg - 1, sx = width - 1;
+	float range = max - min;
 	for (int i = 1; i < NSENSORS; i++) {
-		int y = sh * (1.0 - vals[i] / (max - min));
+		int y = sh * (1.0 - (vals[i] - min) / range);
 		sprite.drawFastVLine(sx, y, 1, i);
 	}
 
-	sprite.pushSprite(0, yorg);
+	if (showing)
+		doShow();
 	sprite.scroll(-1, 0);
 
 	grid++;
@@ -28,4 +30,8 @@ void Graph::update() {
 	} else
 		for (int p = 0; p <= sh; p += 10)
 			sprite.drawPixel(sx, p, 14);
+}
+
+void Graph::doShow() {
+	sprite.pushSprite(0, yorg);
 }
