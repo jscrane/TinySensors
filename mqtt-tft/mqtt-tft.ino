@@ -41,19 +41,19 @@ config cfg;
 bool debugging;
 
 static const char *config_file = "/config.json";
-static const unsigned long UPDATE_RSSI = 500, UPDATE_VI = 250, SAMPLE_VI = 50;
+static const unsigned long UPDATE_RSSI = 500;
 static const unsigned long SWITCH_INTERVAL = 1000;
 static const unsigned long UPDATE_CONNECT = 500, CONNECT_TIME = 30000;
 
 static RSSI rssi(tft, 5);
 const int rssi_error = 31;
-const size_t N = UPDATE_VI / SAMPLE_VI;
 
-static Label status(tft), title(tft), shunt(tft), current(tft);
+static Label status(tft), title(tft);
 static SimpleTimer timers;
 static int connectTimer;
-
 static Stator<bool> swtch;
+
+static uint16_t ly[2];
 
 void ICACHE_RAM_ATTR switch_handler() { swtch = true; }
 
@@ -125,9 +125,21 @@ static void mqtt_callback(const char *topic, byte *payload, unsigned int length)
 	if (id <= 0 || id >= NSENSORS)
 		return;
 	
-	//const char *n = strrchr(topic, '/');
-	//if (n)
-		//strncpy(s.name, n+1, sizeof(s.name));
+	const char *n = strrchr(topic, '/');
+	if (n) {
+		const char *l = n+1;
+		uint16_t x, y;
+		if (id > 4) {
+			y = ly[1];
+			x = id - 5;
+		} else {
+			y = ly[0];
+			x = id - 1;
+		}
+		x *= tft.textWidth(l, 1);
+		tft.setTextColor(pgm_read_word(default_4bit_palette + id));
+		tft.drawString(l, x, y, 1);
+	}
 
 	light.addReading(id, float(doc[F("l")]));
 	battery.addReading(id, float(doc[F("b")]));
@@ -166,13 +178,10 @@ void setup() {
 	status.setColor(fgcolor, bgcolor);
 	y += status.setFont(1);
 
-	shunt.setPosition(0, y);
-	shunt.setColor(fgcolor, bgcolor);
-	y += shunt.setFont(1);
-
-	current.setPosition(0, y);
-	current.setColor(fgcolor, bgcolor);
-	y += current.setFont(1);
+	ly[0] = y;
+	y += tft.fontHeight(1);
+	ly[1] = y;
+	y += tft.fontHeight(1);
 
 	title.setPosition(0, y);
 	title.setColor(fgcolor, bgcolor);
