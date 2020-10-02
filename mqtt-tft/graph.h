@@ -5,17 +5,18 @@
 
 class Graph {
 public:
-	Graph(TFT_eSPI &tft);
+	Graph(TFT_eSPI &tft, const char *t);
 	void setYO(unsigned yo);
-	void setBounds(const float &mn, const float &mx) { min = mn; max = mx; }
+	void setBounds(const float &mn, const float &mx) { min = mn; range = mx - mn; }
 	void addReading(int sid, const float &val) { vals[sid] = val; }
 	void update();
-	void show() { showing = true; doShow(); }
+	const char *show() { showing = true; doShow(); return t; }
 	void hide() { showing = false; }
 
 private:
 	TFT_eSprite sprite;
-	float min, max;
+	const char *t;
+	float min, range;
 	const unsigned width, height;
 	unsigned yorg, grid;
 	float vals[NSENSORS];

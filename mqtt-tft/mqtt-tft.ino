@@ -22,8 +22,8 @@
 #define SWITCH  D3
 
 TFT_eSPI tft;
-Graph light(tft);
-Graph battery(tft);
+Graph light(tft, "light");
+Graph battery(tft, "battery");
 Graphs graphs({ &light, &battery });
 
 #define SDA	D2
@@ -37,10 +37,9 @@ ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 DNSServer dnsServer;
 
-bool debugging;
-unsigned bgcolor;
-const unsigned fgcolor = TFT_CYAN;
+const unsigned bgcolor = TFT_NAVY, fgcolor = TFT_CYAN;
 config cfg;
+bool debugging;
 
 static const char *config_file = "/config.json";
 static const unsigned long UPDATE_RSSI = 500, UPDATE_VI = 250, SAMPLE_VI = 50;
@@ -51,7 +50,7 @@ static RSSI rssi(tft, 5);
 const int rssi_error = 31;
 const size_t N = UPDATE_VI / SAMPLE_VI;
 
-static Label status(tft), bus(tft), shunt(tft), current(tft), debug(tft);
+static Label status(tft), title(tft), shunt(tft), current(tft);
 static SimpleTimer timers;
 static int connectTimer;
 
@@ -154,7 +153,6 @@ void setup() {
 
 	pinMode(SWITCH, INPUT_PULLUP);
 	debugging = cfg.debug;
-	bgcolor = debugging? TFT_RED: TFT_NAVY;
 
 	tft.init();
 	tft.setTextColor(fgcolor, bgcolor);
@@ -167,10 +165,6 @@ void setup() {
 	status.setColor(fgcolor, bgcolor);
 	y += status.setFont(1);
 
-	bus.setPosition(0, y);
-	bus.setColor(fgcolor, bgcolor);
-	y += bus.setFont(1);
-
 	shunt.setPosition(0, y);
 	shunt.setColor(fgcolor, bgcolor);
 	y += shunt.setFont(1);
@@ -179,14 +173,14 @@ void setup() {
 	current.setColor(fgcolor, bgcolor);
 	y += current.setFont(1);
 
-	debug.setPosition(0, y);
-	debug.setColor(fgcolor, bgcolor);
-	y += debug.setFont(1);
+	title.setPosition(0, y);
+	title.setColor(fgcolor, bgcolor);
+	y += title.setFont(1);
 
 	light.setBounds(cfg.light.min, cfg.light.max);
 	battery.setBounds(cfg.battery.min, cfg.battery.max);
 	graphs.each([y](Graph *g) { g->setYO(y); });
-	graphs.curr()->show();
+	title.draw(graphs.curr()->show());
 
 	rssi.setColor(TFT_WHITE, bgcolor);
 	rssi.setBounds(tft.width() - 21, 0, 20, 20);
@@ -247,7 +241,7 @@ void loop() {
 
 	if (swtch && swtch.changedAfter(SWITCH_INTERVAL)) {
 		graphs.curr()->hide();
-		graphs.next()->show();
+		title.draw(graphs.next()->show());
 	}
 	swtch = false;
 }

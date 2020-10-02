@@ -2,7 +2,7 @@
 #include <TFT_eSPI.h>
 #include "graph.h"
 
-Graph::Graph(TFT_eSPI &tft): sprite(&tft), width(tft.width()), height(tft.height()) {
+Graph::Graph(TFT_eSPI &tft, const char *n): sprite(&tft), t(n), width(tft.width()), height(tft.height()) {
 	sprite.setColorDepth(4);
 }
 
@@ -13,7 +13,6 @@ void Graph::setYO(unsigned yo) {
 
 void Graph::update() {
 	unsigned sh = height - yorg - 1, sx = width - 1;
-	float range = max - min;
 	for (int i = 1; i < NSENSORS; i++) {
 		int y = sh * (1.0 - (vals[i] - min) / range);
 		sprite.drawFastVLine(sx, y, 1, i);
