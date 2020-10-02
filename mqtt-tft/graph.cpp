@@ -2,7 +2,7 @@
 #include <TFT_eSPI.h>
 #include "graph.h"
 
-Graph::Graph(TFT_eSPI &tft, const char *n): sprite(&tft), t(n), width(tft.width()), height(tft.height()) {
+Graph::Graph(TFT_eSPI &tft, const char *n): sprite(&tft), f(n), width(tft.width()), height(tft.height()) {
 	sprite.setColorDepth(4);
 }
 
@@ -33,4 +33,10 @@ void Graph::update() {
 
 void Graph::doShow() {
 	sprite.pushSprite(0, yorg);
+}
+
+const char *Graph::fmt() {
+	static char buf[32];
+	snprintf(buf, sizeof(buf), f, min, min + range);
+	return buf;
 }

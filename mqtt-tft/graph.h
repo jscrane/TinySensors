@@ -5,23 +5,24 @@
 
 class Graph {
 public:
-	Graph(TFT_eSPI &tft, const char *t);
+	Graph(TFT_eSPI &tft, const char *f);
 	void setYO(unsigned yo);
 	void setBounds(const float &mn, const float &mx) { min = mn; range = mx - mn; }
 	void addReading(int sid, const float &val) { vals[sid] = val; }
 	void update();
-	const char *show() { showing = true; doShow(); return t; }
+	const char *show() { showing = true; doShow(); return fmt(); }
 	void hide() { showing = false; }
 
 private:
 	TFT_eSprite sprite;
-	const char *t;
 	float min, range;
 	const unsigned width, height;
 	unsigned yorg, grid;
 	float vals[NSENSORS];
 	bool showing;
 	void doShow();
+	const char *f;
+	const char *fmt();
 };
 
 typedef std::function<void(Graph*)> graph_updater;

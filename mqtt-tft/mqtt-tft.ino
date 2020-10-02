@@ -22,9 +22,8 @@
 #define SWITCH  D3
 
 TFT_eSPI tft;
-Graph light(tft, "light");
-Graph battery(tft, "battery");
-Graphs graphs({ &light, &battery });
+Graph light(tft, "light %.0f-%.0f"), battery(tft, "batt %.1f-%.1fv"), temperature(tft, "temp %.0f-%.0fC"), humidity(tft, "humi %.0f-%.0f%%");
+Graphs graphs({ &light, &battery, &temperature, &humidity });
 
 #define SDA	D2
 #define SCL	D1
@@ -132,6 +131,8 @@ static void mqtt_callback(const char *topic, byte *payload, unsigned int length)
 
 	light.addReading(id, float(doc[F("l")]));
 	battery.addReading(id, float(doc[F("b")]));
+	temperature.addReading(id, float(doc[F("t")]));
+	humidity.addReading(id, float(doc[F("h")]));
 }
 
 void setup() {
@@ -179,6 +180,9 @@ void setup() {
 
 	light.setBounds(cfg.light.min, cfg.light.max);
 	battery.setBounds(cfg.battery.min, cfg.battery.max);
+	temperature.setBounds(cfg.temperature.min, cfg.temperature.max);
+	humidity.setBounds(cfg.humidity.min, cfg.humidity.max);
+
 	graphs.each([y](Graph *g) { g->setYO(y); });
 	title.draw(graphs.curr()->show());
 
@@ -226,6 +230,8 @@ void setup() {
 
 	timers.setInterval(cfg.light.refresh_interval, []() { light.update(); });
 	timers.setInterval(cfg.battery.refresh_interval, []() { battery.update(); });
+	timers.setInterval(cfg.temperature.refresh_interval, []() { temperature.update(); });
+	timers.setInterval(cfg.humidity.refresh_interval, []() { humidity.update(); });
 	connectTimer = timers.setInterval(UPDATE_CONNECT, connecting);
 }
 
