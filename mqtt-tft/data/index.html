@@ -19,17 +19,37 @@ function load_config() {
   });
 }
 function save_config() {
-  config = document.getElementById('config');
-  data = [].reduce.call(config.elements, (data, element) => {
+  data = [].reduce.call(document.getElementsByClassName('c'), (o, element) => {
     if (element.id && element.value) {
       if (element.type == 'checkbox') {
-        data[element.id] = (element.checked? 1: 0);
+        o[element.id] = (element.checked? 1: 0);
       } else {
-        data[element.id] = element.value;
+        o[element.id] = element.value;
       }
     }
-    return data;
+    return o;
   }, {});
+
+  data['light'] = [].reduce.call(document.getElementsByClassName('l'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
+  data['battery'] = [].reduce.call(document.getElementsByClassName('b'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
+  data['temperature'] = [].reduce.call(document.getElementsByClassName('t'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
+  data['humidity'] = [].reduce.call(document.getElementsByClassName('h'), (o, element) => {
+    o[element.id] = element.value;
+    return o;
+  }, {});
+
   xhr = new XMLHttpRequest();
   xhr.open("POST", '/config', true);
   xhr.setRequestHeader('Content-Type', 'application/json');
@@ -44,38 +64,130 @@ function save_config() {
 <legend>Configuration</legend>
 <table>
   <tr>
-    <td>SSID:</td>
-    <td><input type="text" id="ssid"></td>
+    <td colspan="3" align="center" style="background-color:lightgray">Networking</td>
+  </tr>
+  <tr>
+    <td>SSID</td>
+    <td><input class="c" type="text" id="ssid"></td>
     <td><img src="info.png" title="Your Wifi network name"/></td>
   </tr>
   <tr>
-    <td>Password:</td>
-    <td><input type="password" id="password"></td>
+    <td>Password</td>
+    <td><input class="c" type="password" id="password"></td>
     <td><img src="info.png" title="Your Wifi network password"/></td>
   </tr>
   <tr>
-    <td>Hostname:</td>
-    <td><input type="text" id="hostname"></td>
+    <td>Hostname</td>
+    <td><input class="c" type="text" id="hostname"></td>
     <td><img src="info.png" title="My hostname on your network"/></td>
   </tr>
   <tr>
     <td>MQTT Server</td>
-    <td><input type="text" id="mqtt_server" maxlength="32"></td>
+    <td><input class="c" type="text" id="mqtt_server" maxlength="32"></td>
     <td><img src="info.png" title="Your MQTT server's hostname"/></td>
   </tr>
   <tr>
     <td>Status Topic</td>
-    <td><input type="text" id="stat_topic" maxlength="64"></td>
+    <td><input class="c" type="text" id="stat_topic" maxlength="64"></td>
     <td><img src="info.png" title="MQTT status topic"/></td>
   </tr>
   <tr>
-    <td>Display Refresh Interval</td>
-    <td><input type="number" min=0 id="refresh_interval"></td>
-    <td><img src="info.png" title="Interval between graph updates (in seconds)"/></td>
+    <td colspan="3" align="center" style="background-color:lightgray">Graphs</td>
+  </tr>
+  <tr>
+    <td>Light</td>
+    <td>
+      <table id="light">
+      <tr>
+	<td>Min</td>
+        <td><input class="l" id="min" type="number" min=0 max=255></td>
+        <td><img src="info.png" title="Graph lower bound"/></td>
+      </tr>
+      <tr>
+	<td>Max</td>
+        <td><input class="l" id="max" type="number" min=0 max=255></td>
+        <td><img src="info.png" title="Graph upper bound"/></td>
+      </tr>
+      <tr>
+	<td>Refresh</td>
+        <td><input class="l" id="refresh_interval" type="number" min=1></td>
+        <td><img src="info.png" title="Interval between graph updates (in seconds)"/></td>
+      </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td>Battery</td>
+    <td>
+      <table id="battery">
+      <tr>
+	<td>Min</td>
+        <td><input class="b" id="min" type="number" min=0.0 max=1.7 step=0.1></td>
+        <td><img src="info.png" title="Graph lower bound"/></td>
+      </tr>
+      <tr>
+	<td>Max</td>
+        <td><input class="b" id="max" type="number" min=0 max=1.7 step=0.1></td>
+        <td><img src="info.png" title="Graph upper bound"/></td>
+      </tr>
+      <tr>
+	<td>Refresh</td>
+        <td><input class="b" id="refresh_interval" type="number" min=1></td>
+        <td><img src="info.png" title="Interval between graph updates (in seconds)"/></td>
+      </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td>Temperature</td>
+    <td>
+      <table id="temperature">
+      <tr>
+	<td>Min</td>
+        <td><input class="t" id="min" type="number" min=0 max=20></td>
+        <td><img src="info.png" title="Graph lower bound"/></td>
+      </tr>
+      <tr>
+	<td>Max</td>
+        <td><input class="t" id="max" type="number" min=10 max=40></td>
+        <td><img src="info.png" title="Graph upper bound"/></td>
+      </tr>
+      <tr>
+	<td>Refresh</td>
+        <td><input class="t" id="refresh_interval" type="number" min=1></td>
+        <td><img src="info.png" title="Interval between graph updates (in seconds)"/></td>
+      </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td>Humidity</td>
+    <td>
+      <table id="humidity">
+      <tr>
+	<td>Min</td>
+        <td><input class="h" id="min" type="number" min=0 max=50></td>
+        <td><img src="info.png" title="Graph lower bound"/></td>
+      </tr>
+      <tr>
+	<td>Max</td>
+        <td><input class="h" id="max" type="number" min=50 max=100></td>
+        <td><img src="info.png" title="Graph upper bound"/></td>
+      </tr>
+      <tr>
+	<td>Refresh</td>
+        <td><input class="h" id="refresh_interval" type="number" min=1></td>
+        <td><img src="info.png" title="Interval between graph updates (in seconds)"/></td>
+      </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" align="center" style="background-color:lightgray">Other</td>
   </tr>
   <tr>
     <td>Debugging:</td>
-    <td><input type="checkbox" id="debug"></td>
+    <td><input type="checkbox" class="c" id="debug"></td>
     <td><img src="info.png" title="Debug output on Serial port"/></td>
   </tr>
   <tr>

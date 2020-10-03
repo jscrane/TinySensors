@@ -8,7 +8,7 @@ bool Configuration::read_file(const char *filename) {
 	if (!f)
 		return false;
 
-	DynamicJsonDocument doc(4*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(10) + 200);
+	DynamicJsonDocument doc(4*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(10) + 250);
 	auto error = deserializeJson(doc, f);
 	f.close();
 	if (error) {
