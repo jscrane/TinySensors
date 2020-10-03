@@ -20,7 +20,7 @@ static bool verbose = false;
 #define BATT	"battery"
 #define HUMI	"humidity"
 #define WIRED	"wired"
-#define TIMEOUT_SECS	600
+static int timeout_secs = 600;
 
 static int width, height;
 
@@ -114,7 +114,7 @@ void update_humi(sensor &s, int sid, const char *screen) {
 void check_timeouts(const char *screen, time_t &now) {
 	for (int i = 1; i < MAX_SENSORS; i++) {
 		struct reading &r = readings[i];
-		if (r.s.short_name[0] && now - r.last > TIMEOUT_SECS) {
+		if (r.s.short_name[0] && now - r.last > timeout_secs) {
 			char t[16];
 			snprintf(t, sizeof(t), "%.4s     ", r.s.short_name);
 			update_lcd(r.s.node_id, screen, t, 0);
@@ -190,13 +190,16 @@ int main(int argc, char *argv[]) {
 	const char *lcd_host = "localhost", *mux_host = "localhost";
 
 	atexit(close_sockets);
-	while ((opt = getopt(argc, argv, "l:m:vf")) != -1)
+	while ((opt = getopt(argc, argv, "l:m:t:vf")) != -1)
 		switch (opt) {
 		case 'l':
 			lcd_host = optarg;
 			break;
 		case 'm':
 			mux_host = optarg;
+			break;
+		case 't':
+			timeout_secs = atoi(optarg);
 			break;
 		case 'v':
 			verbose = true;
@@ -206,7 +209,7 @@ int main(int argc, char *argv[]) {
 			daemon = false;
 			break;
 		default:
-			fatal("Usage: %s: -l lcd:port -m mux:port [-v] [-f]\n", argv[0]);
+			fatal("Usage: %s: [-l lcd:port] [-m mux:port[ [-t timeout] [-v] [-f]\n", argv[0]);
 		}
 
 	if (daemon)
