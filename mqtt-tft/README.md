@@ -6,7 +6,6 @@ Display hardware as [WifiWeatherGuy](https://cadlab.io/project/1280/master/files
 - [Wemos D1 Mini](https://wiki.wemos.cc/products:d1:d1_mini)
 - PCB-mounted push switch
 - 1.8" TFT LCD display
-- v3 PCB (with pin headers)
 
 ## Software
 - [Arduino](https://www.arduino.cc/en/main/software) 1.8.x
