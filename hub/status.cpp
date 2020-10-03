@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	bool daemon = true;
 	const char *mux_host = "localhost";
 
-	while ((opt = getopt(argc, argv, "m:vf")) != -1)
+	while ((opt = getopt(argc, argv, "m:vft:")) != -1)
 		switch (opt) {
 		case 'm':
 			mux_host = optarg;
@@ -47,8 +47,11 @@ int main(int argc, char *argv[]) {
 		case 'f':
 			daemon = false;
 			break;
+		case 't':
+			idle_secs = atoi(optarg);
+			break;
 		default:
-			fatal("Usage: %s: -m mux:port [-v] [-f]\n", argv[0]);
+			fatal("Usage: %s: [-m mux:port] [-t timeout secs] [-v] [-f]\n", argv[0]);
 		}
 
 	if (daemon)
