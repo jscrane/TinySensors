@@ -1,0 +1,28 @@
+{
+ "ssid": "",
+ "password": "",
+ "hostname": "mqtt-tft",
+ "mqtt_server": "iot",
+ "stat_topic": "stat/#",
+ "light": {
+   "refresh_interval": 5,
+   "max": 255,
+   "min": 0
+ },
+ "battery": {
+   "refresh_interval": 5,
+   "max": 1.5,
+   "min": 0.2
+ },
+ "temperature": {
+   "refresh_interval": 5,
+   "max": 25,
+   "min": 5
+ },
+ "humidity": {
+   "refresh_interval": 5,
+   "max": 100,
+   "min": 0
+ },
+ "debug": false
+}
