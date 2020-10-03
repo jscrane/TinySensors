@@ -6,4 +6,4 @@
 *.elf
 *.img
 *.txt.mk
-#data/config.json
+data/config.json
