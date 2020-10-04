@@ -16,7 +16,6 @@
 #include "label.h"
 #include "rssi.h"
 #include "stator.h"
-#include "smoother.h"
 #include "graph.h"
 
 #define SWITCH  D3
