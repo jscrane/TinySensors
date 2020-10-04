@@ -37,7 +37,7 @@ DNSServer dnsServer;
 
 const unsigned bgcolor = TFT_NAVY, fgcolor = TFT_CYAN;
 config cfg;
-bool debugging;
+bool debugging = false;
 
 static const char *config_file = "/config.json";
 static const unsigned long UPDATE_RSSI = 500;
@@ -148,8 +148,8 @@ static void mqtt_callback(const char *topic, byte *payload, unsigned int length)
 
 void setup() {
 	Serial.begin(TERMINAL_SPEED);
-	Serial.println(F("Booting!"));
-	Serial.println(F(VERSION));
+	DBG(println(F("Booting!")));
+	DBG(println(F(VERSION)));
 
 	bool result = LittleFS.begin();
 	if (!result) {
@@ -164,7 +164,6 @@ void setup() {
 	}
 
 	pinMode(SWITCH, INPUT_PULLUP);
-	debugging = cfg.debug;
 
 	tft.init();
 	tft.setTextColor(fgcolor, bgcolor);

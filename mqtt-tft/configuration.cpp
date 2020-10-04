@@ -8,7 +8,7 @@ bool Configuration::read_file(const char *filename) {
 	if (!f)
 		return false;
 
-	DynamicJsonDocument doc(4*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(10) + 250);
+	DynamicJsonDocument doc(4*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(9) + 250);
 	auto error = deserializeJson(doc, f);
 	f.close();
 	if (error) {
@@ -27,7 +27,6 @@ void config::configure(JsonDocument &o) {
 	strlcpy(hostname, o[F("hostname")] | "", sizeof(hostname));
 	strlcpy(mqtt_server, o[F("mqtt_server")] | "", sizeof(mqtt_server));
 	strlcpy(stat_topic, o[F("stat_topic")] | "", sizeof(stat_topic));
-	debug = o[F("debug")] | false;
 
 	JsonObject l = o[F("light")];
 	light.configure(l);

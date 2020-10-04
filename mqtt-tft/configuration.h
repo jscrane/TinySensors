@@ -27,7 +27,6 @@ public:
 	char hostname[NETWORK_LEN];
 	char mqtt_server[NETWORK_LEN];
 	char stat_topic[TOPIC_LEN];
-	bool debug;
 
 	struct graph_config light, battery, temperature, humidity;
 
