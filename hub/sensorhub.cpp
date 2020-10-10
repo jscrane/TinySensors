@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	if (0 > listen(ss, 1))
 		fatal("listen: %s\n", strerror(errno));
 
-	RF24 radio(RPI_V2_GPIO_P1_26, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_8MHZ);
+	RF24 radio(RPI_V2_GPIO_P1_26, BCM2835_SPI_CS0);
 	radio.begin();
 	radio.setAutoAck(true);
 	radio.setDataRate(data_rate);
