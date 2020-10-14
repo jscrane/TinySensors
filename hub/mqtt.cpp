@@ -64,7 +64,7 @@ void as_json(const char *root, const sensor &s) {
 	const char *fmt;
 	switch (s.node_type) {
 	case 0:
-		fmt = "{ \"i\":%d, \"t\":%3.1f, \"l\":%d, \"h\":%3.1f, \"b\":%1.2f }";
+		fmt = "{ \"i\":%d, \"t\":%3.1f, \"l\":%d, \"h\":%3.1f, \"b\":%1.2f, \"ms\":%d, \"msg\":%d }";
 		break;
 	case 1:
 		fmt = "{ \"i\":%d, \"t\":%3.1f }";
@@ -76,7 +76,7 @@ void as_json(const char *root, const sensor &s) {
 		return;
 	}
 	char val[80], topic[80];
-	sprintf(val, fmt, s.node_id, s.temperature, s.light, s.humidity, s.battery);
+	sprintf(val, fmt, s.node_id, s.temperature, s.light, s.humidity, s.battery, s.node_time, s.msg_id);
 	sprintf(topic, "%s/%s", root, s.short_name);
 	do_pub(topic, val);
 }
