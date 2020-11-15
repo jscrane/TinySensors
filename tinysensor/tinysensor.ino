@@ -1,4 +1,5 @@
 #include <avr/power.h>
+#include <SPI.h>
 #include <RF24.h>
 #include <DHT.h>
 #include <SoftwareSerial.h>
@@ -56,7 +57,8 @@ void loop(void)
 
 	pinMode(LIGHT_PIN, INPUT_PULLUP);
 	unsigned lsens = analogRead(LIGHT_PIN);
-	pinMode(LIGHT_PIN, INPUT);
+	pinMode(LIGHT_PIN, OUTPUT);
+	digitalWrite(LIGHT_PIN, LOW);
 
 	uint8_t light = 255 - lsens / 4;
 	unsigned secs = lsens / 4 + 1;
