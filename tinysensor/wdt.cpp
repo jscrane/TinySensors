@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
-#include <avr/power.h>
 #include <avr/sleep.h>
 
 #include "wdt.h"
@@ -19,11 +18,6 @@ ISR(WDT_vect) {
 }
 
 void wdt_sleep(unsigned secs) {
-	power_usi_disable();
-
-	uint8_t adcsra = ADCSRA;
-	ADCSRA &= ~_BV(ADEN);
-	power_adc_disable();
 
 	while (secs) {
 		uint8_t e = 0;
@@ -49,9 +43,4 @@ void wdt_sleep(unsigned secs) {
 		sleep_cpu();
 		sleep_disable();
 	}
-
-	power_adc_enable();
-	ADCSRA = adcsra;
-
-	power_usi_enable();
 }

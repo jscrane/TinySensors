@@ -30,9 +30,11 @@ void setup(void)
 
 	dht.setup(DHT_PIN);
 
+	pinMode(LIGHT_PIN, INPUT_PULLUP);
+
 #if defined(DEBUG)
 	serial.begin(TERMINAL_SPEED);
-	serial.println(F("millis\tStatus\tHum\tTemp\tLight\tBattery\tTime"));
+	serial.println(F("Time\tnRF\tDHT\tADC\tStatus\tHum\tTemp\tLight\tBattery\tSleep"));
 #else
 	pinMode(RX_PIN, INPUT_PULLUP);
 	pinMode(TX_PIN, INPUT_PULLUP);
@@ -53,31 +55,43 @@ void setup(void)
 void loop(void)
 {
 	static uint32_t msgid;
-	uint32_t start = millis();
 
-	pinMode(LIGHT_PIN, INPUT_PULLUP);
+	uint32_t start = micros();
+
+	// don't wait 5ms in powerUp(): reading the sensors takes the time
+	radio.powerUp(false);
+
 	unsigned lsens = analogRead(LIGHT_PIN);
-	pinMode(LIGHT_PIN, OUTPUT);
-	digitalWrite(LIGHT_PIN, LOW);
-
-	uint8_t light = 255 - lsens / 4;
-	unsigned secs = lsens / 4 + 1;
 	uint8_t batt = analogRead(BATTERY_PIN) / 4;
+	uint8_t light = 255 - lsens / 4;
+	unsigned sleep = lsens / 4 + 1;
+
+	uint8_t adcsra = ADCSRA;
+	ADCSRA &= ~_BV(ADEN);
+	power_adc_disable();
 
 	// millis() only counts time when the sketch is not sleeping
+	uint32_t sd = micros();
 	dht.resetTimer();
 	int16_t h = dht.getHumidity();
 	int16_t t = dht.getTemperature();
 	uint8_t status = dht.getStatus();
 	sensor_payload_t payload = { millis(), msgid++, h, t, NODE_ID, light, batt, status };
 
-	radio.powerUp();
+	uint32_t sr = micros();
 	radio.stopListening();
 	radio.write(&payload, sizeof(payload));
 	radio.powerDown();
 
 #if defined(DEBUG)
-	serial.print(millis() - start);
+	uint32_t now = micros();
+	serial.print(now - start);
+	serial.print('\t');
+	serial.print(now - sr);
+	serial.print('\t');
+	serial.print(sr - sd);
+	serial.print('\t');
+	serial.print(sd - start);
 	serial.print('\t');
 	serial.print(status);
 	serial.print('\t');
@@ -85,12 +99,19 @@ void loop(void)
 	serial.print('\t');
 	serial.print(t);
 	serial.print('\t');
-	serial.print((int)light);
+	serial.print(light);
 	serial.print('\t');
 	serial.print(batt);
 	serial.print('\t');
-	serial.println(secs);
+	serial.println(sleep);
 #endif
 
-	wdt_sleep(secs);
+	power_usi_disable();
+
+	wdt_sleep(sleep);
+
+	power_usi_enable();
+
+	power_adc_enable();
+	ADCSRA = adcsra;
 }
