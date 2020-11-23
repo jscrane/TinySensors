@@ -67,7 +67,7 @@ void loop(void)
 	unsigned sleep = lsens / 4 + 1;
 
 	uint8_t adcsra = ADCSRA;
-	ADCSRA &= ~_BV(ADEN);
+	ADCSRA = 0;
 	power_adc_disable();
 
 	// millis() only counts time when the sketch is not sleeping
@@ -106,11 +106,12 @@ void loop(void)
 	serial.println(sleep);
 #endif
 
-	power_usi_disable();
+	uint8_t prr = PRR;
+	power_all_disable();
 
 	wdt_sleep(sleep);
 
-	power_usi_enable();
+	PRR = prr;
 
 	power_adc_enable();
 	ADCSRA = adcsra;
