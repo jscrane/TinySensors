@@ -2,10 +2,12 @@ BOARD := tinysensor
 BOARD_CLOCK := 8internal
 SKETCH := tinysensor.ino
 TERMINAL_SPEED := 9600
-CPPFLAGS = -DNODE_ID=$(NODE_ID)
+CPPFLAGS = -DNODE_ID=$(NODE_ID) -DRF24_POWERUP_DELAY=0
 ifeq ($(DEBUG),1)
 CPPFLAGS += -DDEBUG=$(DEBUG)
 endif
+
+LOCAL_LIBRARY_PATH := ~/src/nRF24
 
 -include tiny.mk
 

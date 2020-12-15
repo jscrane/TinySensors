@@ -58,8 +58,8 @@ void loop(void)
 
 	uint32_t start = micros();
 
-	// don't wait 5ms in powerUp(): reading the sensors takes the time
-	radio.powerUp(false);
+	// power-up here to overlap with dht read
+	radio.powerUp();
 
 	unsigned lsens = analogRead(LIGHT_PIN);
 	uint8_t batt = analogRead(BATTERY_PIN) / 4;
