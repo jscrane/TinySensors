@@ -76,9 +76,7 @@ void as_json(const char *root, const sensor &s) {
 		return;
 	}
 	char val[128], topic[80];
-	float av = 0.0;
-	if (s.msg_id > 0)
-		av = s.node_time / (float)s.msg_id;
+	float av = s.node_time / (1.0 + s.msg_id);
 	sprintf(val, fmt, s.node_id, s.temperature, s.light, s.humidity, s.battery, s.node_time, s.msg_id, av);
 	sprintf(topic, "%s/%s", root, s.short_name);
 	do_pub(topic, val);
