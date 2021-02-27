@@ -12,9 +12,9 @@ LOCAL_LIBRARY_PATH := ~/src/nRF24
 -include tiny.mk
 
 $(runtime.platform.path)/boards.local.txt: $(runtime.platform.path)
-	install -c -m 0644 boards.local.mk $^
+	install -c -m 0644 boards.local.txt $^
 
-$(runtime.platform.path)/bootloaders/optiboot/%.hex: optiboot/%.nex
-	install -c -m 0644 $^ $(dir $@)
+$(runtime.platform.path)/bootloaders/optiboot/%.hex:
+	install -c -m 0644 optiboot/$(notdir $@) $(dir $@)
 
 init: $(runtime.platform.path)/boards.local.txt $(addprefix $(runtime.platform.path)/bootloaders/, $(wildcard optiboot/*.hex))
