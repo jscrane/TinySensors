@@ -149,7 +149,7 @@ while (1) {
 	my $ty = 2;
 
 	if ($temp != $chill) {
-		my $fmin = sprintf("%d%.1s", $chill, $temp_unit);
+		my $fmin = sprintf("% 2d%.1s", $chill, $temp_unit);
 		my $x = $width - length($fmin) + 1;
 		lcdproc $remote, "widget_set weather tmin {$x} 3 {$fmin}";
 	} else {
