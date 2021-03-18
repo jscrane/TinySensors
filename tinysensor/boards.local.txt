@@ -1,4 +1,6 @@
 tinysensor.name=TinySensor
+tinysensor.upload.maximum_size=7553
+tinysensor.upload.maximum_data_size=512
 tinysensor.build.variant=tinyX4_reverse
 tinysensor.build.board=AVR_ATTINYX4
 tinysensor.build.mcu=attiny84
