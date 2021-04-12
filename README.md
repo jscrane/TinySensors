@@ -17,7 +17,7 @@ Software
   - [DHT22](https://github.com/jscrane/DHT22) library, slimmed-down for ATtiny
 
 * Raspberry-Pi
-  - Tested on Raspberry Pi 2 and Raspberry Pi 3 Model B
+  - Tested on Raspberry Pi 2, Pi 3 Model B and Pi Zero-W
   - [nRF24](https://github.com/nRF24/RF24) library
   - [BCM2835](http://www.airspayce.com/mikem/bcm2835) library
   - libmosquitto-dev
