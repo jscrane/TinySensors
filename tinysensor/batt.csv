@@ -1,0 +1,18 @@
+node,start,end,ms,msg,commit,type
+kitc,2020-10-14,2020-11-17,,,f343fb1,duracell
+bath,2020-10-21,2020-12-15,,,f343fb1,duracell
+hprs,2020-10-31,2021-03-09,527079,39456,f343fb1,duracell
+kitc,2020-11-23,,,,6fdd778,duracell
+bath,2020-12-15,2021-01-25,148191,11993,9dcf06f,duracell
+kitc,2020-12-31,2021-02-05,121559,11539,9dcf06f,duracell
+bedr,,2021-02-02,1226725,84231,,duracell
+bedr,2021-02-02,,,,bea7474,duracell
+kitc,2021-02-06,2021-03-18,136349,12944,9dcf06f,duracell
+bath,2021-01-25,2021-02-27,114427,9547,9dcf06f,duracell
+hprs,2021-03-09,,,7f8d5f9,duracell
+bath,2021-02-27,2021-03-15,52701,4794,9dcf06f,duracell
+bath,2021-03-16,2021-04-01,51280,4837,9dcf06f,duracell
+kitc,2021-03-18,2021-04-30,148717,14255,f2ae0df,duracell
+bath,2021-04-02,2021-04-21,60129,5249,aabc77b,duracell
+bath,2021-04-21,,,,aabc77b,duracell
+kitc,2021-04-30,,,f2ae0df,tesco extra long life
