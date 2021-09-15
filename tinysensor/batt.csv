@@ -5,14 +5,25 @@ hprs,2020-10-31,2021-03-09,527079,39456,f343fb1,duracell
 kitc,2020-11-23,,,,6fdd778,duracell
 bath,2020-12-15,2021-01-25,148191,11993,9dcf06f,duracell
 kitc,2020-12-31,2021-02-05,121559,11539,9dcf06f,duracell
-bedr,,2021-02-02,1226725,84231,,duracell
-bedr,2021-02-02,,,,bea7474,duracell
+bdrm,,2021-02-02,1226725,84231,,duracell
+bdrm,2021-02-02,2021-09-10,2430496,215188,bea7474,duracell
 kitc,2021-02-06,2021-03-18,136349,12944,9dcf06f,duracell
 bath,2021-01-25,2021-02-27,114427,9547,9dcf06f,duracell
-hprs,2021-03-09,,,7f8d5f9,duracell
+hprs,2021-03-09,2021-07-10,356417,37817,7f8d5f9,duracell
 bath,2021-02-27,2021-03-15,52701,4794,9dcf06f,duracell
 bath,2021-03-16,2021-04-01,51280,4837,9dcf06f,duracell
 kitc,2021-03-18,2021-04-30,148717,14255,f2ae0df,duracell
 bath,2021-04-02,2021-04-21,60129,5249,aabc77b,duracell
-bath,2021-04-21,,,,aabc77b,duracell
-kitc,2021-04-30,,,f2ae0df,tesco extra long life
+bath,2021-04-21,2021-07-07,1827006,155101,aabc77b,duracell
+kitc,2021-04-30,2021-06-14,160923,15566,f2ae0df,tesco extra long life
+kitc,2021-06-14,2021-07-31,159182,16007,f2ae0df,tesco
+ensu,2020-05-24,2021-09-10,2062858,144018,,duracell
+fron,2020-06-25,2021-06-24,2407708,176456,,duracell plus
+fron,2021-06-24,,,,84842c7,tesco extra long life
+bath,2021-07-09,aabc77b,tesco extra long life
+hprs,2021-07-11,7f8d5f9,duracell simply
+kitc,2021-08-01,2021-09-15,150521,14874,f2ae0df,tesco
+stud,2021-08-01,,,,f2ae0df,tesco
+ensu,2021-09-10,,,,f2ae0df,tesco
+bdrm,2021-09-10,,,,f2ae0df,tesco
+kitc,2021-09-15,,,,bb94809,duracell simply
