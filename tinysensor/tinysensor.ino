@@ -64,7 +64,8 @@ void loop(void)
 	unsigned lsens = analogRead(LIGHT_PIN);
 	uint8_t batt = analogRead(BATTERY_PIN) / 4;
 	uint8_t light = 255 - lsens / 4;
-	unsigned sleep = lsens / 4 + 1;
+//	unsigned sleep = lsens / 4 + 1;
+	unsigned sleep = 300;
 
 	uint8_t adcsra = ADCSRA;
 	ADCSRA = 0;
