@@ -67,10 +67,14 @@ void as_json(const char *root, const sensor &s) {
 		fmt = "{ \"i\":%d, \"t\":%3.1f, \"l\":%d, \"h\":%3.1f, \"b\":%1.2f, \"ms\":%d, \"msg\":%d, \"av\":%2.1f }";
 		break;
 	case 1:
-		fmt = "{ \"i\":%d, \"t\":%3.1f }";
-		break;
+		// ???
+		return;
 	case 2:
 		fmt = "{ \"i\":%d, \"t\":%3.1f, \"l\":%d }";
+		break;
+	case 3:
+	case 4:
+		fmt = "{ \"i\":%d, \"t\":%3.1f }";
 		break;
 	default:
 		return;
