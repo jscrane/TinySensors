@@ -239,7 +239,8 @@ int main(int argc, char *argv[]) {
 
 		rd = srd;
 		wr = swr;
-		if (0 > select(1 + (mux > lcd? mux: lcd), &rd, &wr, 0, 0))
+		struct timeval t = { 15, 0 };
+		if (0 > select(1 + (mux > lcd? mux: lcd), &rd, &wr, 0, &t))
 			fatal("select: %s\n", strerror(errno));
 
 		if (FD_ISSET(lcd, &rd)) {

@@ -142,7 +142,11 @@ int main(int argc, char *argv[])
 
 		rd = srd;
 		wr = swr;
-		if (select(nfds + 1, &rd, &wr, 0, 0) < 0)
+		int m = nfds;
+		if (FD_ISSET(ss, &rd) && ss > nfds)
+			m = ss;
+		struct timeval t = { 15, 0 };
+		if (select(m + 1, &rd, &wr, 0, &t) < 0)
 			fatal("select: %s\n", strerror(errno));
 
 		char obuf[256];

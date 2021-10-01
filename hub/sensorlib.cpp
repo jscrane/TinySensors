@@ -146,7 +146,7 @@ static int init_addr(struct sockaddr_in &a, const char *s, int defport, bool blo
 		return 0;
 	}
 
-	if (!block && h_errno == TRY_AGAIN)
+	if (!block && (h_errno == HOST_NOT_FOUND || h_errno == TRY_AGAIN))
 		return -1;
 
 	fatal("gethostbyname: %s: %s\n", host, hstrerror(h_errno));
