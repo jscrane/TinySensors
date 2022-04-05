@@ -19,7 +19,7 @@ kitc,2021-04-30,2021-06-14,160923,15566,f2ae0df,tesco extra long life
 kitc,2021-06-14,2021-07-31,159182,16007,f2ae0df,tesco
 ensu,2020-05-24,2021-09-10,2062858,144018,,duracell
 fron,2020-06-25,2021-06-24,2407708,176456,,duracell plus
-fron,2021-06-24,,,,84842c7,tesco extra long life
+fron,2021-06-24,2022-03-16,1665503,171123,84842c7,tesco extra long life
 bath,2021-07-09,,,,aabc77b,tesco extra long life
 hprs,2021-07-11,2021-11-11,353808,37622,7f8d5f9,duracell simply
 kitc,2021-08-01,2021-09-15,150521,14874,f2ae0df,tesco
@@ -28,5 +28,7 @@ ensu,2021-09-10,,,,f2ae0df,tesco
 bdrm,2021-09-10,,,,f2ae0df,tesco
 kitc,2021-09-15,2021-10-27,107474,10628,bb94809,duracell simply
 kitc,2021-10-27,2021-12-19,137242,13282,bb94809,tesco
-hprs,2021-11-11,,,,bb94809,tesco
+hprs,2021-11-11,2022-03-18,298719,32890,bb94809,tesco
 kitc,2021-12-19,2022-02-13,146462,14272,bb94809,tesco
+fron,2022-03-15,,,ecc21bb,tesco
+hprs,2022-03-18,,,bb94809,simply duracell
