@@ -7,8 +7,6 @@ ifeq ($(DEBUG),1)
 CPPFLAGS += -DDEBUG=$(DEBUG)
 endif
 
-LOCAL_LIBRARY_PATH := ~/src/nRF24
-
 -include tiny.mk
 
 $(runtime.platform.path)/boards.local.txt: boards.local.txt
