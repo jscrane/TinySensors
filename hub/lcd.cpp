@@ -147,7 +147,39 @@ void update_sensor(sensor &s) {
 		update_temp(s, s.node_id - 19, WIRED);
 }
 
-void init_lcd() {
+void init_wired() {
+	char buf[128];
+	lcdproc(buf, sizeof(buf), "screen_add " WIRED "\n");
+	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {" WIRED "}\n");
+
+	for (int i = 1; i < MAX_SENSORS; i++)
+		lcdproc(buf, sizeof(buf), "widget_add " WIRED " sensor%d string\n", i);
+
+	lcdproc(buf, sizeof(buf), "widget_add " WIRED " unit string\n");
+}
+
+void init_wireless() {
+	char buf[128];
+	lcdproc(buf, sizeof(buf), "screen_add " TEMP "\n");
+	lcdproc(buf, sizeof(buf), "screen_set " TEMP " name {" TEMP "}\n");
+	lcdproc(buf, sizeof(buf), "screen_add " HUMI "\n");
+	lcdproc(buf, sizeof(buf), "screen_set " HUMI " name {" HUMI "}\n");
+	lcdproc(buf, sizeof(buf), "screen_add " BATT "\n");
+	lcdproc(buf, sizeof(buf), "screen_set " BATT " name {" BATT "}\n");
+
+	for (int i = 1; i < MAX_SENSORS; i++) {
+		lcdproc(buf, sizeof(buf), "widget_add " TEMP " sensor%d string\n", i);
+		lcdproc(buf, sizeof(buf), "widget_add " BATT " sensor%d string\n", i);
+		lcdproc(buf, sizeof(buf), "widget_add " HUMI " sensor%d string\n", i);
+	}
+
+	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " TEMP " unit string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " BATT " unit string\n");
+	lcdproc(buf, sizeof(buf), "widget_add " HUMI " unit string\n");
+}
+
+void init_lcd(bool wired, bool wireless) {
 	char buf[128];
 	int n = lcdproc(buf, sizeof(buf), "hello\n");
 	height = width = 0;
@@ -159,38 +191,23 @@ void init_lcd() {
 	}
 
 	lcdproc(buf, sizeof(buf), "client_set name {Sensors}\n");
-	lcdproc(buf, sizeof(buf), "screen_add " TEMP "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " TEMP " name {" TEMP "}\n");
-	lcdproc(buf, sizeof(buf), "screen_add " HUMI "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " HUMI " name {" HUMI "}\n");
-	lcdproc(buf, sizeof(buf), "screen_add " BATT "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " BATT " name {" BATT "}\n");
-	lcdproc(buf, sizeof(buf), "screen_add " WIRED "\n");
-	lcdproc(buf, sizeof(buf), "screen_set " WIRED " name {" WIRED "}\n");
 
-	for (int i = 1; i < MAX_SENSORS; i++) {
-		lcdproc(buf, sizeof(buf), "widget_add " WIRED " sensor%d string\n", i);
-		lcdproc(buf, sizeof(buf), "widget_add " TEMP " sensor%d string\n", i);
-		lcdproc(buf, sizeof(buf), "widget_add " BATT " sensor%d string\n", i);
-		lcdproc(buf, sizeof(buf), "widget_add " HUMI " sensor%d string\n", i);
-	}
+	if (wireless)
+		init_wireless();
 
-	lcdproc(buf, sizeof(buf), "widget_add " TEMP " update string\n");
-	lcdproc(buf, sizeof(buf), "widget_add " TEMP " unit string\n");
-	lcdproc(buf, sizeof(buf), "widget_add " WIRED " unit string\n");
-	lcdproc(buf, sizeof(buf), "widget_add " BATT " unit string\n");
-	lcdproc(buf, sizeof(buf), "widget_add " HUMI " unit string\n");
+	if (wired)
+		init_wired();
 
 	lcdproc(buf, sizeof(buf), "backlight off\n");
 }
 
 int main(int argc, char *argv[]) {
 	int opt;
-	bool daemon = true;
+	bool daemon = true, wired = true, wireless = true;
 	const char *lcd_host = "localhost", *mux_host = "localhost";
 
 	atexit(close_sockets);
-	while ((opt = getopt(argc, argv, "l:m:t:vf")) != -1)
+	while ((opt = getopt(argc, argv, "l:m:t:vfwd")) != -1)
 		switch (opt) {
 		case 'l':
 			lcd_host = optarg;
@@ -208,8 +225,14 @@ int main(int argc, char *argv[]) {
 		case 'f':
 			daemon = false;
 			break;
+		case 'w':
+			wired = false;
+			break;
+		case 'd':
+			wireless = false;
+			break;
 		default:
-			fatal("Usage: %s: [-l lcd:port] [-m mux:port[ [-t timeout] [-v] [-f]\n", argv[0]);
+			fatal("Usage: %s: [-l lcd:port] [-m mux:port[ [-t timeout] [-v] [-f] [-d] [-w]\n", argv[0]);
 		}
 
 	if (daemon)
@@ -260,7 +283,7 @@ int main(int argc, char *argv[]) {
 			lcd = on_connect(lcd);
 			if (lcd >= 0) {
 				FD_SET(lcd, &srd);
-				init_lcd();
+				init_lcd(wired, wireless);
 			} else
 				sleep(1);
 		}
