@@ -1,5 +1,5 @@
 BOARD := tinysensor
-CLOCK := 8internal
+clock := 8internal
 SKETCH := tinysensor.ino
 TERMINAL_SPEED := 9600
 CPPFLAGS = -DNODE_ID=$(NODE_ID) -DRF24_POWERUP_DELAY=0
